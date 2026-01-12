@@ -12,12 +12,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/ashiqfardus/laravel-fuzzy-search.git",
-                "reference": "eae3421a3bf3aca7f71eacdfcacbf20320f92317"
+                "reference": "b4470eee04a02e28b01872f35c59ea685a7f1dd5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ashiqfardus/laravel-fuzzy-search/zipball/eae3421a3bf3aca7f71eacdfcacbf20320f92317",
-                "reference": "eae3421a3bf3aca7f71eacdfcacbf20320f92317",
+                "url": "https://api.github.com/repos/ashiqfardus/laravel-fuzzy-search/zipball/b4470eee04a02e28b01872f35c59ea685a7f1dd5",
+                "reference": "b4470eee04a02e28b01872f35c59ea685a7f1dd5",
                 "shasum": ""
             },
             "require": {
@@ -68,7 +68,7 @@
                 "issues": "https://github.com/ashiqfardus/laravel-fuzzy-search/issues",
                 "source": "https://github.com/ashiqfardus/laravel-fuzzy-search/tree/v1.0.0"
             },
-            "time": "2026-01-12T15:51:21+00:00"
+            "time": "2026-01-12T17:54:01+00:00"
         },
         {
             "name": "brick/math",

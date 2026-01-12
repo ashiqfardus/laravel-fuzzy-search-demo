@@ -17,6 +17,7 @@ A demonstration application showcasing the [Laravel Fuzzy Search](https://github
 | **Phonetic Search** | Soundex & Metaphone matching | `/search/contacts` |
 | **Tokenization** | Multi-word search with AND/OR | `/search/articles` |
 | **Federated Search** | Search across multiple models | `/search/federated` |
+| **Smart Search** | Did You Mean, Suggestions, Autocomplete | `/search/smart` |
 | **Relevance Scoring** | Results ranked by relevance | All pages |
 | **Result Highlighting** | Search terms highlighted | All pages |
 
@@ -92,6 +93,13 @@ Navigate to `/search/articles` and try:
 
 ### 6. Federated Search
 Navigate to `/search/federated` to search across all models simultaneously.
+
+### 7. Smart Search Features
+Navigate to `/search/smart` and try:
+- Search `volet` → See "Violet VonRueden" with similarity score (412.01)
+- Search `iphne` → See "iPhone" products with proper scoring
+- View autocomplete suggestions as you type
+- Click on suggestions to refine your search
 
 ## 📁 Project Structure
 

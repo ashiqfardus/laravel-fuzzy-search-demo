@@ -9,4 +9,5 @@ Route::get('/search/products', [SearchController::class, 'products'])->name('sea
 Route::get('/search/articles', [SearchController::class, 'articles'])->name('search.articles');
 Route::get('/search/contacts', [SearchController::class, 'contacts'])->name('search.contacts');
 Route::get('/search/federated', [SearchController::class, 'federated'])->name('search.federated');
+Route::get('/search/smart', [SearchController::class, 'smart'])->name('search.smart');
 Route::get('/api/suggest', [SearchController::class, 'suggest'])->name('api.suggest');

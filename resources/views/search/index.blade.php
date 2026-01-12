@@ -58,6 +58,12 @@
         <div class="text-sm text-orange-600">Multi-model search →</div>
     </a>
 
+    <a href="{{ route('search.smart') }}" class="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow border-2 border-pink-200">
+        <h3 class="text-xl font-bold text-gray-800 mb-2">🧠 Smart Search</h3>
+        <p class="text-gray-600 mb-4">Did You Mean, Suggestions, Autocomplete</p>
+        <div class="text-sm text-pink-600">Try: "iphne" → "iPhone" →</div>
+    </a>
+
     <div class="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg shadow-lg p-6 text-white">
         <h3 class="text-xl font-bold mb-2">✨ Features to Test</h3>
         <ul class="text-sm space-y-1 opacity-90">
@@ -66,6 +72,7 @@
             <li>• Relevance scoring (_score)</li>
             <li>• Result highlighting</li>
             <li>• Config presets</li>
+            <li>• Did You Mean suggestions</li>
         </ul>
     </div>
 </div>

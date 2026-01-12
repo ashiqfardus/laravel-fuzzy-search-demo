@@ -173,4 +173,97 @@ class SearchController extends Controller
 
         return response()->json($suggestions);
     }
+
+    /**
+     * Smart search features: Did You Mean, Suggestions, Autocomplete
+     */
+    public function smart(Request $request)
+    {
+        $query = $request->input('q', '');
+
+        $results = collect();
+        $suggestions = [];
+        $didYouMean = [];
+        $autocomplete = [];
+
+        if ($query) {
+            // Helper function to search and map results with similarity
+            $searchModel = function($modelClass, $type, $nameField) use ($query) {
+                // Try levenshtein first (better for typos)
+                $levenResults = $modelClass::search($query)
+                    ->using('levenshtein')
+                    ->typoTolerance(3)
+                    ->withRelevance()
+                    ->highlight('mark')
+                    ->get();
+
+                // Also try fuzzy for broader matches
+                $fuzzyResults = $modelClass::search($query)
+                    ->using('fuzzy')
+                    ->typoTolerance(4)
+                    ->withRelevance()
+                    ->highlight('mark')
+                    ->get();
+
+                // Merge and deduplicate
+                $merged = $levenResults->merge($fuzzyResults)->unique('id');
+
+                return $merged->map(function($item) use ($query, $type, $nameField) {
+                    $similarity = 0;
+                    $name = is_array($nameField)
+                        ? $item->{$nameField[0]}
+                        : $item->{$nameField};
+                    similar_text(strtolower($query), strtolower($name), $similarity);
+                    $item->_score = max($item->_score ?? 0, $similarity);
+                    return ['type' => $type, 'item' => $item, 'similarity' => $similarity];
+                });
+            };
+
+            $productResults = $searchModel(Product::class, 'Product', 'name');
+            $userResults = $searchModel(User::class, 'User', 'name');
+            $articleResults = $searchModel(Article::class, 'Article', 'title');
+            $contactResults = $searchModel(Contact::class, 'Contact', 'first_name');
+
+            // Combine and sort by similarity score (higher = better match)
+            $results = $productResults
+                ->concat($userResults)
+                ->concat($articleResults)
+                ->concat($contactResults)
+                ->sortByDesc('similarity')
+                ->take(20)
+                ->values();
+
+            // Get autocomplete/suggestions from actual matches
+            $autocomplete = $results->take(8)->map(function($r) {
+                $item = $r['item'];
+                $type = $r['type'];
+                return match($type) {
+                    'Product' => $item->name,
+                    'User' => $item->name,
+                    'Article' => $item->title,
+                    'Contact' => $item->first_name . ' ' . $item->last_name,
+                    default => null
+                };
+            })->filter()->unique()->values()->toArray();
+
+            // Generate "Did You Mean" from top results if query doesn't match exactly
+            $didYouMean = $results->take(3)->map(function($r) {
+                $item = $r['item'];
+                $type = $r['type'];
+                $term = match($type) {
+                    'Product' => $item->name,
+                    'User' => $item->name,
+                    'Article' => $item->title,
+                    'Contact' => $item->first_name,
+                    default => null
+                };
+                return ['term' => $term, 'type' => $type];
+            })->filter(fn($d) => $d['term'] !== null)->values()->toArray();
+
+            // Suggestions - same as autocomplete for now
+            $suggestions = collect($autocomplete)->map(fn($s) => ['text' => $s])->toArray();
+        }
+
+        return view('search.smart', compact('results', 'query', 'suggestions', 'didYouMean', 'autocomplete'));
+    }
 }

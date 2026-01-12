@@ -20,6 +20,7 @@
                     <a href="{{ route('search.articles') }}" class="hover:text-indigo-200">Articles</a>
                     <a href="{{ route('search.contacts') }}" class="hover:text-indigo-200">Contacts</a>
                     <a href="{{ route('search.federated') }}" class="hover:text-indigo-200">Federated</a>
+                    <a href="{{ route('search.smart') }}" class="hover:text-indigo-200">Smart</a>
                 </div>
             </div>
         </div>
