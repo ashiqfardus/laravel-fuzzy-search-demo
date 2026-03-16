@@ -133,7 +133,7 @@ routes/
 ## 🛠️ Requirements
 
 - PHP 8.2+
-- Laravel 12.x
+- Laravel 12.x or 13.x-dev
 - SQLite (default) or MySQL/PostgreSQL
 
 ## 📝 License
