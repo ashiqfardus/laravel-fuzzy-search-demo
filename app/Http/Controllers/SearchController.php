@@ -186,7 +186,7 @@ class SearchController extends Controller
      */
     public function capabilityMatrix(): \Illuminate\View\View
     {
-        $algorithms = ['simple', 'fuzzy', 'levenshtein', 'trigram', 'soundex', 'similar_text'];
+        $algorithms = ['simple', 'fuzzy', 'levenshtein', 'trigram', 'soundex', 'metaphone', 'similar_text'];
         $term       = request('q', 'john');
         $results    = [];
 
