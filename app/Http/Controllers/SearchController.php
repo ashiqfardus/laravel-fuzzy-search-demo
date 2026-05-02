@@ -175,6 +175,33 @@ class SearchController extends Controller
     }
 
     /**
+     * Side-by-side algorithm comparison
+     */
+    public function capabilityMatrix(): \Illuminate\View\View
+    {
+        $algorithms = ['simple', 'fuzzy', 'levenshtein', 'trigram', 'soundex', 'similar_text'];
+        $term       = request('q', 'john');
+        $results    = [];
+
+        if ($term) {
+            foreach ($algorithms as $algo) {
+                try {
+                    $items = User::search($term)
+                        ->using($algo)
+                        ->withRelevance()
+                        ->take(5)
+                        ->get();
+                    $results[$algo] = ['rows' => $items, 'error' => null];
+                } catch (\Throwable $e) {
+                    $results[$algo] = ['rows' => collect(), 'error' => $e->getMessage()];
+                }
+            }
+        }
+
+        return view('search.capability-matrix', compact('algorithms', 'term', 'results'));
+    }
+
+    /**
      * Smart search features: Did You Mean, Suggestions, Autocomplete
      */
     public function smart(Request $request)
