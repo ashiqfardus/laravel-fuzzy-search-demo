@@ -303,4 +303,59 @@ class SearchController extends Controller
 
         return view('search.smart', compact('results', 'query', 'suggestions', 'didYouMean', 'autocomplete'));
     }
+
+    /**
+     * LIKE vs BM25 side-by-side benchmark
+     */
+    public function benchmarks(): \Illuminate\View\View
+    {
+        $term    = request('q', 'john');
+        $results = [];
+
+        if ($term) {
+            // LIKE-based path
+            $start = microtime(true);
+            $likeResults = User::search($term)->withRelevance()->take(5)->get();
+            $results['like'] = [
+                'rows' => $likeResults,
+                'ms'   => round((microtime(true) - $start) * 1000, 2),
+                'label' => 'LIKE Pattern Search',
+            ];
+
+            // BM25 inverted index path
+            $start = microtime(true);
+            try {
+                $bm25Results = User::search($term)->useInvertedIndex()->take(5)->get();
+                $results['bm25'] = [
+                    'rows'  => $bm25Results,
+                    'ms'    => round((microtime(true) - $start) * 1000, 2),
+                    'label' => 'BM25 Inverted Index',
+                    'error' => null,
+                ];
+            } catch (\Throwable $e) {
+                $results['bm25'] = ['rows' => collect(), 'ms' => 0, 'label' => 'BM25', 'error' => $e->getMessage()];
+            }
+        }
+
+        return view('search.benchmarks', compact('term', 'results'));
+    }
+
+    /**
+     * Scout driver demo page
+     */
+    public function scoutDemo(): \Illuminate\View\View
+    {
+        $term    = request('q', '');
+        $results = collect();
+
+        if ($term) {
+            try {
+                $results = User::search($term)->withRelevance()->take(10)->get();
+            } catch (\Throwable $e) {
+                $results = collect();
+            }
+        }
+
+        return view('search.scout-demo', compact('term', 'results'));
+    }
 }
