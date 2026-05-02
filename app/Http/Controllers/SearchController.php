@@ -167,8 +167,15 @@ class SearchController extends Controller
             default => Product::class,
         };
 
+        $searchColumns = match($model) {
+            'users'    => ['name', 'email'],
+            'articles' => ['title', 'author'],
+            'contacts' => ['first_name', 'last_name'],
+            default    => ['name'],
+        };
+
         $suggestions = $modelClass::search($query)
-            ->searchIn(['name', 'title', 'first_name'])
+            ->searchIn($searchColumns)
             ->suggest(5);
 
         return response()->json($suggestions);
