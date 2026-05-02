@@ -84,8 +84,7 @@
         first names exist in the dataset for that query (correct, not broken). It works best on names like
         <em>john / jon / jean</em> or <em>steven / stephen</em>.
         The SQL each algorithm generates is documented in the
-        <a href="https://github.com/ashiqfardus/laravel-fuzzy-search/blob/main/docs/CAPABILITY_MATRIX.md"
-           class="underline" target="_blank">Capability Matrix</a>.
+        <a href="https://github.com/ashiqfardus/laravel-fuzzy-search" class="underline" target="_blank">package docs</a>.
     </div>
     @endif
 
