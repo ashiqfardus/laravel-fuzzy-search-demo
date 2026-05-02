@@ -21,6 +21,7 @@
                     <a href="{{ route('search.contacts') }}" class="hover:text-indigo-200">Contacts</a>
                     <a href="{{ route('search.federated') }}" class="hover:text-indigo-200">Federated</a>
                     <a href="{{ route('search.smart') }}" class="hover:text-indigo-200">Smart</a>
+                    <a href="{{ route('search.capability-matrix') }}" class="hover:text-indigo-200 font-semibold border border-indigo-400 rounded px-2 py-0.5">⚡ Benchmark</a>
                 </div>
             </div>
         </div>
@@ -31,7 +32,7 @@
     </main>
 
     <footer class="text-center text-gray-500 py-4 text-sm">
-        Laravel Fuzzy Search v1.0.0 | Package Demo
+        Laravel Fuzzy Search v2.0.0-alpha.1 | Package Demo
     </footer>
 </body>
 </html>
