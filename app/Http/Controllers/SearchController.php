@@ -192,15 +192,18 @@ class SearchController extends Controller
 
         if ($term) {
             foreach ($algorithms as $algo) {
+                $start = microtime(true);
                 try {
                     $items = User::search($term)
                         ->using($algo)
                         ->withRelevance()
                         ->take(5)
                         ->get();
-                    $results[$algo] = ['rows' => $items, 'error' => null];
+                    $ms = round((microtime(true) - $start) * 1000, 2);
+                    $results[$algo] = ['rows' => $items, 'error' => null, 'ms' => $ms];
                 } catch (\Throwable $e) {
-                    $results[$algo] = ['rows' => collect(), 'error' => $e->getMessage()];
+                    $ms = round((microtime(true) - $start) * 1000, 2);
+                    $results[$algo] = ['rows' => collect(), 'error' => $e->getMessage(), 'ms' => $ms];
                 }
             }
         }

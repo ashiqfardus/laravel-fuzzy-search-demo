@@ -35,7 +35,10 @@
                 @if($data['error'])
                     <span class="text-red-500 text-xs">error</span>
                 @else
-                    <span class="text-gray-500 text-xs">{{ $data['rows']->count() }} result(s)</span>
+                    <div class="flex gap-2 items-center">
+                        <span class="text-gray-500 text-xs">{{ $data['rows']->count() }} result(s)</span>
+                        <span class="text-blue-500 text-xs font-mono">{{ $data['ms'] ?? '?' }}ms</span>
+                    </div>
                 @endif
             </div>
             <div class="p-4">
