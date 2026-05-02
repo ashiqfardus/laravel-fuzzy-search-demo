@@ -46,6 +46,13 @@
                     <p class="text-red-600 text-sm break-words">{{ $data['error'] }}</p>
                 @elseif($data['rows']->isEmpty())
                     <p class="text-gray-400 text-sm italic">No results</p>
+                    @if($algo === 'soundex')
+                    <p class="text-gray-400 text-xs mt-1">
+                        Soundex found no phonetically similar names. This is correct — soundex requires
+                        a true phonetic match (same sound-code). Try searching <em>john</em>, <em>stephen</em>,
+                        or <em>steven</em> to see it work.
+                    </p>
+                    @endif
                 @else
                     <ol class="space-y-2">
                         @foreach($data['rows'] as $rank => $row)
@@ -72,7 +79,11 @@
         <strong>How to read this:</strong>
         Each card shows the same query run through a different algorithm.
         Differences reveal how each algorithm handles typos, phonetics, and substring matching.
-        Scores are PHP-side relevance (higher = better). The SQL each algorithm generates is documented in the
+        Scores are PHP-side relevance (higher = better).
+        <strong>Soundex</strong> requires a true phonetic match — 0 results means no phonetically similar
+        first names exist in the dataset for that query (correct, not broken). It works best on names like
+        <em>john / jon / jean</em> or <em>steven / stephen</em>.
+        The SQL each algorithm generates is documented in the
         <a href="https://github.com/ashiqfardus/laravel-fuzzy-search/blob/main/docs/CAPABILITY_MATRIX.md"
            class="underline" target="_blank">Capability Matrix</a>.
     </div>
