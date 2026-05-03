@@ -14,3 +14,4 @@ Route::get('/search/capability-matrix', [SearchController::class, 'capabilityMat
 Route::get('/api/suggest', [SearchController::class, 'suggest'])->name('api.suggest');
 Route::get('/search/benchmarks', [SearchController::class, 'benchmarks'])->name('search.benchmarks');
 Route::get('/search/scout-demo', [SearchController::class, 'scoutDemo'])->name('search.scout-demo');
+Route::get('/search/playground', [SearchController::class, 'playground'])->name('search.playground');

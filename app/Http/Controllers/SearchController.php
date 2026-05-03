@@ -341,6 +341,31 @@ class SearchController extends Controller
     }
 
     /**
+     * Extended-search syntax playground
+     */
+    public function playground(): \Illuminate\View\View
+    {
+        $query = request('q', "=John ^Doe !banned");
+
+        $ast     = null;
+        $error   = null;
+        $results = collect();
+
+        if ($query) {
+            try {
+                $tokens = (new \Ashiqfardus\LaravelFuzzySearch\Query\Lexer())->tokenize($query);
+                $ast    = (new \Ashiqfardus\LaravelFuzzySearch\Query\ExtendedQueryParser())->parse($tokens);
+
+                $results = User::search($query)->extended()->take(10)->get();
+            } catch (\Throwable $e) {
+                $error = $e->getMessage();
+            }
+        }
+
+        return view('search.playground', compact('query', 'ast', 'error', 'results'));
+    }
+
+    /**
      * Scout driver demo page
      */
     public function scoutDemo(): \Illuminate\View\View

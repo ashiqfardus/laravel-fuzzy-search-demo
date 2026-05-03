@@ -24,6 +24,7 @@
                     <a href="{{ route('search.capability-matrix') }}" class="hover:text-indigo-200 font-semibold border border-indigo-400 rounded px-2 py-0.5">⚡ Benchmark</a>
                     <a href="{{ route('search.benchmarks') }}" class="hover:text-indigo-200">BM25</a>
                     <a href="{{ route('search.scout-demo') }}" class="hover:text-indigo-200">Scout</a>
+                    <a href="{{ route('search.playground') }}" class="hover:text-indigo-200 font-semibold">🎮 Playground</a>
                 </div>
             </div>
         </div>
