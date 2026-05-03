@@ -4,15 +4,23 @@
 @section('content')
 <div class="container mx-auto px-4 py-8 max-w-5xl">
     <h1 class="text-3xl font-bold mb-2">Extended Search Playground</h1>
-    <p class="text-gray-600 mb-6">
-        Try Fuse-style operators. Whitespace = AND, <code>|</code> = OR, <code>!</code> = NOT,
-        <code>=</code> = exact, <code>^</code> = prefix, <code>$</code> = suffix.
+    <p class="text-gray-600 mb-3">
+        Try Fuse-style operators. Whitespace&nbsp;=&nbsp;AND, <code>|</code>&nbsp;=&nbsp;OR, <code>!</code>&nbsp;=&nbsp;NOT,
+        <code>^</code>&nbsp;=&nbsp;prefix, <code>$</code>&nbsp;=&nbsp;suffix,
+        <code>=word</code>&nbsp;=&nbsp;<strong>exact</strong> (whole field must equal <em>word</em>), <code>'word</code>&nbsp;=&nbsp;include.
+    </p>
+    <p class="text-gray-500 text-sm mb-6">
+        Examples:&nbsp;
+        <a href="?q=^John+Doe" class="underline font-mono">^John Doe</a> &nbsp;·&nbsp;
+        <a href="?q=john+|+jane" class="underline font-mono">john | jane</a> &nbsp;·&nbsp;
+        <a href="?q=^John+Doe+!banned" class="underline font-mono">^John Doe !banned</a> &nbsp;·&nbsp;
+        <a href="?q=^Smith+Doe$" class="underline font-mono">^Smith Doe$</a>
     </p>
 
     <form method="GET" class="mb-6 flex gap-3">
         <input type="text" name="q" value="{{ $query }}"
                class="border rounded px-4 py-2 flex-1 font-mono"
-               placeholder="=John ^Doe !banned">
+               placeholder="^John Doe !banned">
         <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded">Run</button>
     </form>
 

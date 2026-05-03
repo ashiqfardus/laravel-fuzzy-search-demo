@@ -345,7 +345,7 @@ class SearchController extends Controller
      */
     public function playground(): \Illuminate\View\View
     {
-        $query = request('q', "=John ^Doe !banned");
+        $query = request('q', "^John Doe !banned");
 
         $ast     = null;
         $error   = null;

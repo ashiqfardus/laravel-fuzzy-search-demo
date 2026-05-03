@@ -35,7 +35,7 @@
     </main>
 
     <footer class="text-center text-gray-500 py-4 text-sm">
-        Laravel Fuzzy Search v2.0.0-alpha.1 | Package Demo
+        Laravel Fuzzy Search v2.0.0-alpha.4 | Package Demo
     </footer>
 </body>
 </html>
