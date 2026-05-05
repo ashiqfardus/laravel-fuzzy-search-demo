@@ -7,7 +7,7 @@
 </div>
 
 <!-- Search Form -->
-<form method="GET" class="bg-white rounded-lg shadow p-6 mb-8">
+<form method="GET" class="bg-white rounded-lg shadow p-6 mb-8" x-data="{ loading: false }" @submit="loading = true">
     <div class="grid md:grid-cols-4 gap-4">
         <div class="md:col-span-2">
             <label class="block text-sm font-medium text-gray-700 mb-1">Search Query</label>
@@ -35,8 +35,15 @@
         </div>
     </div>
     <div class="mt-4">
-        <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700">
-            Search
+        <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50" :disabled="loading">
+            <span x-show="!loading">Search</span>
+            <span x-show="loading" x-cloak class="inline-flex items-center gap-1">
+                <svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                </svg>
+                Searching…
+            </span>
         </button>
     </div>
 </form>

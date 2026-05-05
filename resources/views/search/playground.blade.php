@@ -17,12 +17,58 @@
         <a href="?q=^Smith+Doe$" class="underline font-mono">^Smith Doe$</a>
     </p>
 
-    <form method="GET" class="mb-6 flex gap-3">
-        <input type="text" name="q" value="{{ $query }}"
+    <div x-data="{
+    query: '{{ addslashes($query) }}',
+    results: [],
+    loading: false,
+    controller: null,
+    async search() {
+        if (this.query.length < 2) { this.results = []; return; }
+        this.loading = true;
+        if (this.controller) this.controller.abort();
+        this.controller = new AbortController();
+        try {
+            const resp = await fetch('/api/suggest?q=' + encodeURIComponent(this.query), {
+                signal: this.controller.signal
+            });
+            this.results = await resp.json();
+        } catch(e) {
+            if (e.name !== 'AbortError') this.results = [];
+        } finally {
+            this.loading = false;
+        }
+    }
+}" x-init="query.length >= 2 && search()">
+    <div class="mb-6 flex gap-3">
+        <input type="text"
+               x-model.debounce.400ms="query"
+               @input="search()"
                class="border rounded px-4 py-2 flex-1 font-mono"
-               placeholder="^John Doe !banned">
-        <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded">Run</button>
-    </form>
+               placeholder="^John Doe !banned — results appear as you type">
+        <span x-show="loading" x-cloak class="self-center">
+            <svg class="w-5 h-5 animate-spin text-indigo-600" viewBox="0 0 24 24" fill="none">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+            </svg>
+        </span>
+    </div>
+
+    <div x-show="!loading && results.length === 0 && query.length >= 2" x-cloak
+         class="text-gray-400 italic text-sm">No results for this query.</div>
+
+    <ul x-show="results.length > 0" class="bg-white border rounded-lg overflow-hidden divide-y">
+        <template x-for="r in results" :key="r.id ?? r.name">
+            <li class="px-4 py-3 flex justify-between text-sm">
+                <div>
+                    <p class="font-medium" x-text="r.name ?? r.title ?? r.full_name ?? '—'"></p>
+                    <p class="text-gray-500 text-xs" x-text="r.email ?? ''"></p>
+                </div>
+                <span class="text-gray-400 font-mono text-xs self-center"
+                      x-text="r._score != null ? 'score: ' + parseFloat(r._score).toFixed(4) : ''"></span>
+            </li>
+        </template>
+    </ul>
+</div>
 
     @if($error)
         <div class="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4 mb-6">
