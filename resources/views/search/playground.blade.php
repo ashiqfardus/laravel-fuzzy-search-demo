@@ -17,12 +17,12 @@
         <a href="?q=^Smith+Doe$" class="underline font-mono">^Smith Doe$</a>
     </p>
 
-    <div x-data="{
+    <form method="GET" x-data="{
     query: '{{ addslashes($query) }}',
     results: [],
     loading: false,
     controller: null,
-    async search() {
+    async suggest() {
         if (this.query.length < 2) { this.results = []; return; }
         this.loading = true;
         if (this.controller) this.controller.abort();
@@ -38,25 +38,30 @@
             this.loading = false;
         }
     }
-}" x-init="query.length >= 2 && search()">
-    <div class="mb-6 flex gap-3">
+}" x-init="query.length >= 2 && suggest()">
+    <div class="mb-4 flex gap-3">
         <input type="text"
+               name="q"
                x-model.debounce.400ms="query"
-               @input="search()"
+               @input="suggest()"
                class="border rounded px-4 py-2 flex-1 font-mono"
-               placeholder="^John Doe !banned — results appear as you type">
+               placeholder="^John Doe !banned — press Search or Enter for full results">
         <span x-show="loading" x-cloak class="self-center">
             <svg class="w-5 h-5 animate-spin text-indigo-600" viewBox="0 0 24 24" fill="none">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
             </svg>
         </span>
+        <button type="submit"
+                class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-5 py-2 rounded-lg transition-colors">
+            Search
+        </button>
     </div>
 
     <div x-show="!loading && results.length === 0 && query.length >= 2" x-cloak
-         class="text-gray-400 italic text-sm">No results for this query.</div>
+         class="text-gray-400 italic text-sm mb-4">No live suggestions — press Search to run the full extended query.</div>
 
-    <ul x-show="results.length > 0" class="bg-white border rounded-lg overflow-hidden divide-y">
+    <ul x-show="results.length > 0" class="bg-white border rounded-lg overflow-hidden divide-y mb-4">
         <template x-for="r in results" :key="r.id ?? r.name">
             <li class="px-4 py-3 flex justify-between text-sm">
                 <div>
@@ -68,7 +73,7 @@
             </li>
         </template>
     </ul>
-</div>
+</form>
 
     @if($error)
         <div class="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4 mb-6">
@@ -101,7 +106,7 @@
             </ul>
         </div>
     @elseif($query && !$error)
-        <p class="text-gray-500 italic">No results for this query.</p>
+        <p class="text-gray-500 italic">No results matched the extended query.</p>
     @endif
 </div>
 @endsection
