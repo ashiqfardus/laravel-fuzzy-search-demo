@@ -159,16 +159,12 @@ class SearchController extends Controller
             return response()->json([]);
         }
 
-        $results = User::search($query)
-            ->withRelevance()
-            ->take(8)
-            ->get()
-            ->map(fn ($u) => [
-                'id'     => $u->id,
-                'name'   => $u->name,
-                'email'  => $u->email,
-                '_score' => $u->_score ?? null,
-            ]);
+        $safe = addcslashes($query, '%_');
+        $results = User::where('name', 'LIKE', '%' . $safe . '%')
+            ->orWhere('email', 'LIKE', '%' . $safe . '%')
+            ->limit(8)
+            ->get(['id', 'name', 'email'])
+            ->map(fn ($u) => ['id' => $u->id, 'name' => $u->name, 'email' => $u->email]);
 
         return response()->json($results);
     }
