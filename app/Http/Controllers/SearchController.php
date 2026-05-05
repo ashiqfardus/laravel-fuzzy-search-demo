@@ -149,6 +149,31 @@ class SearchController extends Controller
     }
 
     /**
+     * API endpoint for playground live search — returns full User records as JSON
+     */
+    public function searchUsers(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $query = $request->input('q', '');
+
+        if (strlen($query) < 2) {
+            return response()->json([]);
+        }
+
+        $results = User::search($query)
+            ->withRelevance()
+            ->take(8)
+            ->get()
+            ->map(fn ($u) => [
+                'id'     => $u->id,
+                'name'   => $u->name,
+                'email'  => $u->email,
+                '_score' => $u->_score ?? null,
+            ]);
+
+        return response()->json($results);
+    }
+
+    /**
      * API endpoint for autocomplete
      */
     public function suggest(Request $request)

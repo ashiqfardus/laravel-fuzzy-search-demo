@@ -28,7 +28,7 @@
         if (this.controller) this.controller.abort();
         this.controller = new AbortController();
         try {
-            const resp = await fetch('/api/suggest?model=users&q=' + encodeURIComponent(this.query), {
+            const resp = await fetch('/api/search/users?q=' + encodeURIComponent(this.query), {
                 signal: this.controller.signal
             });
             this.results = await resp.json();
@@ -42,8 +42,8 @@
     <div class="mb-4 flex gap-3">
         <input type="text"
                name="q"
-               x-model.debounce.400ms="query"
-               @input="suggest()"
+               x-model="query"
+               @input.debounce.400ms="suggest()"
                class="border rounded px-4 py-2 flex-1 font-mono"
                placeholder="^John Doe !banned — press Search or Enter for full results">
         <span x-show="loading" x-cloak class="self-center">
@@ -59,7 +59,7 @@
     </div>
 
     <div x-show="!loading && results.length === 0 && query.length >= 2" x-cloak
-         class="text-gray-400 italic text-sm mb-4">No live suggestions — press Search to run the full extended query.</div>
+         class="text-gray-400 italic text-sm mb-4">No results — try pressing Search for the full extended query.</div>
 
     <ul x-show="results.length > 0" class="bg-white border rounded-lg overflow-hidden divide-y mb-4">
         <template x-for="r in results" :key="r.id ?? r.name">
