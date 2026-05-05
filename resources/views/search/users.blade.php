@@ -71,8 +71,8 @@
             <div class="p-4 hover:bg-gray-50">
                 <div class="flex justify-between items-start">
                     <div>
-                        <div class="font-medium text-gray-800">{!! $user->name !!}</div>
-                        <div class="text-sm text-gray-500">{!! $user->email !!}</div>
+                        <div class="font-medium text-gray-800">@fuzzyHighlight($user, 'name')</div>
+                        <div class="text-sm text-gray-500">{{ $user->email }}</div>
                     </div>
                     @if(isset($user->_score))
                     <div class="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded">

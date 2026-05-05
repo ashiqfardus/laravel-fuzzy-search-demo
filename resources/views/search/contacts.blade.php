@@ -59,9 +59,9 @@
                 <div class="flex justify-between items-start">
                     <div>
                         <h3 class="font-medium text-gray-800">
-                            {!! $contact->first_name !!} {!! $contact->last_name !!}
+                            @fuzzyHighlight($contact, 'first_name') @fuzzyHighlight($contact, 'last_name')
                         </h3>
-                        <div class="text-sm text-gray-500">{!! $contact->email !!}</div>
+                        <div class="text-sm text-gray-500">{{ $contact->email }}</div>
                         @if($contact->company)
                         <div class="text-sm text-gray-400">{{ $contact->company }}</div>
                         @endif

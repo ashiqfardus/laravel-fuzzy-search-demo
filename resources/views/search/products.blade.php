@@ -51,7 +51,7 @@
                     </span>
                     @endif
                 </div>
-                <h3 class="font-medium text-gray-800 mb-1">{!! $product->name !!}</h3>
+                <h3 class="font-medium text-gray-800 mb-1">@fuzzyHighlight($product, 'name')</h3>
                 <div class="text-sm text-gray-500 mb-2">{{ $product->brand }} • {{ $product->sku }}</div>
                 <div class="text-lg font-bold text-green-600">${{ number_format($product->price, 2) }}</div>
             </div>

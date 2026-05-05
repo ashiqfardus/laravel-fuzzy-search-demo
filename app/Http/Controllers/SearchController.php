@@ -48,7 +48,7 @@ class SearchController extends Controller
 
                 $results = $searchQuery->get();
                 $debugInfo = $searchQuery->getDebugInfo();
-            } catch (\Ashiqfardus\LaravelFuzzySearch\Exceptions\InvalidAlgorithmException $e) {
+            } catch (\Ashiqfardus\LaravelFuzzySearch\Exceptions\InvalidAlgorithmException) {
                 $algorithm = 'fuzzy';
             }
         }
@@ -123,7 +123,7 @@ class SearchController extends Controller
                     ->withRelevance()
                     ->highlight('mark')
                     ->get();
-            } catch (\Ashiqfardus\LaravelFuzzySearch\Exceptions\InvalidAlgorithmException $e) {
+            } catch (\Ashiqfardus\LaravelFuzzySearch\Exceptions\InvalidAlgorithmException) {
                 $algorithm = 'soundex';
             }
         }
@@ -232,7 +232,8 @@ class SearchController extends Controller
                     $results[$algo] = ['rows' => $items, 'error' => null, 'ms' => $ms];
                 } catch (\Throwable $e) {
                     $ms = round((microtime(true) - $start) * 1000, 2);
-                    $results[$algo] = ['rows' => collect(), 'error' => $e->getMessage(), 'ms' => $ms];
+                    logger()->error('capability-matrix search failed', ['algo' => $algo, 'error' => $e->getMessage()]);
+                    $results[$algo] = ['rows' => collect(), 'error' => 'Search unavailable', 'ms' => $ms];
                 }
             }
         }
@@ -362,7 +363,8 @@ class SearchController extends Controller
                     'error' => null,
                 ];
             } catch (\Throwable $e) {
-                $results['bm25'] = ['rows' => collect(), 'ms' => 0, 'label' => 'BM25', 'error' => $e->getMessage()];
+                logger()->error('BM25 benchmark failed', ['error' => $e->getMessage()]);
+                $results['bm25'] = ['rows' => collect(), 'ms' => 0, 'label' => 'BM25', 'error' => 'Index not available — run php artisan fuzzy-search:rebuild'];
             }
         }
 
@@ -386,8 +388,11 @@ class SearchController extends Controller
                 $ast    = (new \Ashiqfardus\LaravelFuzzySearch\Query\ExtendedQueryParser())->parse($tokens);
 
                 $results = User::search($query)->extended()->take(10)->get();
-            } catch (\Throwable $e) {
+            } catch (\Ashiqfardus\LaravelFuzzySearch\Exceptions\QuerySyntaxException $e) {
                 $error = $e->getMessage();
+            } catch (\Throwable $e) {
+                logger()->error('Playground search failed', ['error' => $e->getMessage()]);
+                $error = 'Search unavailable — please try a different query.';
             }
         }
 
@@ -405,7 +410,7 @@ class SearchController extends Controller
         if ($term) {
             try {
                 $results = User::search($term)->withRelevance()->take(10)->get();
-            } catch (\Throwable $e) {
+            } catch (\Throwable) {
                 $results = collect();
             }
         }
