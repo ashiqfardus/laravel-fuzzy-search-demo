@@ -10,7 +10,7 @@
         [x-cloak] { display: none !important; }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen" x-data="{}">
+<body class="bg-gray-100 min-h-screen" x-data="{ tour: fuzzyTour() }">
     <nav class="bg-indigo-600 text-white shadow-lg sticky top-0 z-40">
         <div class="max-w-7xl mx-auto px-4 py-4">
             <div class="flex items-center justify-between">
@@ -38,6 +38,7 @@
     <footer class="text-center text-gray-500 py-4 text-sm">
         Laravel Fuzzy Search v2.0.0 &bull; <a href="https://github.com/ashiqfardus/laravel-fuzzy-search" class="underline hover:text-gray-300">GitHub</a>
     </footer>
+    @include('partials.tour-overlay')
 </body>
 </html>
 
