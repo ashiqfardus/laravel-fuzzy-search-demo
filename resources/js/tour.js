@@ -12,7 +12,7 @@ export function fuzzyTour() {
         },
         {
             title:  '3 / 8 — Extended Syntax Playground',
-            body:   'Type =exact, ^prefix, word$, !excluded, or "quoted phrase". Chain with | and (). Powered by the built-in Lexer.',
+            body:   "Type =exact, ^prefix, word$, !excluded, or 'include. Chain with | for OR. Powered by the built-in Lexer → AST → SQL compiler.",
             href:   '/search/playground',
         },
         {
@@ -22,7 +22,7 @@ export function fuzzyTour() {
         },
         {
             title:  '5 / 8 — Federated Search',
-            body:   'Search across Users, Products, and Articles simultaneously. Results are merged and ranked by a normalized _score.',
+            body:   'Search across Users, Products, Articles, and Contacts simultaneously. Results are merged and ranked by a normalized _score.',
             href:   '/search/federated',
         },
         {

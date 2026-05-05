@@ -69,6 +69,7 @@
     <div
         x-data="benchmarkHistory()"
         x-init="load()"
+        @bench-run-saved.window="load()"
         class="mt-8"
         x-show="history.length > 0"
         x-cloak
@@ -142,11 +143,8 @@
         history.unshift({ term, ms, ts: Date.now() });
         localStorage.setItem('fzs_bench_history', JSON.stringify(history.slice(0, 5)));
 
-        // Trigger Alpine to re-read history
-        const el = document.querySelector('[x-data="benchmarkHistory()"]');
-        if (el && el._x_dataStack) {
-            el._x_dataStack[0].load();
-        }
+        // Notify Alpine component via public event (avoids private _x_dataStack API)
+        document.dispatchEvent(new CustomEvent('bench-run-saved'));
     });
     </script>
 

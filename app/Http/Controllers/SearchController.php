@@ -39,14 +39,18 @@ class SearchController extends Controller
         $debugInfo = [];
 
         if ($query) {
-            $searchQuery = User::search($query)
-                ->using($algorithm)
-                ->typoTolerance($typoTolerance)
-                ->withRelevance()
-                ->highlight('mark');
+            try {
+                $searchQuery = User::search($query)
+                    ->using($algorithm)
+                    ->typoTolerance($typoTolerance)
+                    ->withRelevance()
+                    ->highlight('mark');
 
-            $results = $searchQuery->get();
-            $debugInfo = $searchQuery->getDebugInfo();
+                $results = $searchQuery->get();
+                $debugInfo = $searchQuery->getDebugInfo();
+            } catch (\Ashiqfardus\LaravelFuzzySearch\Exceptions\InvalidAlgorithmException $e) {
+                $algorithm = 'fuzzy';
+            }
         }
 
         return view('search.users', compact('results', 'query', 'algorithm', 'typoTolerance', 'debugInfo'));
@@ -113,11 +117,15 @@ class SearchController extends Controller
         $results = collect();
 
         if ($query) {
-            $results = Contact::search($query)
-                ->using($algorithm)
-                ->withRelevance()
-                ->highlight('mark')
-                ->get();
+            try {
+                $results = Contact::search($query)
+                    ->using($algorithm)
+                    ->withRelevance()
+                    ->highlight('mark')
+                    ->get();
+            } catch (\Ashiqfardus\LaravelFuzzySearch\Exceptions\InvalidAlgorithmException $e) {
+                $algorithm = 'soundex';
+            }
         }
 
         return view('search.contacts', compact('results', 'query', 'algorithm'));
@@ -155,7 +163,7 @@ class SearchController extends Controller
     {
         $query = $request->input('q', '');
 
-        if (strlen($query) < 2) {
+        if (strlen($query) < 2 || strlen($query) > 200) {
             return response()->json([]);
         }
 
@@ -177,7 +185,7 @@ class SearchController extends Controller
         $query = $request->input('q', '');
         $model = $request->input('model', 'products');
 
-        if (strlen($query) < 2) {
+        if (strlen($query) < 2 || strlen($query) > 200) {
             return response()->json([]);
         }
 
