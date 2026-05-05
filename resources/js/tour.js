@@ -42,15 +42,43 @@ export function fuzzyTour() {
         },
     ];
 
+    const STORAGE_KEY = 'fzs_tour';
+
     return {
         active:  false,
         step:    0,
         steps,
         get current()  { return this.steps[this.step]; },
         get isLast()   { return this.step === this.steps.length - 1; },
-        start()  { this.step = 0; this.active = true; },
-        next()   { this.isLast ? this.finish() : this.step++; },
-        prev()   { if (this.step > 0) this.step--; },
-        finish() { this.active = false; },
+        start()  {
+            this.step = 0;
+            this.active = true;
+            this._save();
+        },
+        next()   {
+            if (this.isLast) { this.finish(); return; }
+            this.step++;
+            this._save();
+        },
+        prev()   {
+            if (this.step > 0) { this.step--; this._save(); }
+        },
+        finish() {
+            this.active = false;
+            sessionStorage.removeItem(STORAGE_KEY);
+        },
+        restore() {
+            try {
+                const saved = JSON.parse(sessionStorage.getItem(STORAGE_KEY) ?? 'null');
+                if (saved && saved.active && Number.isInteger(saved.step)
+                    && saved.step >= 0 && saved.step < this.steps.length) {
+                    this.step   = saved.step;
+                    this.active = true;
+                }
+            } catch {}
+        },
+        _save() {
+            sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ active: this.active, step: this.step }));
+        },
     };
 }

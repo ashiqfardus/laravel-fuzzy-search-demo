@@ -10,7 +10,7 @@
         [x-cloak] { display: none !important; }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen" x-data="{ tour: fuzzyTour() }">
+<body class="bg-gray-100 min-h-screen" x-data="{ tour: fuzzyTour() }" x-init="tour.restore()">
     <nav class="bg-indigo-600 text-white shadow-lg sticky top-0 z-40">
         <div class="max-w-7xl mx-auto px-4 py-4">
             <div class="flex items-center justify-between">
