@@ -28,7 +28,7 @@
         if (this.controller) this.controller.abort();
         this.controller = new AbortController();
         try {
-            const resp = await fetch('/api/suggest?q=' + encodeURIComponent(this.query), {
+            const resp = await fetch('/api/suggest?model=users&q=' + encodeURIComponent(this.query), {
                 signal: this.controller.signal
             });
             this.results = await resp.json();
