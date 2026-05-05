@@ -4,21 +4,15 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d8dc598e82e068fee816df2058d2a8c7",
+    "content-hash": "efc9cdf34e9be2f06148c33f86448733",
     "packages": [
         {
             "name": "ashiqfardus/laravel-fuzzy-search",
-            "version": "v1.0.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/ashiqfardus/laravel-fuzzy-search.git",
-                "reference": "1dbcc6c36efe45e47c9a4c789688b80a000393d2"
-            },
+            "version": "2.x-dev",
             "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/ashiqfardus/laravel-fuzzy-search/zipball/1dbcc6c36efe45e47c9a4c789688b80a000393d2",
-                "reference": "1dbcc6c36efe45e47c9a4c789688b80a000393d2",
-                "shasum": ""
+                "type": "path",
+                "url": "../laravel-fuzzy-search",
+                "reference": "8011007ef6de184458207f8294ed1c7ddf7e6dd0"
             },
             "require": {
                 "illuminate/database": "^9.0|^10.0|^11.0|^12.0|^13.0",
@@ -28,6 +22,10 @@
             "require-dev": {
                 "orchestra/testbench": "^7.0|^8.0|^9.0|^10.0",
                 "phpunit/phpunit": "^9.0|^10.0|^11.0|^12.0||^13.0"
+            },
+            "suggest": {
+                "laravel/scout": "Required for Scout driver integration (^9.0|^10.0)",
+                "wamania/php-stemmer": "Required for language stemming support in Phase 1 (^1.2)"
             },
             "type": "library",
             "extra": {
@@ -42,7 +40,22 @@
                     "Ashiqfardus\\LaravelFuzzySearch\\": "src/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "autoload-dev": {
+                "psr-4": {
+                    "Ashiqfardus\\LaravelFuzzySearch\\Tests\\": "tests/"
+                }
+            },
+            "scripts": {
+                "test": [
+                    "vendor/bin/phpunit"
+                ],
+                "test-coverage": [
+                    "vendor/bin/phpunit --coverage-html coverage"
+                ],
+                "benchmark": [
+                    "php artisan fuzzy-search:benchmark"
+                ]
+            },
             "license": [
                 "MIT"
             ],
@@ -64,11 +77,10 @@
                 "trigram",
                 "typo-tolerance"
             ],
-            "support": {
-                "issues": "https://github.com/ashiqfardus/laravel-fuzzy-search/issues",
-                "source": "https://github.com/ashiqfardus/laravel-fuzzy-search/tree/v1.0.1"
-            },
-            "time": "2026-03-16T04:51:28+00:00"
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
         },
         {
             "name": "brick/math",
@@ -8432,6 +8444,7 @@
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
+        "ashiqfardus/laravel-fuzzy-search": 20,
         "laravel/framework": 20
     },
     "prefer-stable": true,

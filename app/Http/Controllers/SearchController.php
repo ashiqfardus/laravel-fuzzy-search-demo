@@ -39,14 +39,18 @@ class SearchController extends Controller
         $debugInfo = [];
 
         if ($query) {
-            $searchQuery = User::search($query)
-                ->using($algorithm)
-                ->typoTolerance($typoTolerance)
-                ->withRelevance()
-                ->highlight('mark');
+            try {
+                $searchQuery = User::search($query)
+                    ->using($algorithm)
+                    ->typoTolerance($typoTolerance)
+                    ->withRelevance()
+                    ->highlight('mark');
 
-            $results = $searchQuery->get();
-            $debugInfo = $searchQuery->getDebugInfo();
+                $results = $searchQuery->get();
+                $debugInfo = $searchQuery->getDebugInfo();
+            } catch (\Ashiqfardus\LaravelFuzzySearch\Exceptions\InvalidAlgorithmException) {
+                $algorithm = 'fuzzy';
+            }
         }
 
         return view('search.users', compact('results', 'query', 'algorithm', 'typoTolerance', 'debugInfo'));
@@ -113,11 +117,15 @@ class SearchController extends Controller
         $results = collect();
 
         if ($query) {
-            $results = Contact::search($query)
-                ->using($algorithm)
-                ->withRelevance()
-                ->highlight('mark')
-                ->get();
+            try {
+                $results = Contact::search($query)
+                    ->using($algorithm)
+                    ->withRelevance()
+                    ->highlight('mark')
+                    ->get();
+            } catch (\Ashiqfardus\LaravelFuzzySearch\Exceptions\InvalidAlgorithmException) {
+                $algorithm = 'soundex';
+            }
         }
 
         return view('search.contacts', compact('results', 'query', 'algorithm'));
@@ -149,6 +157,27 @@ class SearchController extends Controller
     }
 
     /**
+     * API endpoint for playground live search — returns full User records as JSON
+     */
+    public function searchUsers(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $query = $request->input('q', '');
+
+        if (strlen($query) < 2 || strlen($query) > 200) {
+            return response()->json([]);
+        }
+
+        $safe = addcslashes($query, '%_');
+        $results = User::where('name', 'LIKE', '%' . $safe . '%')
+            ->orWhere('email', 'LIKE', '%' . $safe . '%')
+            ->limit(8)
+            ->get(['id', 'name', 'email'])
+            ->map(fn ($u) => ['id' => $u->id, 'name' => $u->name, 'email' => $u->email]);
+
+        return response()->json($results);
+    }
+
+    /**
      * API endpoint for autocomplete
      */
     public function suggest(Request $request)
@@ -156,7 +185,7 @@ class SearchController extends Controller
         $query = $request->input('q', '');
         $model = $request->input('model', 'products');
 
-        if (strlen($query) < 2) {
+        if (strlen($query) < 2 || strlen($query) > 200) {
             return response()->json([]);
         }
 
@@ -167,11 +196,49 @@ class SearchController extends Controller
             default => Product::class,
         };
 
+        $searchColumns = match($model) {
+            'users'    => ['name', 'email'],
+            'articles' => ['title', 'author'],
+            'contacts' => ['first_name', 'last_name'],
+            default    => ['name'],
+        };
+
         $suggestions = $modelClass::search($query)
-            ->searchIn(['name', 'title', 'first_name'])
+            ->searchIn($searchColumns)
             ->suggest(5);
 
         return response()->json($suggestions);
+    }
+
+    /**
+     * Side-by-side algorithm comparison
+     */
+    public function capabilityMatrix(): \Illuminate\View\View
+    {
+        $algorithms = ['simple', 'fuzzy', 'levenshtein', 'trigram', 'soundex', 'metaphone', 'similar_text'];
+        $term       = request('q', 'john');
+        $results    = [];
+
+        if ($term) {
+            foreach ($algorithms as $algo) {
+                $start = microtime(true);
+                try {
+                    $items = User::search($term)
+                        ->using($algo)
+                        ->withRelevance()
+                        ->take(5)
+                        ->get();
+                    $ms = round((microtime(true) - $start) * 1000, 2);
+                    $results[$algo] = ['rows' => $items, 'error' => null, 'ms' => $ms];
+                } catch (\Throwable $e) {
+                    $ms = round((microtime(true) - $start) * 1000, 2);
+                    logger()->error('capability-matrix search failed', ['algo' => $algo, 'error' => $e->getMessage()]);
+                    $results[$algo] = ['rows' => collect(), 'error' => 'Search unavailable', 'ms' => $ms];
+                }
+            }
+        }
+
+        return view('search.capability-matrix', compact('algorithms', 'term', 'results'));
     }
 
     /**
@@ -265,5 +332,89 @@ class SearchController extends Controller
         }
 
         return view('search.smart', compact('results', 'query', 'suggestions', 'didYouMean', 'autocomplete'));
+    }
+
+    /**
+     * LIKE vs BM25 side-by-side benchmark
+     */
+    public function benchmarks(): \Illuminate\View\View
+    {
+        $term    = request('q', 'john');
+        $results = [];
+
+        if ($term) {
+            // LIKE-based path
+            $start = microtime(true);
+            $likeResults = User::search($term)->withRelevance()->take(5)->get();
+            $results['like'] = [
+                'rows' => $likeResults,
+                'ms'   => round((microtime(true) - $start) * 1000, 2),
+                'label' => 'LIKE Pattern Search',
+            ];
+
+            // BM25 inverted index path
+            $start = microtime(true);
+            try {
+                $bm25Results = User::search($term)->useInvertedIndex()->take(5)->get();
+                $results['bm25'] = [
+                    'rows'  => $bm25Results,
+                    'ms'    => round((microtime(true) - $start) * 1000, 2),
+                    'label' => 'BM25 Inverted Index',
+                    'error' => null,
+                ];
+            } catch (\Throwable $e) {
+                logger()->error('BM25 benchmark failed', ['error' => $e->getMessage()]);
+                $results['bm25'] = ['rows' => collect(), 'ms' => 0, 'label' => 'BM25', 'error' => 'Index not available — run php artisan fuzzy-search:rebuild'];
+            }
+        }
+
+        return view('search.benchmarks', compact('term', 'results'));
+    }
+
+    /**
+     * Extended-search syntax playground
+     */
+    public function playground(): \Illuminate\View\View
+    {
+        $query = request('q', "^John Doe !banned");
+
+        $ast     = null;
+        $error   = null;
+        $results = collect();
+
+        if ($query) {
+            try {
+                $tokens = (new \Ashiqfardus\LaravelFuzzySearch\Query\Lexer())->tokenize($query);
+                $ast    = (new \Ashiqfardus\LaravelFuzzySearch\Query\ExtendedQueryParser())->parse($tokens);
+
+                $results = User::search($query)->extended()->take(10)->get();
+            } catch (\Ashiqfardus\LaravelFuzzySearch\Exceptions\QuerySyntaxException $e) {
+                $error = $e->getMessage();
+            } catch (\Throwable $e) {
+                logger()->error('Playground search failed', ['error' => $e->getMessage()]);
+                $error = 'Search unavailable — please try a different query.';
+            }
+        }
+
+        return view('search.playground', compact('query', 'ast', 'error', 'results'));
+    }
+
+    /**
+     * Scout driver demo page
+     */
+    public function scoutDemo(): \Illuminate\View\View
+    {
+        $term    = request('q', '');
+        $results = collect();
+
+        if ($term) {
+            try {
+                $results = User::search($term)->withRelevance()->take(10)->get();
+            } catch (\Throwable) {
+                $results = collect();
+            }
+        }
+
+        return view('search.scout-demo', compact('term', 'results'));
     }
 }

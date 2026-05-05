@@ -53,8 +53,8 @@
                     </span>
                     @endif
                 </div>
-                <h3 class="font-bold text-gray-800 text-lg mb-2">{!! $article->title !!}</h3>
-                <p class="text-gray-600 text-sm mb-2">{!! Str::limit($article->excerpt ?? $article->body, 150) !!}</p>
+                <h3 class="font-bold text-gray-800 text-lg mb-2">@fuzzyHighlight($article, 'title')</h3>
+                <p class="text-gray-600 text-sm mb-2">{{ Str::limit($article->excerpt ?? $article->body, 150) }}</p>
                 <div class="text-xs text-gray-400">By {{ $article->author }}</div>
             </div>
             @endforeach

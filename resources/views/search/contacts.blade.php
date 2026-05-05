@@ -19,9 +19,9 @@
             <label class="block text-sm font-medium text-gray-700 mb-1">Algorithm</label>
             <select name="algorithm" class="w-full border rounded-lg px-4 py-2">
                 <option value="soundex" {{ $algorithm === 'soundex' ? 'selected' : '' }}>Soundex</option>
-                <option value="metaphone" {{ $algorithm === 'metaphone' ? 'selected' : '' }}>Metaphone</option>
                 <option value="levenshtein" {{ $algorithm === 'levenshtein' ? 'selected' : '' }}>Levenshtein</option>
                 <option value="fuzzy" {{ $algorithm === 'fuzzy' ? 'selected' : '' }}>Fuzzy</option>
+                <option value="similar_text" {{ $algorithm === 'similar_text' ? 'selected' : '' }}>Similar Text</option>
             </select>
         </div>
     </div>
@@ -59,9 +59,9 @@
                 <div class="flex justify-between items-start">
                     <div>
                         <h3 class="font-medium text-gray-800">
-                            {!! $contact->first_name !!} {!! $contact->last_name !!}
+                            @fuzzyHighlight($contact, 'first_name') @fuzzyHighlight($contact, 'last_name')
                         </h3>
-                        <div class="text-sm text-gray-500">{!! $contact->email !!}</div>
+                        <div class="text-sm text-gray-500">{{ $contact->email }}</div>
                         @if($contact->company)
                         <div class="text-sm text-gray-400">{{ $contact->company }}</div>
                         @endif

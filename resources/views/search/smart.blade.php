@@ -158,16 +158,16 @@
                             </div>
                             <div class="font-medium text-gray-800">
                                 @if($type === 'Product')
-                                    {!! $item->name !!}
+                                    @fuzzyHighlight($item, 'name')
                                     <span class="text-gray-500 text-sm ml-2">{{ $item->brand }} • ${{ number_format($item->price, 2) }}</span>
                                 @elseif($type === 'User')
-                                    {!! $item->name !!}
+                                    @fuzzyHighlight($item, 'name')
                                     <span class="text-gray-500 text-sm ml-2">{{ $item->email }}</span>
                                 @elseif($type === 'Article')
-                                    {!! $item->title !!}
+                                    @fuzzyHighlight($item, 'title')
                                     <span class="text-gray-500 text-sm ml-2">by {{ $item->author }}</span>
                                 @elseif($type === 'Contact')
-                                    {!! $item->first_name !!} {!! $item->last_name !!}
+                                    @fuzzyHighlight($item, 'first_name') @fuzzyHighlight($item, 'last_name')
                                     <span class="text-gray-500 text-sm ml-2">{{ $item->email }}</span>
                                 @endif
                             </div>
