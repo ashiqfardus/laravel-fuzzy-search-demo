@@ -83,7 +83,7 @@
 @endif
 
 @if($results->isNotEmpty())
-    <x-results :count="$results->count()">
+    <x-results :count="$results->total()">
         <ul class="divide-y divide-line">
             @foreach($results as $r)
                 <li class="row items-center">
@@ -96,6 +96,7 @@
             @endforeach
         </ul>
     </x-results>
+    <x-pager :paginator="$results" class="mt-4" />
 @elseif($query && !$error)
     <x-results :count="0">
         <x-empty icon="code">No rows matched the extended query.</x-empty>

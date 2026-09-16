@@ -33,7 +33,19 @@
             @endforeach
         </select>
     </x-field>
+    <x-slot:actions>
+        <label class="inline-flex items-center gap-2 text-sm text-muted">
+            <input type="checkbox" name="verified_only" value="1" class="accent-accent" @checked($verifiedOnly)>
+            Verified users only
+        </label>
+    </x-slot:actions>
 </x-search-form>
+
+@if($verifiedOnly)
+    <x-callout tone="info" class="mb-8">
+        <code class="code">->whereNotNull('email_verified_at')</code> was chained straight onto the search builder before <code class="code">get()</code>.
+    </x-callout>
+@endif
 
 @if($query && count($attempts) > 1)
     <x-callout tone="warn" title="Fallback used" class="mb-8">

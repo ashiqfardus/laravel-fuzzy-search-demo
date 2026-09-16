@@ -11,16 +11,16 @@ A demonstration application showcasing the [ashiqfardus/laravel-fuzzy-search](ht
 
 | Page | What it shows |
 | ---- | ------------- |
-| `/search/users` | 8 algorithms, typo tolerance, relevance scoring, `@fuzzyHighlight`, `fallback()` chain with an "answered by" trace |
+| `/search/users` | 8 algorithms, typo tolerance, relevance scoring, `@fuzzyHighlight`, `fallback()` chain with an "answered by" trace, `verified_only` toggle chaining `->whereNotNull('email_verified_at')` straight onto the search builder |
 | `/search/products` | Config presets (`ecommerce`, `exact`), field weighting, category `filter()` honoured on the BM25 path, BM25 → fuzzy fallback |
 | `/search/articles` | Multi-word tokenization with AND / OR logic |
 | `/search/contacts` | Phonetic search — Soundex & Metaphone shadow columns |
-| `/search/federated` | Cross-model federated search with unified ranking |
+| `/search/federated` | Cross-model federated search with unified ranking, `limitPerModel(10)->paginate(10)` with a reachable-rows total and a dark-theme pager |
 | `/search/smart` | `didYouMean()`, autocomplete suggestions, in-memory search |
 | `/search/benchmarks` | Side-by-side timing: LIKE vs BM25 inverted index across dataset sizes |
 | `/search/capability-matrix` | Feature availability per algorithm and database driver |
 | `/search/scout-demo` | Laravel Scout integration (`SCOUT_DRIVER=fuzzy-search`) |
-| `/search/playground` | Extended query syntax: include `'`, exact `=`, prefix `^`, suffix `$`, exclude `!`, OR, grouping `()` |
+| `/search/playground` | Extended query syntax: include `'`, exact `=`, prefix `^`, suffix `$`, exclude `!`, OR, grouping `()`; `extended()->paginate(10)` with the same pager component |
 
 ## Installation
 

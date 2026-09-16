@@ -23,7 +23,7 @@
 </x-search-form>
 
 @if($query)
-    <x-results title="Across all models" :count="$results->count()">
+    <x-results title="Across all models" :count="$results->total()">
         @if($results->isEmpty())
             <x-empty icon="squares">Nothing matches “{{ $query }}” in any model.</x-empty>
         @else
@@ -55,5 +55,6 @@
             </ul>
         @endif
     </x-results>
+    <x-pager :paginator="$results" class="mt-4" />
 @endif
 @endsection

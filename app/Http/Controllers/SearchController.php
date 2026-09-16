@@ -40,6 +40,7 @@ class SearchController extends Controller
         if (!in_array($fallback, ['fuzzy', 'levenshtein', 'soundex', 'metaphone', 'simple'], true) || $fallback === $algorithm) {
             $fallback = '';
         }
+        $verifiedOnly = $request->boolean('verified_only');
 
         $results = collect();
         $debugInfo = [];
@@ -58,6 +59,11 @@ class SearchController extends Controller
                     $searchQuery->fallback($fallback);
                 }
 
+                if ($verifiedOnly) {
+                    // Chained straight onto the search builder — see "Chaining Eloquent" in the package README.
+                    $searchQuery->whereNotNull('email_verified_at');
+                }
+
                 $results = $searchQuery->get();
                 $debugInfo = $searchQuery->getDebugInfo();
             } catch (\Ashiqfardus\LaravelFuzzySearch\Exceptions\InvalidAlgorithmException) {
@@ -68,7 +74,7 @@ class SearchController extends Controller
         return view('search.users', [
             'results' => $results, 'query' => $query, 'algorithm' => $algorithm,
             'typoTolerance' => $typoTolerance, 'fallback' => $fallback,
-            'debugInfo' => $debugInfo, 'attempts' => $attempts->all(),
+            'verifiedOnly' => $verifiedOnly, 'debugInfo' => $debugInfo, 'attempts' => $attempts->all(),
         ]);
     }
 
@@ -201,8 +207,9 @@ class SearchController extends Controller
             ])
                 ->search($query)
                 ->searchIn(['name', 'title', 'first_name', 'email', 'description'])
-                ->limit(20)
-                ->get();
+                ->limitPerModel(10)
+                ->paginate(10)
+                ->withQueryString();
         }
 
         return view('search.federated', compact('results', 'query'));
@@ -439,7 +446,7 @@ class SearchController extends Controller
                 $tokens = (new \Ashiqfardus\LaravelFuzzySearch\Query\Lexer())->tokenize($query);
                 $ast    = (new \Ashiqfardus\LaravelFuzzySearch\Query\ExtendedQueryParser())->parse($tokens);
 
-                $results = User::search($query)->extended()->take(10)->get();
+                $results = User::search($query)->extended()->paginate(10)->withQueryString();
             } catch (\Ashiqfardus\LaravelFuzzySearch\Exceptions\QuerySyntaxException $e) {
                 $error = $e->getMessage();
             } catch (\Throwable $e) {
