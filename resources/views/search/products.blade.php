@@ -3,12 +3,12 @@
 @section('content')
 <div class="mb-8">
     <h1 class="text-2xl font-bold text-gray-800 mb-2">🛒 Product Search</h1>
-    <p class="text-gray-600">Test config presets for e-commerce search</p>
+    <p class="text-gray-600">Config presets, a category filter that is honoured on the BM25 index path, and a fuzzy fallback</p>
 </div>
 
 <!-- Search Form -->
 <form method="GET" class="bg-white rounded-lg shadow p-6 mb-8">
-    <div class="grid md:grid-cols-3 gap-4">
+    <div class="grid md:grid-cols-5 gap-4">
         <div class="md:col-span-2">
             <label class="block text-sm font-medium text-gray-700 mb-1">Search Query</label>
             <input type="text" name="q" value="{{ $query }}"
@@ -22,6 +22,23 @@
                 <option value="exact" {{ $preset === 'exact' ? 'selected' : '' }}>Exact (no typos)</option>
             </select>
         </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+            <select name="category" class="w-full border rounded-lg px-4 py-2">
+                <option value="" {{ $category === '' ? 'selected' : '' }}>All categories</option>
+                @foreach($categories as $option)
+                    <option value="{{ $option }}" {{ $category === $option ? 'selected' : '' }}>{{ $option }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Engine</label>
+            <select name="engine" class="w-full border rounded-lg px-4 py-2">
+                <option value="like" {{ $engine === 'like' ? 'selected' : '' }}>LIKE patterns</option>
+                <option value="bm25" {{ $engine === 'bm25' ? 'selected' : '' }}>BM25 index → fuzzy fallback</option>
+            </select>
+            <p class="text-xs text-gray-500 mt-1">Build the index once: <code>php artisan fuzzy-search:rebuild "App\Models\Product"</code></p>
+        </div>
     </div>
     <div class="mt-4">
         <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">
@@ -29,6 +46,20 @@
         </button>
     </div>
 </form>
+
+<!-- Engine / fallback trace -->
+@if($query && count($attempts) > 1)
+<div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-4 mb-8 text-sm">
+    <span class="font-semibold">Fallback used:</span>
+    <code>{{ implode(' → ', $attempts) }}</code> —
+    <strong>{{ $attempts[0] }}</strong> returned nothing{{ $attempts[0] === 'bm25' ? ' (no index match, or the products index is not built)' : '' }},
+    so the same search was re-run with <strong>{{ last($attempts) }}</strong>{{ $category !== '' ? ', still filtered to "' . $category . '"' : '' }}.
+</div>
+@elseif($query && $engine === 'bm25' && count($attempts) === 1)
+<div class="bg-gray-50 border border-gray-200 text-gray-600 rounded-lg p-4 mb-8 text-sm">
+    Answered by the <strong>BM25 index</strong>{{ $category !== '' ? ' with the "' . $category . '" filter applied before the page was cut' : '' }}; the fuzzy fallback was not needed.
+</div>
+@endif
 
 <!-- Results -->
 @if($query)

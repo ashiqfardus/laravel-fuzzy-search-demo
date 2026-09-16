@@ -11,8 +11,8 @@ A demonstration application showcasing the [ashiqfardus/laravel-fuzzy-search](ht
 
 | Page | What it shows |
 | ---- | ------------- |
-| `/search/users` | 8 algorithms, typo tolerance, relevance scoring, `@fuzzyHighlight` |
-| `/search/products` | Config presets (`ecommerce`, `exact`), field weighting |
+| `/search/users` | 8 algorithms, typo tolerance, relevance scoring, `@fuzzyHighlight`, `fallback()` chain with an "answered by" trace |
+| `/search/products` | Config presets (`ecommerce`, `exact`), field weighting, category `filter()` honoured on the BM25 path, BM25 → fuzzy fallback |
 | `/search/articles` | Multi-word tokenization with AND / OR logic |
 | `/search/contacts` | Phonetic search — Soundex & Metaphone shadow columns |
 | `/search/federated` | Cross-model federated search with unified ranking |

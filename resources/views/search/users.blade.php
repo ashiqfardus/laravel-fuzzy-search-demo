@@ -8,7 +8,7 @@
 
 <!-- Search Form -->
 <form method="GET" class="bg-white rounded-lg shadow p-6 mb-8" x-data="{ loading: false }" @submit="loading = true">
-    <div class="grid md:grid-cols-4 gap-4">
+    <div class="grid md:grid-cols-5 gap-4">
         <div class="md:col-span-2">
             <label class="block text-sm font-medium text-gray-700 mb-1">Search Query</label>
             <input type="text" name="q" value="{{ $query }}"
@@ -33,6 +33,18 @@
                 @endfor
             </select>
         </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Fallback</label>
+            <select name="fallback" class="w-full border rounded-lg px-4 py-2">
+                <option value="" {{ $fallback === '' ? 'selected' : '' }}>None</option>
+                <option value="fuzzy" {{ $fallback === 'fuzzy' ? 'selected' : '' }}>Fuzzy</option>
+                <option value="levenshtein" {{ $fallback === 'levenshtein' ? 'selected' : '' }}>Levenshtein</option>
+                <option value="soundex" {{ $fallback === 'soundex' ? 'selected' : '' }}>Soundex</option>
+                <option value="metaphone" {{ $fallback === 'metaphone' ? 'selected' : '' }}>Metaphone</option>
+                <option value="simple" {{ $fallback === 'simple' ? 'selected' : '' }}>Simple (LIKE)</option>
+            </select>
+            <p class="text-xs text-gray-500 mt-1">Runs only if the primary algorithm finds nothing. Try <em>Simple</em> + "jonh" with <em>Fuzzy</em> fallback.</p>
+        </div>
     </div>
     <div class="mt-4">
         <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50" :disabled="loading">
@@ -47,6 +59,19 @@
         </button>
     </div>
 </form>
+
+<!-- Fallback trace -->
+@if($query && count($attempts) > 1)
+<div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-4 mb-8 text-sm">
+    <span class="font-semibold">Fallback used:</span>
+    <code>{{ implode(' → ', $attempts) }}</code> —
+    <strong>{{ $attempts[0] }}</strong> returned nothing, so the same search was re-run with <strong>{{ last($attempts) }}</strong>.
+</div>
+@elseif($query && $fallback !== '' && count($attempts) === 1)
+<div class="bg-gray-50 border border-gray-200 text-gray-600 rounded-lg p-4 mb-8 text-sm">
+    Answered by <strong>{{ $attempts[0] }}</strong>; the <strong>{{ $fallback }}</strong> fallback was not needed.
+</div>
+@endif
 
 <!-- Debug Info -->
 @if($query && !empty($debugInfo))

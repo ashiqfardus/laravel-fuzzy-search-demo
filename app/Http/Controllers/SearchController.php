@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Event;
 use App\Models\User;
 use App\Models\Product;
 use App\Models\Article;
 use App\Models\Contact;
+use Ashiqfardus\LaravelFuzzySearch\Events\FuzzySearchExecuted;
 use Ashiqfardus\LaravelFuzzySearch\FederatedSearch;
 
 class SearchController extends Controller
@@ -34,9 +36,14 @@ class SearchController extends Controller
         $query = $request->input('q', '');
         $algorithm = $request->input('algorithm', 'fuzzy');
         $typoTolerance = (int) $request->input('typo_tolerance', 2);
+        $fallback = $request->input('fallback', '');
+        if (!in_array($fallback, ['fuzzy', 'levenshtein', 'soundex', 'metaphone', 'simple'], true) || $fallback === $algorithm) {
+            $fallback = '';
+        }
 
         $results = collect();
         $debugInfo = [];
+        $attempts = $this->recordSearchAttempts();
 
         if ($query) {
             try {
@@ -46,6 +53,11 @@ class SearchController extends Controller
                     ->withRelevance()
                     ->highlight('mark');
 
+                if ($fallback !== '') {
+                    // Re-runs the search with this algorithm only if the primary finds nothing.
+                    $searchQuery->fallback($fallback);
+                }
+
                 $results = $searchQuery->get();
                 $debugInfo = $searchQuery->getDebugInfo();
             } catch (\Ashiqfardus\LaravelFuzzySearch\Exceptions\InvalidAlgorithmException) {
@@ -53,7 +65,26 @@ class SearchController extends Controller
             }
         }
 
-        return view('search.users', compact('results', 'query', 'algorithm', 'typoTolerance', 'debugInfo'));
+        return view('search.users', [
+            'results' => $results, 'query' => $query, 'algorithm' => $algorithm,
+            'typoTolerance' => $typoTolerance, 'fallback' => $fallback,
+            'debugInfo' => $debugInfo, 'attempts' => $attempts->all(),
+        ]);
+    }
+
+    /**
+     * Every search attempt — the primary algorithm and each fallback() retry — fires one
+     * FuzzySearchExecuted event. Collect their algorithm names so the page can show which
+     * one actually answered.
+     */
+    private function recordSearchAttempts(): \Illuminate\Support\Collection
+    {
+        $attempts = collect();
+        Event::listen(FuzzySearchExecuted::class, function (FuzzySearchExecuted $event) use ($attempts) {
+            $attempts->push($event->algorithm);
+        });
+
+        return $attempts;
     }
 
     /**
@@ -61,20 +92,41 @@ class SearchController extends Controller
      */
     public function products(Request $request)
     {
-        $query = $request->input('q', '');
-        $preset = $request->input('preset', 'ecommerce');
+        $query    = $request->input('q', '');
+        $preset   = $request->input('preset', 'ecommerce');
+        $category = (string) $request->input('category', '');
+        $engine   = $request->input('engine') === 'bm25' ? 'bm25' : 'like';
 
-        $results = collect();
+        $categories = Product::query()->distinct()->orderBy('category')->pluck('category');
+        $results    = collect();
+        $attempts   = $this->recordSearchAttempts();
 
         if ($query) {
-            $results = Product::search($query)
+            $search = Product::search($query)
                 ->preset($preset)
                 ->withRelevance()
-                ->highlight('mark')
-                ->get();
+                ->highlight('mark');
+
+            if ($category !== '') {
+                // Honoured on both paths: on BM25 the ranking is checked against the
+                // filter before the page is cut, so the page never comes back short.
+                $search->filter('category', $category);
+            }
+
+            if ($engine === 'bm25') {
+                // BM25 has no typo tolerance yet: fall back to the fuzzy driver when the
+                // index has no match (or has not been built for products).
+                $search->useInvertedIndex()->fallback('fuzzy');
+            }
+
+            $results = $search->get();
         }
 
-        return view('search.products', compact('results', 'query', 'preset'));
+        return view('search.products', [
+            'results' => $results, 'query' => $query, 'preset' => $preset,
+            'category' => $category, 'categories' => $categories,
+            'engine' => $engine, 'attempts' => $attempts->all(),
+        ]);
     }
 
     /**
