@@ -1,66 +1,51 @@
 @extends('layouts.app')
 
+@section('title', 'Article search — Fuzzy Search Demo')
+
 @section('content')
-<div class="mb-8">
-    <h1 class="text-2xl font-bold text-gray-800 mb-2">📝 Article Search</h1>
-    <p class="text-gray-600">Test tokenization with multi-word search</p>
-</div>
+<x-page-header eyebrow="Tokenization · blog preset" title="Article search">
+    Multi-word queries are split into tokens. Match any token (OR) for recall, or require every token (AND) for precision.
+</x-page-header>
 
-<!-- Search Form -->
-<form method="GET" class="bg-white rounded-lg shadow p-6 mb-8">
-    <div class="grid md:grid-cols-3 gap-4">
-        <div class="md:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Search Query</label>
-            <input type="text" name="q" value="{{ $query }}"
-                   placeholder="Try: laravel search fuzzy..."
-                   class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-        </div>
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Match Mode</label>
-            <select name="match_mode" class="w-full border rounded-lg px-4 py-2">
-                <option value="any" {{ $matchMode === 'any' ? 'selected' : '' }}>Match Any (OR)</option>
-                <option value="all" {{ $matchMode === 'all' ? 'selected' : '' }}>Match All (AND)</option>
-            </select>
-        </div>
-    </div>
-    <div class="mt-4">
-        <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
-            Search Articles
-        </button>
-    </div>
-</form>
+<x-search-form button="Search articles" cols="md:grid-cols-3">
+    <x-field label="Search query" for="q" class="md:col-span-2">
+        <input id="q" type="text" name="q" value="{{ $query }}" placeholder="Try: laravel search fuzzy…" class="field-control" autofocus>
+    </x-field>
+    <x-field label="Match mode" for="match_mode">
+        <select id="match_mode" name="match_mode" class="field-control">
+            <option value="any" @selected($matchMode === 'any')>Match any token (OR)</option>
+            <option value="all" @selected($matchMode === 'all')>Match all tokens (AND)</option>
+        </select>
+    </x-field>
+</x-search-form>
 
-<!-- Results -->
 @if($query)
-<div class="bg-white rounded-lg shadow">
-    <div class="px-6 py-4 border-b">
-        <h2 class="font-bold text-gray-800">Results ({{ $results->count() }})</h2>
-    </div>
-
-    @if($results->isEmpty())
-        <div class="p-6 text-gray-500 text-center">No articles found for "{{ $query }}"</div>
-    @else
-        <div class="divide-y">
-            @foreach($results as $article)
-            <div class="p-6 hover:bg-gray-50">
-                <div class="flex justify-between items-start mb-2">
-                    <span class="text-xs px-2 py-1 rounded {{ $article->status === 'published' ? 'bg-green-100 text-green-800' : ($article->status === 'draft' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-600') }}">
-                        {{ ucfirst($article->status) }}
-                    </span>
-                    @if(isset($article->_score))
-                    <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                        Score: {{ number_format($article->_score, 2) }}
-                    </span>
-                    @endif
-                </div>
-                <h3 class="font-bold text-gray-800 text-lg mb-2">@fuzzyHighlight($article, 'title')</h3>
-                <p class="text-gray-600 text-sm mb-2">{{ Str::limit($article->excerpt ?? $article->body, 150) }}</p>
-                <div class="text-xs text-gray-400">By {{ $article->author }}</div>
-            </div>
-            @endforeach
-        </div>
-    @endif
-</div>
+    <x-results :count="$results->count()">
+        @if($results->isEmpty())
+            <x-empty icon="document">
+                No articles match “{{ $query }}”.
+                <x-slot:hint>Switch to “match any” to widen the search.</x-slot:hint>
+            </x-empty>
+        @else
+            <ul class="divide-y divide-line">
+                @foreach($results as $article)
+                    @php
+                        $status = ['published' => 'bg-accent/15 text-accent', 'draft' => 'bg-amber-500/15 text-amber-300'][$article->status] ?? 'bg-raised text-muted';
+                    @endphp
+                    <li class="row flex-col items-stretch gap-2">
+                        <div class="flex items-center justify-between gap-3">
+                            <span class="badge {{ $status }}">{{ ucfirst($article->status) }}</span>
+                            @isset($article->_score)
+                                <span class="badge bg-accent/15 text-accent" title="Relevance score">{{ number_format($article->_score, 2) }}</span>
+                            @endisset
+                        </div>
+                        <h3 class="text-lg font-medium text-ink">@fuzzyHighlight($article, 'title')</h3>
+                        <p class="text-sm leading-relaxed text-muted">{{ Str::limit($article->excerpt ?? $article->body, 150) }}</p>
+                        <p class="text-xs text-muted">By {{ $article->author }}</p>
+                    </li>
+                @endforeach
+            </ul>
+        @endif
+    </x-results>
 @endif
 @endsection
-

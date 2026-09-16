@@ -1,44 +1,83 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laravel Fuzzy Search Demo</title>
+    <title>@yield('title', 'Laravel Fuzzy Search Demo')</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Fira+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <style>
-        mark { background-color: #fef08a; padding: 0 2px; border-radius: 2px; }
-        [x-cloak] { display: none !important; }
-    </style>
 </head>
-<body class="bg-gray-100 min-h-screen" x-data="{ tour: fuzzyTour() }" x-init="tour.restore()">
-    <nav class="bg-indigo-600 text-white shadow-lg sticky top-0 z-40">
-        <div class="max-w-7xl mx-auto px-4 py-4">
-            <div class="flex items-center justify-between">
-                <a href="{{ route('search.index') }}" class="text-xl font-bold">🔍 Fuzzy Search Demo</a>
-                <div class="flex space-x-4 text-sm">
-                    <a href="{{ route('search.users') }}" class="hover:text-indigo-200">Users</a>
-                    <a href="{{ route('search.products') }}" class="hover:text-indigo-200">Products</a>
-                    <a href="{{ route('search.articles') }}" class="hover:text-indigo-200">Articles</a>
-                    <a href="{{ route('search.contacts') }}" class="hover:text-indigo-200">Contacts</a>
-                    <a href="{{ route('search.federated') }}" class="hover:text-indigo-200">Federated</a>
-                    <a href="{{ route('search.smart') }}" class="hover:text-indigo-200">Smart</a>
-                    <a href="{{ route('search.capability-matrix') }}" class="hover:text-indigo-200 font-semibold border border-indigo-400 rounded px-2 py-0.5">⚡ Benchmark</a>
-                    <a href="{{ route('search.benchmarks') }}" class="hover:text-indigo-200">BM25</a>
-                    <a href="{{ route('search.scout-demo') }}" class="hover:text-indigo-200">Scout</a>
-                    <a href="{{ route('search.playground') }}" class="hover:text-indigo-200 font-semibold">🎮 Playground</a>
-                </div>
-            </div>
-        </div>
-    </nav>
+@php
+    $nav = [
+        ['search.users',             'Users'],
+        ['search.products',          'Products'],
+        ['search.articles',          'Articles'],
+        ['search.contacts',          'Contacts'],
+        ['search.federated',         'Federated'],
+        ['search.smart',             'Smart'],
+        ['search.capability-matrix', 'Compare'],
+        ['search.benchmarks',        'BM25'],
+        ['search.scout-demo',        'Scout'],
+        ['search.playground',        'Playground'],
+    ];
+@endphp
+<body class="min-h-full bg-base font-sans text-ink antialiased" x-data="{ tour: fuzzyTour(), menu: false }" x-init="tour.restore()">
+    <header class="sticky top-0 z-50 border-b border-line bg-base/90 backdrop-blur">
+        <div class="mx-auto flex h-16 max-w-7xl items-center gap-6 px-4 sm:px-6 lg:px-8">
+            <a href="{{ route('search.index') }}" class="flex shrink-0 items-center gap-2 font-mono text-sm font-semibold text-ink">
+                <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-slate-950">
+                    <x-icon name="search" class="h-4 w-4" />
+                </span>
+                fuzzy-search
+                <span class="badge bg-raised text-muted">v2.1</span>
+            </a>
 
-    <main class="max-w-7xl mx-auto px-4 py-8">
+            <nav class="hidden min-w-0 flex-1 items-center gap-1 overflow-x-auto md:flex" aria-label="Primary">
+                @foreach($nav as [$route, $label])
+                    <a href="{{ route($route) }}"
+                       @class([
+                           'rounded-md px-3 py-1.5 text-sm whitespace-nowrap transition-colors duration-200 hover:bg-raised hover:text-ink',
+                           'bg-raised text-ink' => request()->routeIs($route),
+                           'text-muted'         => !request()->routeIs($route),
+                       ])
+                       @if(request()->routeIs($route)) aria-current="page" @endif>{{ $label }}</a>
+                @endforeach
+            </nav>
+
+            <a href="https://github.com/ashiqfardus/laravel-fuzzy-search" target="_blank" rel="noopener"
+               class="ml-auto hidden items-center gap-2 text-sm text-muted transition-colors duration-200 hover:text-ink md:flex">
+                <x-icon name="github" class="h-5 w-5" /> GitHub
+            </a>
+
+            <button type="button" class="btn-ghost ml-auto md:hidden" @click="menu = !menu" :aria-expanded="menu" aria-controls="mobile-nav" aria-label="Toggle navigation">
+                <x-icon name="menu" class="h-5 w-5" />
+            </button>
+        </div>
+
+        <nav id="mobile-nav" x-show="menu" x-cloak @click.outside="menu = false" class="border-t border-line bg-base px-4 py-3 md:hidden" aria-label="Primary">
+            <div class="grid grid-cols-2 gap-1">
+                @foreach($nav as [$route, $label])
+                    <a href="{{ route($route) }}"
+                       @class(['rounded-md px-3 py-2 text-sm', 'bg-raised text-ink' => request()->routeIs($route), 'text-muted' => !request()->routeIs($route)])>{{ $label }}</a>
+                @endforeach
+                <a href="https://github.com/ashiqfardus/laravel-fuzzy-search" class="rounded-md px-3 py-2 text-sm text-muted">GitHub</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
         @yield('content')
     </main>
 
-    <footer class="text-center text-gray-500 py-4 text-sm">
-        Laravel Fuzzy Search v2.0.0 &bull; <a href="https://github.com/ashiqfardus/laravel-fuzzy-search" class="underline hover:text-gray-300">GitHub</a>
+    <footer class="mx-auto max-w-7xl px-4 py-8 text-sm text-muted sm:px-6 lg:px-8">
+        <div class="flex flex-wrap items-center justify-between gap-2 border-t border-line pt-6">
+            <span class="font-mono">ashiqfardus/laravel-fuzzy-search</span>
+            <span>MIT · <a href="https://github.com/ashiqfardus/laravel-fuzzy-search" class="text-link hover:underline">Source</a></span>
+        </div>
     </footer>
+
     @include('partials.tour-overlay')
 </body>
 </html>
-

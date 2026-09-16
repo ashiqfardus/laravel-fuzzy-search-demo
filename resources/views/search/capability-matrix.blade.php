@@ -1,92 +1,68 @@
 @extends('layouts.app')
 
-@section('title', 'Algorithm Comparison — Laravel Fuzzy Search Demo')
+@section('title', 'Compare algorithms — Fuzzy Search Demo')
 
 @section('content')
-<div class="container mx-auto px-4 py-8 max-w-7xl">
+<x-page-header eyebrow="Side by side" title="Compare algorithms">
+    The same query through every algorithm at once. Scores are PHP-side relevance; higher is a better match.
+</x-page-header>
 
-    <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 mb-2">Algorithm Comparison</h1>
-        <p class="text-gray-600">
-            The same query run through every algorithm simultaneously.
-            Scores are PHP-side relevance scores. Higher = better match.
-        </p>
-    </div>
+<x-search-form button="Compare all" cols="md:grid-cols-1">
+    <x-field label="Search term" for="q">
+        <input id="q" type="text" name="q" value="{{ $term }}" placeholder="e.g. john, jhn, jon" class="field-control" autofocus>
+    </x-field>
+    <x-slot:actions>
+        <a href="{{ route('search.capability-matrix') }}" class="btn-ghost">Reset</a>
+    </x-slot:actions>
+</x-search-form>
 
-    <form method="GET" class="mb-8 flex gap-3 items-center">
-        <input type="text" name="q" value="{{ $term }}"
-               class="border border-gray-300 rounded-lg px-4 py-2 w-72 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-               placeholder="Search term (e.g. john, jhn, jon)">
-        <button type="submit"
-                class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2 rounded-lg transition-colors">
-            Compare All Algorithms
-        </button>
-        <a href="{{ route('search.capability-matrix') }}"
-           class="text-gray-500 hover:text-gray-700 text-sm">Reset</a>
-    </form>
-
-    @if($term)
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+@if($term)
+    <div class="mb-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         @foreach($algorithms as $algo)
-        @php $data = $results[$algo]; @endphp
-        <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-            <div class="bg-gray-50 border-b border-gray-200 px-4 py-3 flex items-center justify-between">
-                <span class="font-semibold text-gray-800 font-mono">{{ $algo }}</span>
-                @if($data['error'])
-                    <span class="text-red-500 text-xs">error</span>
-                @else
-                    <div class="flex gap-2 items-center">
-                        <span class="text-gray-500 text-xs">{{ $data['rows']->count() }} result(s)</span>
-                        <span class="text-blue-500 text-xs font-mono">{{ $data['ms'] ?? '?' }}ms</span>
-                    </div>
-                @endif
-            </div>
-            <div class="p-4">
-                @if($data['error'])
-                    <p class="text-red-600 text-sm break-words">{{ $data['error'] }}</p>
-                @elseif($data['rows']->isEmpty())
-                    <p class="text-gray-400 text-sm italic">No results</p>
-                    @if($algo === 'soundex')
-                    <p class="text-gray-400 text-xs mt-1">
-                        Soundex found no phonetically similar names. This is correct — soundex requires
-                        a true phonetic match (same sound-code). Try searching <em>john</em>, <em>stephen</em>,
-                        or <em>steven</em> to see it work.
-                    </p>
+            @php $data = $results[$algo]; @endphp
+            <section class="card overflow-hidden">
+                <header class="flex items-center justify-between gap-2 border-b border-line px-5 py-3.5">
+                    <h2 class="font-mono text-sm font-semibold text-ink">{{ $algo }}</h2>
+                    @if($data['error'])
+                        <span class="badge bg-red-500/15 text-red-300">error</span>
+                    @else
+                        <div class="flex items-center gap-2">
+                            <span class="badge bg-raised text-muted">{{ $data['rows']->count() }}</span>
+                            <span class="badge bg-accent/15 text-accent">{{ $data['ms'] ?? '?' }} ms</span>
+                        </div>
                     @endif
-                @else
-                    <ol class="space-y-2">
-                        @foreach($data['rows'] as $rank => $row)
-                        <li class="flex items-center justify-between text-sm">
-                            <span class="flex items-center gap-2">
-                                <span class="text-gray-400 w-4 text-right">{{ $rank + 1 }}.</span>
-                                <span class="text-gray-800">{{ $row->name }}</span>
-                            </span>
-                            @if(isset($row->_score))
-                            <span class="text-xs text-gray-400 font-mono tabular-nums">
-                                {{ number_format($row->_score, 1) }}
-                            </span>
-                            @endif
-                        </li>
-                        @endforeach
-                    </ol>
-                @endif
-            </div>
-        </div>
+                </header>
+                <div class="p-5">
+                    @if($data['error'])
+                        <p class="text-sm text-red-300">{{ $data['error'] }}</p>
+                    @elseif($data['rows']->isEmpty())
+                        <p class="text-sm text-muted">No results</p>
+                        @if($algo === 'soundex')
+                            <p class="mt-2 text-xs leading-relaxed text-muted">Soundex needs a true phonetic match (same sound code). Try <span class="code">john</span>, <span class="code">stephen</span> or <span class="code">steven</span>.</p>
+                        @endif
+                    @else
+                        <ol class="space-y-2">
+                            @foreach($data['rows'] as $rank => $row)
+                                <li class="flex items-center justify-between gap-3 text-sm">
+                                    <span class="flex items-center gap-3">
+                                        <span class="w-4 text-right font-mono text-muted">{{ $rank + 1 }}</span>
+                                        <span class="text-ink">{{ $row->name }}</span>
+                                    </span>
+                                    @isset($row->_score)
+                                        <span class="font-mono text-xs tabular-nums text-muted">{{ number_format($row->_score, 1) }}</span>
+                                    @endisset
+                                </li>
+                            @endforeach
+                        </ol>
+                    @endif
+                </div>
+            </section>
         @endforeach
     </div>
 
-    <div class="mt-8 p-4 bg-blue-50 rounded-lg text-sm text-blue-800">
-        <strong>How to read this:</strong>
-        Each card shows the same query run through a different algorithm.
-        Differences reveal how each algorithm handles typos, phonetics, and substring matching.
-        Scores are PHP-side relevance (higher = better).
-        <strong>Soundex</strong> requires a true phonetic match — 0 results means no phonetically similar
-        first names exist in the dataset for that query (correct, not broken). It works best on names like
-        <em>john / jon / jean</em> or <em>steven / stephen</em>.
-        The SQL each algorithm generates is documented in the
-        <a href="https://github.com/ashiqfardus/laravel-fuzzy-search" class="underline" target="_blank">package docs</a>.
-    </div>
-    @endif
-
-</div>
+    <x-callout tone="info" title="How to read this">
+        Differences reveal how each algorithm handles typos, phonetics and substring matching. Zero Soundex results means no phonetically similar first name exists for that query — correct, not broken. The SQL each algorithm generates is documented in the
+        <a href="https://github.com/ashiqfardus/laravel-fuzzy-search#readme" class="text-link underline" target="_blank" rel="noopener">package docs</a>.
+    </x-callout>
+@endif
 @endsection

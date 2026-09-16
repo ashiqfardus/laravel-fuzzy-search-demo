@@ -1,115 +1,80 @@
 @extends('layouts.app')
 
+@section('title', 'User search — Fuzzy Search Demo')
+
 @section('content')
-<div class="mb-8">
-    <h1 class="text-2xl font-bold text-gray-800 mb-2">👤 User Search</h1>
-    <p class="text-gray-600">Test different algorithms and typo tolerance settings</p>
-</div>
+<x-page-header eyebrow="Algorithms · typo tolerance · fallback" title="User search">
+    Pick an algorithm, choose how many typos to forgive, and optionally chain a fallback that only runs when the primary finds nothing.
+</x-page-header>
 
-<!-- Search Form -->
-<form method="GET" class="bg-white rounded-lg shadow p-6 mb-8" x-data="{ loading: false }" @submit="loading = true">
-    <div class="grid md:grid-cols-5 gap-4">
-        <div class="md:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Search Query</label>
-            <input type="text" name="q" value="{{ $query }}"
-                   placeholder="Try: jonh, jon, johnny..."
-                   class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-        </div>
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Algorithm</label>
-            <select name="algorithm" class="w-full border rounded-lg px-4 py-2">
-                <option value="fuzzy" {{ $algorithm === 'fuzzy' ? 'selected' : '' }}>Fuzzy</option>
-                <option value="levenshtein" {{ $algorithm === 'levenshtein' ? 'selected' : '' }}>Levenshtein</option>
-                <option value="soundex" {{ $algorithm === 'soundex' ? 'selected' : '' }}>Soundex</option>
-                <option value="metaphone" {{ $algorithm === 'metaphone' ? 'selected' : '' }}>Metaphone</option>
-                <option value="simple" {{ $algorithm === 'simple' ? 'selected' : '' }}>Simple (LIKE)</option>
-            </select>
-        </div>
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Typo Tolerance</label>
-            <select name="typo_tolerance" class="w-full border rounded-lg px-4 py-2">
-                @for($i = 0; $i <= 5; $i++)
-                    <option value="{{ $i }}" {{ $typoTolerance === $i ? 'selected' : '' }}>{{ $i }}</option>
-                @endfor
-            </select>
-        </div>
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Fallback</label>
-            <select name="fallback" class="w-full border rounded-lg px-4 py-2">
-                <option value="" {{ $fallback === '' ? 'selected' : '' }}>None</option>
-                <option value="fuzzy" {{ $fallback === 'fuzzy' ? 'selected' : '' }}>Fuzzy</option>
-                <option value="levenshtein" {{ $fallback === 'levenshtein' ? 'selected' : '' }}>Levenshtein</option>
-                <option value="soundex" {{ $fallback === 'soundex' ? 'selected' : '' }}>Soundex</option>
-                <option value="metaphone" {{ $fallback === 'metaphone' ? 'selected' : '' }}>Metaphone</option>
-                <option value="simple" {{ $fallback === 'simple' ? 'selected' : '' }}>Simple (LIKE)</option>
-            </select>
-            <p class="text-xs text-gray-500 mt-1">Runs only if the primary algorithm finds nothing. Try <em>Simple</em> + "jonh" with <em>Fuzzy</em> fallback.</p>
-        </div>
-    </div>
-    <div class="mt-4">
-        <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50" :disabled="loading">
-            <span x-show="!loading">Search</span>
-            <span x-show="loading" x-cloak class="inline-flex items-center gap-1">
-                <svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
-                </svg>
-                Searching…
-            </span>
-        </button>
-    </div>
-</form>
-
-<!-- Fallback trace -->
-@if($query && count($attempts) > 1)
-<div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-4 mb-8 text-sm">
-    <span class="font-semibold">Fallback used:</span>
-    <code>{{ implode(' → ', $attempts) }}</code> —
-    <strong>{{ $attempts[0] }}</strong> returned nothing, so the same search was re-run with <strong>{{ last($attempts) }}</strong>.
-</div>
-@elseif($query && $fallback !== '' && count($attempts) === 1)
-<div class="bg-gray-50 border border-gray-200 text-gray-600 rounded-lg p-4 mb-8 text-sm">
-    Answered by <strong>{{ $attempts[0] }}</strong>; the <strong>{{ $fallback }}</strong> fallback was not needed.
-</div>
-@endif
-
-<!-- Debug Info -->
-@if($query && !empty($debugInfo))
-<div class="bg-gray-800 text-gray-100 rounded-lg p-4 mb-8 text-sm overflow-x-auto">
-    <div class="font-bold mb-2">Debug Info:</div>
-    <pre>{{ json_encode($debugInfo, JSON_PRETTY_PRINT) }}</pre>
-</div>
-@endif
-
-<!-- Results -->
-@if($query)
-<div class="bg-white rounded-lg shadow">
-    <div class="px-6 py-4 border-b">
-        <h2 class="font-bold text-gray-800">Results ({{ $results->count() }})</h2>
-    </div>
-
-    @if($results->isEmpty())
-        <div class="p-6 text-gray-500 text-center">No results found for "{{ $query }}"</div>
-    @else
-        <div class="divide-y">
-            @foreach($results as $user)
-            <div class="p-4 hover:bg-gray-50">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <div class="font-medium text-gray-800">@fuzzyHighlight($user, 'name')</div>
-                        <div class="text-sm text-gray-500">{{ $user->email }}</div>
-                    </div>
-                    @if(isset($user->_score))
-                    <div class="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded">
-                        Score: {{ number_format($user->_score, 2) }}
-                    </div>
-                    @endif
-                </div>
-            </div>
+<x-search-form button="Search users" cols="md:grid-cols-6">
+    <x-field label="Search query" for="q" class="md:col-span-3">
+        <input id="q" type="text" name="q" value="{{ $query }}" placeholder="Try: jonh, jon, johnny…" class="field-control" autofocus>
+    </x-field>
+    <x-field label="Algorithm" for="algorithm">
+        <select id="algorithm" name="algorithm" class="field-control">
+            @foreach(['fuzzy' => 'Fuzzy', 'levenshtein' => 'Levenshtein', 'soundex' => 'Soundex', 'metaphone' => 'Metaphone', 'simple' => 'Simple (LIKE)'] as $value => $label)
+                <option value="{{ $value }}" @selected($algorithm === $value)>{{ $label }}</option>
             @endforeach
-        </div>
+        </select>
+    </x-field>
+    <x-field label="Typo tolerance" for="typo_tolerance">
+        <select id="typo_tolerance" name="typo_tolerance" class="field-control">
+            @for($i = 0; $i <= 5; $i++)
+                <option value="{{ $i }}" @selected($typoTolerance === $i)>{{ $i }}</option>
+            @endfor
+        </select>
+    </x-field>
+    <x-field label="Fallback" for="fallback" hint="Runs only if the primary finds nothing. Try Simple + “jonh” with Fuzzy.">
+        <select id="fallback" name="fallback" class="field-control">
+            <option value="" @selected($fallback === '')>None</option>
+            @foreach(['fuzzy' => 'Fuzzy', 'levenshtein' => 'Levenshtein', 'soundex' => 'Soundex', 'metaphone' => 'Metaphone', 'simple' => 'Simple (LIKE)'] as $value => $label)
+                <option value="{{ $value }}" @selected($fallback === $value)>{{ $label }}</option>
+            @endforeach
+        </select>
+    </x-field>
+</x-search-form>
+
+@if($query && count($attempts) > 1)
+    <x-callout tone="warn" title="Fallback used" class="mb-8">
+        <code class="code">{{ implode(' → ', $attempts) }}</code> —
+        <strong>{{ $attempts[0] }}</strong> returned nothing, so the same search was re-run with <strong>{{ last($attempts) }}</strong>.
+    </x-callout>
+@elseif($query && $fallback !== '' && count($attempts) === 1)
+    <x-callout tone="success" class="mb-8">
+        Answered by <strong>{{ $attempts[0] }}</strong>; the <strong>{{ $fallback }}</strong> fallback was not needed.
+    </x-callout>
+@endif
+
+@if($query)
+    <x-results :count="$results->count()">
+        @if($results->isEmpty())
+            <x-empty icon="search">
+                No users match “{{ $query }}”.
+                <x-slot:hint>Raise the typo tolerance, switch algorithm, or add a fallback.</x-slot:hint>
+            </x-empty>
+        @else
+            <ul class="divide-y divide-line">
+                @foreach($results as $user)
+                    <li class="row">
+                        <div class="min-w-0">
+                            <p class="font-medium text-ink">@fuzzyHighlight($user, 'name')</p>
+                            <p class="truncate text-sm text-muted">{{ $user->email }}</p>
+                        </div>
+                        @isset($user->_score)
+                            <span class="badge bg-accent/15 text-accent" title="Relevance score">{{ number_format($user->_score, 2) }}</span>
+                        @endisset
+                    </li>
+                @endforeach
+            </ul>
+        @endif
+    </x-results>
+
+    @if(!empty($debugInfo))
+        <details class="card mt-6 p-5">
+            <summary class="cursor-pointer font-mono text-xs uppercase tracking-[0.15em] text-muted transition-colors duration-200 hover:text-ink">Debug info</summary>
+            <pre class="mt-4 overflow-x-auto font-mono text-xs leading-relaxed text-link">{{ json_encode($debugInfo, JSON_PRETTY_PRINT) }}</pre>
+        </details>
     @endif
-</div>
 @endif
 @endsection
-

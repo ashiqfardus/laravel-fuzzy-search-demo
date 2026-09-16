@@ -1,95 +1,74 @@
 @extends('layouts.app')
 
+@section('title', 'Product search — Fuzzy Search Demo')
+
 @section('content')
-<div class="mb-8">
-    <h1 class="text-2xl font-bold text-gray-800 mb-2">🛒 Product Search</h1>
-    <p class="text-gray-600">Config presets, a category filter that is honoured on the BM25 index path, and a fuzzy fallback</p>
-</div>
+<x-page-header eyebrow="Presets · filters · BM25 fallback" title="Product search">
+    Config presets tune eight parameters at once. The category filter is honoured on the BM25 index path, and the fuzzy fallback answers when the index has no match.
+</x-page-header>
 
-<!-- Search Form -->
-<form method="GET" class="bg-white rounded-lg shadow p-6 mb-8">
-    <div class="grid md:grid-cols-5 gap-4">
-        <div class="md:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Search Query</label>
-            <input type="text" name="q" value="{{ $query }}"
-                   placeholder="Try: iphone, macbok, samsng..."
-                   class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500">
-        </div>
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Preset</label>
-            <select name="preset" class="w-full border rounded-lg px-4 py-2">
-                <option value="ecommerce" {{ $preset === 'ecommerce' ? 'selected' : '' }}>E-commerce (typo tolerant)</option>
-                <option value="exact" {{ $preset === 'exact' ? 'selected' : '' }}>Exact (no typos)</option>
-            </select>
-        </div>
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
-            <select name="category" class="w-full border rounded-lg px-4 py-2">
-                <option value="" {{ $category === '' ? 'selected' : '' }}>All categories</option>
-                @foreach($categories as $option)
-                    <option value="{{ $option }}" {{ $category === $option ? 'selected' : '' }}>{{ $option }}</option>
-                @endforeach
-            </select>
-        </div>
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Engine</label>
-            <select name="engine" class="w-full border rounded-lg px-4 py-2">
-                <option value="like" {{ $engine === 'like' ? 'selected' : '' }}>LIKE patterns</option>
-                <option value="bm25" {{ $engine === 'bm25' ? 'selected' : '' }}>BM25 index → fuzzy fallback</option>
-            </select>
-            <p class="text-xs text-gray-500 mt-1">Build the index once: <code>php artisan fuzzy-search:rebuild "App\Models\Product"</code></p>
-        </div>
-    </div>
-    <div class="mt-4">
-        <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">
-            Search Products
-        </button>
-    </div>
-</form>
+<x-search-form button="Search products" cols="md:grid-cols-5">
+    <x-field label="Search query" for="q" class="md:col-span-2">
+        <input id="q" type="text" name="q" value="{{ $query }}" placeholder="Try: iphone, macbok, samsng…" class="field-control" autofocus>
+    </x-field>
+    <x-field label="Preset" for="preset">
+        <select id="preset" name="preset" class="field-control">
+            <option value="ecommerce" @selected($preset === 'ecommerce')>E-commerce (typo tolerant)</option>
+            <option value="exact" @selected($preset === 'exact')>Exact (no typos)</option>
+        </select>
+    </x-field>
+    <x-field label="Category" for="category">
+        <select id="category" name="category" class="field-control">
+            <option value="" @selected($category === '')>All categories</option>
+            @foreach($categories as $option)
+                <option value="{{ $option }}" @selected($category === $option)>{{ $option }}</option>
+            @endforeach
+        </select>
+    </x-field>
+    <x-field label="Engine" for="engine" hint='Build the index once: php artisan fuzzy-search:rebuild "App\Models\Product"'>
+        <select id="engine" name="engine" class="field-control">
+            <option value="like" @selected($engine === 'like')>LIKE patterns</option>
+            <option value="bm25" @selected($engine === 'bm25')>BM25 index → fuzzy fallback</option>
+        </select>
+    </x-field>
+</x-search-form>
 
-<!-- Engine / fallback trace -->
 @if($query && count($attempts) > 1)
-<div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-4 mb-8 text-sm">
-    <span class="font-semibold">Fallback used:</span>
-    <code>{{ implode(' → ', $attempts) }}</code> —
-    <strong>{{ $attempts[0] }}</strong> returned nothing{{ $attempts[0] === 'bm25' ? ' (no index match, or the products index is not built)' : '' }},
-    so the same search was re-run with <strong>{{ last($attempts) }}</strong>{{ $category !== '' ? ', still filtered to "' . $category . '"' : '' }}.
-</div>
+    <x-callout tone="warn" title="Fallback used" class="mb-8">
+        <code class="code">{{ implode(' → ', $attempts) }}</code> —
+        <strong>{{ $attempts[0] }}</strong> returned nothing{{ $attempts[0] === 'bm25' ? ' (no index match, or the products index is not built)' : '' }},
+        so the same search was re-run with <strong>{{ last($attempts) }}</strong>{{ $category !== '' ? ', still filtered to “' . $category . '”' : '' }}.
+    </x-callout>
 @elseif($query && $engine === 'bm25' && count($attempts) === 1)
-<div class="bg-gray-50 border border-gray-200 text-gray-600 rounded-lg p-4 mb-8 text-sm">
-    Answered by the <strong>BM25 index</strong>{{ $category !== '' ? ' with the "' . $category . '" filter applied before the page was cut' : '' }}; the fuzzy fallback was not needed.
-</div>
+    <x-callout tone="success" class="mb-8">
+        Answered by the <strong>BM25 index</strong>{{ $category !== '' ? ' with the “' . $category . '” filter applied before the page was cut' : '' }}; the fuzzy fallback was not needed.
+    </x-callout>
 @endif
 
-<!-- Results -->
 @if($query)
-<div class="bg-white rounded-lg shadow">
-    <div class="px-6 py-4 border-b">
-        <h2 class="font-bold text-gray-800">Results ({{ $results->count() }})</h2>
-    </div>
-
-    @if($results->isEmpty())
-        <div class="p-6 text-gray-500 text-center">No products found for "{{ $query }}"</div>
-    @else
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
-            @foreach($results as $product)
-            <div class="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                <div class="flex justify-between items-start mb-2">
-                    <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">{{ $product->category }}</span>
-                    @if(isset($product->_score))
-                    <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
-                        {{ number_format($product->_score, 1) }}
-                    </span>
-                    @endif
-                </div>
-                <h3 class="font-medium text-gray-800 mb-1">@fuzzyHighlight($product, 'name')</h3>
-                <div class="text-sm text-gray-500 mb-2">{{ $product->brand }} • {{ $product->sku }}</div>
-                <div class="text-lg font-bold text-green-600">${{ number_format($product->price, 2) }}</div>
+    <x-results :count="$results->count()">
+        @if($results->isEmpty())
+            <x-empty icon="bag">
+                No products match “{{ $query }}”{{ $category !== '' ? ' in “' . $category . '”' : '' }}.
+                <x-slot:hint>Try the E-commerce preset, clear the category, or switch the engine.</x-slot:hint>
+            </x-empty>
+        @else
+            <div class="grid gap-4 p-4 sm:p-5 md:grid-cols-2 lg:grid-cols-3">
+                @foreach($results as $product)
+                    <article class="flex flex-col gap-2 rounded-xl border border-line bg-base/40 p-4 transition-colors duration-200 hover:border-accent/50">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="badge bg-raised text-muted">{{ $product->category }}</span>
+                            @isset($product->_score)
+                                <span class="badge bg-accent/15 text-accent" title="Relevance score">{{ number_format($product->_score, 1) }}</span>
+                            @endisset
+                        </div>
+                        <h3 class="font-medium text-ink">@fuzzyHighlight($product, 'name')</h3>
+                        <p class="text-sm text-muted">{{ $product->brand }} · <span class="font-mono">{{ $product->sku }}</span></p>
+                        <p class="mt-auto font-mono text-lg font-semibold text-ink">${{ number_format($product->price, 2) }}</p>
+                    </article>
+                @endforeach
             </div>
-            @endforeach
-        </div>
-    @endif
-</div>
+        @endif
+    </x-results>
 @endif
 @endsection
-

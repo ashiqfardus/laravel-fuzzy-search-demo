@@ -1,50 +1,32 @@
 <div
     x-show="tour.active"
     x-cloak
-    class="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-4"
+    class="fixed inset-0 z-60 flex items-end justify-center bg-base/70 p-4 backdrop-blur-sm sm:items-center"
     @keydown.escape.window="tour.finish()"
+    role="dialog" aria-modal="true" aria-label="Feature tour"
 >
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 relative">
-        {{-- Close button --}}
+    <div class="card relative w-full max-w-sm p-6 shadow-2xl">
         <button @click="tour.finish()"
-                class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 transition-colors"
+                class="absolute right-3 top-3 cursor-pointer rounded-md p-1 text-muted transition-colors duration-200 hover:bg-raised hover:text-ink"
                 aria-label="Close tour">
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
+            <x-icon name="close" class="h-5 w-5" />
         </button>
 
-        {{-- Step title --}}
-        <p class="text-xs text-indigo-500 font-semibold uppercase tracking-wide mb-1"
-           x-text="tour.current.title"></p>
+        <p class="mb-2 font-mono text-xs uppercase tracking-[0.2em] text-accent" x-text="tour.current.title"></p>
+        <p class="mb-5 text-sm leading-relaxed text-muted" x-text="tour.current.body"></p>
 
-        {{-- Step body --}}
-        <p class="text-gray-700 text-sm leading-relaxed mb-5"
-           x-text="tour.current.body"></p>
-
-        {{-- Progress dots --}}
         <div class="flex items-center justify-between">
-            <div class="flex gap-1.5">
+            <div class="flex gap-1.5" aria-hidden="true">
                 <template x-for="(s, i) in tour.steps" :key="i">
-                    <span class="w-2 h-2 rounded-full transition-colors"
-                          :class="i === tour.step ? 'bg-indigo-600' : 'bg-gray-300'"></span>
+                    <span class="h-1.5 w-1.5 rounded-full transition-colors duration-200"
+                          :class="i === tour.step ? 'bg-accent' : 'bg-line'"></span>
                 </template>
             </div>
 
-            {{-- Navigation buttons --}}
             <div class="flex gap-2">
-                <button
-                    x-show="tour.step > 0"
-                    @click="tour.prev()"
-                    class="text-gray-500 hover:text-gray-700 text-sm px-3 py-1.5 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors">
-                    ← Back
-                </button>
-                <a
-                    :href="tour.current.href"
-                    @click="tour.next()"
-                    class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-1.5 rounded-lg transition-colors"
-                    x-text="tour.isLast ? 'Finish' : 'Go →'">
-                </a>
+                <button x-show="tour.step > 0" @click="tour.prev()" class="btn-ghost">Back</button>
+                <a :href="tour.current.href" @click="tour.next()" class="btn-primary py-2! text-sm"
+                   x-text="tour.isLast ? 'Finish' : 'Go'"></a>
             </div>
         </div>
     </div>
