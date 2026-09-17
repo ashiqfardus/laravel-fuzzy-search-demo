@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\User;
 use App\Models\Product;
 use App\Models\Article;
+use App\Models\Author;
 use App\Models\Contact;
 use Illuminate\Database\Seeder;
 
@@ -38,8 +39,10 @@ class DatabaseSeeder extends Seeder
         // Create products
         Product::factory(50)->create();
 
-        // Create articles
-        Article::factory(30)->create();
+        // Create articles — a small author pool so several articles share an author
+        // (otherwise every author is used exactly once and relation search has nothing to demo).
+        $authors = Author::factory()->count(10)->create();
+        Article::factory(30)->recycle($authors)->create();
 
         // Create contacts
         Contact::factory(40)->create();

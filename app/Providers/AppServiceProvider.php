@@ -11,7 +11,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // The demo runs no queue worker; index synchronously so saves and reindexRelated() take effect immediately.
+        config(['fuzzy-search.indexing.async' => false]);
     }
 
     /**

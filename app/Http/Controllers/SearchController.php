@@ -345,17 +345,12 @@ class SearchController extends Controller
         if ($query) {
             // Helper function to search and map results with similarity
             $searchModel = function($modelClass, $type, $nameField) use ($query) {
-                // Article's author is a relation now — eager load it here so the view's
-                // "by {{ $item->author?->name }}" doesn't N+1. No-op for the other models.
-                $withAuthor = fn ($q) => $modelClass === Article::class ? $q->with('author') : $q;
-
                 // Try levenshtein first (better for typos)
                 $levenResults = $modelClass::search($query)
                     ->using('levenshtein')
                     ->typoTolerance(3)
                     ->withRelevance()
                     ->highlight('mark')
-                    ->query($withAuthor)
                     ->get();
 
                 // Also try fuzzy for broader matches
@@ -364,7 +359,6 @@ class SearchController extends Controller
                     ->typoTolerance(4)
                     ->withRelevance()
                     ->highlight('mark')
-                    ->query($withAuthor)
                     ->get();
 
                 // Merge and deduplicate

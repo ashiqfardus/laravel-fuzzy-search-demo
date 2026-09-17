@@ -4,6 +4,7 @@
     $pages = [
         ['search.users',             'users',    'User search',        'Eight algorithms, typo tolerance, relevance scores and a fallback chain that only runs when the primary finds nothing.', 'jonh · simple → fuzzy'],
         ['search.products',          'bag',      'Product search',     'Config presets, a category filter honoured on the BM25 index path, and a fuzzy fallback.',                              'macbok · category = Laptop'],
+        ['search.relations',         'link',     'Relationship search', 'Search through Eloquent relations with dotted columns — author.name compiles to whereHas/EXISTS.',                        'smith'],
         ['search.articles',          'document', 'Article search',     'Multi-word tokenization with match-all and match-any.',                                                                'laravel search fuzzy'],
         ['search.contacts',          'card',     'Contact search',     'Phonetic matching through Soundex and Metaphone shadow columns.',                                                      'steven → Stephen'],
         ['search.federated',         'squares',  'Federated search',   'One query across users, products, articles and contacts, merged into a single ranking.',                              'john'],

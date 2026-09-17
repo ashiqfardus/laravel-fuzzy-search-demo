@@ -48,6 +48,8 @@ php artisan serve
 
 Open <http://127.0.0.1:8000> in your browser.
 
+The demo runs no queue worker, so `AppServiceProvider` forces `fuzzy-search.indexing.async` to `false` — index updates (including `reindexRelated()` on a category/author rename) happen synchronously on the request instead of sitting unprocessed in the `jobs` table.
+
 ## Test Data
 
 The default seeder (`php artisan db:seed`) creates:

@@ -70,9 +70,8 @@ class LargeDatasetSeeder extends Seeder
             $adj       = $adjectives[array_rand($adjectives)];
             $price     = round(rand(999, 199999) / 100, 2);
             $sku       = strtoupper(substr($brand, 0, 3)) . '-' . $type[0] . '-' . str_pad($i, 6, '0', STR_PAD_LEFT);
-            $categoryIds[$type] ??= DB::table('categories')->insertGetId([
-                'name' => $type, 'created_at' => now(), 'updated_at' => now(),
-            ]);
+            $categoryIds[$type] ??= DB::table('categories')->where('name', $type)->value('id')
+                ?? DB::table('categories')->insertGetId(['name' => $type, 'created_at' => now(), 'updated_at' => now()]);
             return [
                 'name'        => "{$brand} {$type} {$adj}",
                 'description' => "The {$brand} {$type} {$adj} is a high-quality product with excellent performance.",
@@ -104,9 +103,8 @@ class LargeDatasetSeeder extends Seeder
             $verb   = $verbs[array_rand($verbs)];
             $author = $authors[array_rand($authors)];
             $status = $statuses[array_rand($statuses)];
-            $authorIds[$author] ??= DB::table('authors')->insertGetId([
-                'name' => $author, 'created_at' => now(), 'updated_at' => now(),
-            ]);
+            $authorIds[$author] ??= DB::table('authors')->where('name', $author)->value('id')
+                ?? DB::table('authors')->insertGetId(['name' => $author, 'created_at' => now(), 'updated_at' => now()]);
             return [
                 'title'      => "{$verb} {$topic}",
                 'body'       => "This article covers {$verb} {$topic}. " . str_repeat("Learn about {$topic} fundamentals and advanced concepts. ", 5),

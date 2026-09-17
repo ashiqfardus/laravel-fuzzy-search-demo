@@ -73,8 +73,8 @@
     </main>
 
     <footer class="mx-auto max-w-7xl px-4 py-8 text-sm text-muted sm:px-6 lg:px-8">
-        <div class="flex flex-wrap items-center justify-between gap-2 border-t border-line pt-6">
-            <span class="font-mono">ashiqfardus/laravel-fuzzy-search</span>
+        <div class="flex flex-col items-start gap-2 border-t border-line pt-6 sm:flex-row sm:items-center sm:justify-between">
+            <span class="font-mono break-all">ashiqfardus/laravel-fuzzy-search</span>
             <span>MIT · <a href="https://github.com/ashiqfardus/laravel-fuzzy-search" class="text-link hover:underline">Source</a></span>
         </div>
     </footer>
