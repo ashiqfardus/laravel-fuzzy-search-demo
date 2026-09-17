@@ -38,6 +38,15 @@ class ProductFactory extends Factory
                 ['name' => 'Samsung Neo QLED 8K', 'brand' => 'Samsung', 'category' => 'TVs'],
                 ['name' => 'Dyson V15 Detect', 'brand' => 'Dyson', 'category' => 'Home Appliances'],
                 ['name' => 'Nespresso Vertuo Plus', 'brand' => 'Nespresso', 'category' => 'Kitchen'],
+                // CJK catalog — script-aware tokenizer (character bigrams for Han/Hiragana/
+                // Katakana/Hangul runs, whitespace for the rest). /search/i18n's description
+                // fields carry the ASCII "Tokyo"/"Kyoto" gloss that the plain-Latin query needs.
+                ['name' => '東京タワー 模型', 'brand' => 'Bandai', 'category' => 'Souvenirs', 'description' => "A die-cast miniature of Tokyo Tower (東京タワー), Japan's iconic red steel landmark."],
+                ['name' => '北京烤鸭 调味料', 'brand' => 'Quanjude', 'category' => 'Kitchen', 'description' => 'A ready-to-use marinade and glaze for authentic Beijing-style roast duck at home.'],
+                ['name' => 'ソニー ヘッドホン', 'brand' => 'Sony', 'category' => 'Headphones', 'description' => "Over-ear wireless headphones with active noise cancelling, in Sony's Japan-market packaging."],
+                ['name' => '华为 手机壳', 'brand' => 'Huawei', 'category' => 'Accessories', 'description' => 'A slim protective case for Huawei smartphones with reinforced corners.'],
+                ['name' => '京都 抹茶 セット', 'brand' => 'Ippodo', 'category' => 'Souvenirs', 'description' => "A ceremonial-grade matcha gift set from Kyoto, once Japan's imperial capital before Tokyo (東京) became the seat of government."],
+                ['name' => '서울 김치 세트', 'brand' => 'Jongga', 'category' => 'Kitchen', 'description' => 'A jarred set of napa cabbage and radish kimchi, fermented in small batches in Seoul.'],
             ]
         );
     }

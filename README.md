@@ -23,6 +23,7 @@ A demonstration application showcasing the [ashiqfardus/laravel-fuzzy-search](ht
 | `/search/scout-demo` | Laravel Scout integration (`SCOUT_DRIVER=fuzzy-search`) |
 | `/search/playground` | Extended query syntax: include `'`, exact `=`, prefix `^`, suffix `$`, exclude `!`, OR, grouping `()`, typo `~word`, field scope `field:term`; `extended()->paginate(10)` with the same pager component |
 | `/search/analytics` | Popular and zero-result searches, latency by path and daily volume, read from `fuzzy_search_logs` via the `SearchAnalytics` facade |
+| `/search/i18n` | Chinese, Japanese and Korean product names through the `ScriptAwareTokenizer` — character bigrams for CJK runs, whitespace for everything else, same BM25 index |
 
 ## Installation
 

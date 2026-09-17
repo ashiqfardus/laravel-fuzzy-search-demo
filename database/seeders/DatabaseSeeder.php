@@ -67,7 +67,7 @@ class DatabaseSeeder extends Seeder
     {
         foreach (ProductFactory::catalog() as $entry) {
             Product::firstOrCreate(['name' => $entry['name']], [
-                'description' => fake()->paragraph(3),
+                'description' => $entry['description'] ?? fake()->paragraph(3),
                 'sku' => strtoupper(fake()->unique()->bothify('???-#####')),
                 'brand' => $entry['brand'],
                 'category_id' => $entry['category_id'],

@@ -14,6 +14,7 @@
         ['search.scout-demo',        'bolt',     'Scout driver',       'SCOUT_DRIVER=fuzzy-search wires the package in as a Scout engine.',                                                     'laravel'],
         ['search.playground',        'code',     'Query playground',   'Extended syntax: ^prefix, word$, =exact, !not, | or, ~typo, field:scope, quoted phrases.',                                                  '^John Doe !banned'],
         ['search.analytics',         'chart',    'Search analytics',   'Popular and zero-result searches, latency by path and daily volume from fuzzy_search_logs.',                                       'run a few searches first'],
+        ['search.i18n',              'squares',  'CJK search',         'Chinese, Japanese and Korean product names through the script-aware n-gram tokenizer.',                                            '東京'],
     ];
     $tiles = [
         ['users',    'Users',    'users'],
@@ -33,6 +34,7 @@
         ['Typo-tolerant, as-you-type BM25 index'],
         ['Extended syntax: <span class="code">~word</span> typo terms and <span class="code">field:</span> scopes'],
         ['Persisted search analytics and dictionary-backed autocomplete'],
+        ['Script-aware tokenizer: character bigrams for Chinese, Japanese and Korean'],
     ];
 @endphp
 

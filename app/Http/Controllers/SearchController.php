@@ -450,6 +450,30 @@ class SearchController extends Controller
     }
 
     /**
+     * CJK search: the script-aware tokenizer cuts character bigrams for Chinese, Japanese
+     * and Korean runs (and leaves whitespace-delimited scripts alone), so product names
+     * with no word boundaries are searchable through the same BM25 index as everything else.
+     */
+    public function i18n(): \Illuminate\View\View
+    {
+        $query = request('q', '東京');
+
+        $search = Product::search($query)
+            ->useInvertedIndex()
+            ->withRelevance()
+            ->highlight('mark')
+            ->limit(20);
+
+        $results = $search->get();
+
+        return view('search.i18n', [
+            'results'    => $results,
+            'query'      => $query,
+            'indexTerms' => $search->getDebugInfo()['index_terms'],
+        ]);
+    }
+
+    /**
      * LIKE vs BM25 side-by-side benchmark
      */
     public function benchmarks(): \Illuminate\View\View
