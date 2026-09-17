@@ -12,8 +12,9 @@ A demonstration application showcasing the [ashiqfardus/laravel-fuzzy-search](ht
 | Page | What it shows |
 | ---- | ------------- |
 | `/search/users` | 8 algorithms, typo tolerance, relevance scoring, `@fuzzyHighlight`, `fallback()` chain with an "answered by" trace, `verified_only` toggle chaining `->whereNotNull('email_verified_at')` straight onto the search builder |
-| `/search/products` | Config presets (`ecommerce`, `exact`), field weighting, category `filter()` honoured on the BM25 path, BM25 → fuzzy fallback |
-| `/search/articles` | Multi-word tokenization with AND / OR logic |
+| `/search/products` | Config presets (`ecommerce`, `exact`), field weighting, `category_id` `filter()` honoured on the BM25 path, BM25 → fuzzy fallback |
+| `/search/relations` | `searchIn(['author.name' => 6])` compiled to a `whereHas`/EXISTS clause, relation match scored and highlighted under the dotted key |
+| `/search/articles` | Multi-word tokenization with AND / OR logic, author shown via the `Author` relation |
 | `/search/contacts` | Phonetic search — Soundex & Metaphone shadow columns |
 | `/search/federated` | Cross-model federated search with unified ranking, `limitPerModel(10)->paginate(10)` with a reachable-rows total and a dark-theme pager |
 | `/search/smart` | `didYouMean()`, autocomplete suggestions, in-memory search |
@@ -54,8 +55,8 @@ The default seeder (`php artisan db:seed`) creates:
 | Model | Count | Searchable columns |
 | ----- | ----- | ------------------ |
 | Users | 24 | `name`, `email` |
-| Products | 50 | `name`, `description`, `sku`, `brand`, `category` |
-| Articles | 30 | `title`, `body`, `excerpt`, `author` |
+| Products | 50 | `name`, `description`, `sku`, `brand`, `category.name` |
+| Articles | 30 | `title`, `body`, `excerpt`, `author.name` |
 | Contacts | 40 | `first_name`, `last_name`, `email`, `company` |
 
 ### Large dataset (benchmarks)
@@ -146,8 +147,10 @@ app/
 │   └── SearchController.php       # All search logic
 ├── Models/
 │   ├── User.php                   # Searchable + BM25 index
-│   ├── Product.php
-│   ├── Article.php
+│   ├── Product.php                # belongsTo Category; searchableText()/searchIndexQuery()
+│   ├── Article.php                # belongsTo Author; searchableText()/searchIndexQuery()
+│   ├── Category.php               # reindexRelated() on rename
+│   ├── Author.php                 # reindexRelated() on rename
 │   └── Contact.php
 database/
 ├── migrations/
@@ -162,6 +165,7 @@ resources/views/
     ├── index.blade.php
     ├── users.blade.php
     ├── products.blade.php
+    ├── relations.blade.php
     ├── articles.blade.php
     ├── contacts.blade.php
     ├── federated.blade.php

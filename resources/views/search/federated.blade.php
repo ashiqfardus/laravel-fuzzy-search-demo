@@ -39,7 +39,7 @@
                                 @elseif($type === 'Product')
                                     {{ $item->name }} <span class="font-normal text-muted">· {{ $item->brand }} · ${{ number_format($item->price, 2) }}</span>
                                 @elseif($type === 'Article')
-                                    {{ $item->title }} <span class="font-normal text-muted">· by {{ $item->author }}</span>
+                                    {{ $item->title }} <span class="font-normal text-muted">· by {{ $item->author?->name }}</span>
                                 @elseif($type === 'Contact')
                                     {{ $item->first_name }} {{ $item->last_name }} <span class="font-normal text-muted">· {{ $item->email }}</span>
                                 @else

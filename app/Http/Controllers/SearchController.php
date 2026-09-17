@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\Product;
 use App\Models\Article;
 use App\Models\Contact;
+use App\Models\Category;
 use Ashiqfardus\LaravelFuzzySearch\Events\FuzzySearchExecuted;
 use Ashiqfardus\LaravelFuzzySearch\FederatedSearch;
 
@@ -103,7 +104,7 @@ class SearchController extends Controller
         $category = (string) $request->input('category', '');
         $engine   = $request->input('engine') === 'bm25' ? 'bm25' : 'like';
 
-        $categories = Product::query()->distinct()->orderBy('category')->pluck('category');
+        $categories = Category::orderBy('name')->get(['id', 'name']);
         $results    = collect();
         $attempts   = $this->recordSearchAttempts();
 
@@ -111,12 +112,13 @@ class SearchController extends Controller
             $search = Product::search($query)
                 ->preset($preset)
                 ->withRelevance()
-                ->highlight('mark');
+                ->highlight('mark')
+                ->with('category');
 
             if ($category !== '') {
                 // Honoured on both paths: on BM25 the ranking is checked against the
                 // filter before the page is cut, so the page never comes back short.
-                $search->filter('category', $category);
+                $search->filter('category_id', (int) $category);
             }
 
             if ($engine === 'bm25') {
@@ -210,9 +212,37 @@ class SearchController extends Controller
                 ->limitPerModel(10)
                 ->paginate(10)
                 ->withQueryString();
+
+            // FederatedSearch fetches each model separately, so the Article rows it returns
+            // don't have author eager loaded — load it in one query rather than per row.
+            \Illuminate\Database\Eloquent\Collection::make(
+                $results->getCollection()->filter(fn ($item) => $item instanceof Article)
+            )->load('author');
         }
 
         return view('search.federated', compact('results', 'query'));
+    }
+
+    /**
+     * Relationship search: author.name compiles to a whereHas/EXISTS clause on the
+     * Article query, and its match is scored and highlighted under the dotted key.
+     */
+    public function relations(Request $request)
+    {
+        $query   = $request->input('q', '');
+        $results = collect();
+
+        if ($query) {
+            $results = Article::search($query)
+                ->searchIn(['title' => 10, 'excerpt' => 3, 'author.name' => 6])
+                ->using('fuzzy')
+                ->withRelevance()
+                ->highlight('mark')
+                ->paginate(10)
+                ->withQueryString();
+        }
+
+        return view('search.relations', compact('results', 'query'));
     }
 
     /**
@@ -257,7 +287,7 @@ class SearchController extends Controller
 
         $searchColumns = match($model) {
             'users'    => ['name', 'email'],
-            'articles' => ['title', 'author'],
+            'articles' => ['title', 'author.name'],
             'contacts' => ['first_name', 'last_name'],
             default    => ['name'],
         };
@@ -315,12 +345,17 @@ class SearchController extends Controller
         if ($query) {
             // Helper function to search and map results with similarity
             $searchModel = function($modelClass, $type, $nameField) use ($query) {
+                // Article's author is a relation now — eager load it here so the view's
+                // "by {{ $item->author?->name }}" doesn't N+1. No-op for the other models.
+                $withAuthor = fn ($q) => $modelClass === Article::class ? $q->with('author') : $q;
+
                 // Try levenshtein first (better for typos)
                 $levenResults = $modelClass::search($query)
                     ->using('levenshtein')
                     ->typoTolerance(3)
                     ->withRelevance()
                     ->highlight('mark')
+                    ->query($withAuthor)
                     ->get();
 
                 // Also try fuzzy for broader matches
@@ -329,6 +364,7 @@ class SearchController extends Controller
                     ->typoTolerance(4)
                     ->withRelevance()
                     ->highlight('mark')
+                    ->query($withAuthor)
                     ->get();
 
                 // Merge and deduplicate

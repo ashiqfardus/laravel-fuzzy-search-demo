@@ -84,7 +84,7 @@
                                 @elseif($type === 'User')
                                     @fuzzyHighlight($item, 'name') <span class="font-normal text-muted">· {{ $item->email }}</span>
                                 @elseif($type === 'Article')
-                                    @fuzzyHighlight($item, 'title') <span class="font-normal text-muted">· by {{ $item->author }}</span>
+                                    @fuzzyHighlight($item, 'title') <span class="font-normal text-muted">· by {{ $item->author?->name }}</span>
                                 @elseif($type === 'Contact')
                                     @fuzzyHighlight($item, 'first_name') @fuzzyHighlight($item, 'last_name') <span class="font-normal text-muted">· {{ $item->email }}</span>
                                 @endif

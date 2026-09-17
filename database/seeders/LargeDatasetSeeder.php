@@ -58,7 +58,8 @@ class LargeDatasetSeeder extends Seeder
     private function seedProducts(): void
     {
         $this->command->info('Seeding products...');
-        $this->bulkInsert('products', function (int $i) {
+        $categoryIds = [];
+        $this->bulkInsert('products', function (int $i) use (&$categoryIds) {
             static $brands    = ['Apple','Samsung','Sony','Dell','HP','Lenovo','Asus','Acer','Microsoft',
                 'Google','Amazon','LG','Philips','Bosch','Nike','Adidas','Puma','Canon','Nikon','Logitech'];
             static $types     = ['Laptop','Phone','Tablet','Monitor','Keyboard','Mouse','Headphones',
@@ -69,13 +70,16 @@ class LargeDatasetSeeder extends Seeder
             $adj       = $adjectives[array_rand($adjectives)];
             $price     = round(rand(999, 199999) / 100, 2);
             $sku       = strtoupper(substr($brand, 0, 3)) . '-' . $type[0] . '-' . str_pad($i, 6, '0', STR_PAD_LEFT);
+            $categoryIds[$type] ??= DB::table('categories')->insertGetId([
+                'name' => $type, 'created_at' => now(), 'updated_at' => now(),
+            ]);
             return [
                 'name'        => "{$brand} {$type} {$adj}",
                 'description' => "The {$brand} {$type} {$adj} is a high-quality product with excellent performance.",
                 'sku'         => $sku,
                 'brand'       => $brand,
                 'price'       => $price,
-                'category'    => $type,
+                'category_id' => $categoryIds[$type],
                 'created_at'  => now(),
                 'updated_at'  => now(),
             ];
@@ -85,7 +89,8 @@ class LargeDatasetSeeder extends Seeder
     private function seedArticles(): void
     {
         $this->command->info('Seeding articles...');
-        $this->bulkInsert('articles', function (int $i) {
+        $authorIds = [];
+        $this->bulkInsert('articles', function (int $i) use (&$authorIds) {
             static $topics  = ['Laravel','PHP','JavaScript','React','Vue','Docker','Kubernetes',
                 'MySQL','PostgreSQL','Redis','AWS','Linux','Git','API','REST','GraphQL',
                 'Testing','Security','Performance','Deployment','Caching','Queues','Events'];
@@ -99,11 +104,14 @@ class LargeDatasetSeeder extends Seeder
             $verb   = $verbs[array_rand($verbs)];
             $author = $authors[array_rand($authors)];
             $status = $statuses[array_rand($statuses)];
+            $authorIds[$author] ??= DB::table('authors')->insertGetId([
+                'name' => $author, 'created_at' => now(), 'updated_at' => now(),
+            ]);
             return [
                 'title'      => "{$verb} {$topic}",
                 'body'       => "This article covers {$verb} {$topic}. " . str_repeat("Learn about {$topic} fundamentals and advanced concepts. ", 5),
                 'excerpt'    => "A comprehensive guide to {$verb} {$topic}.",
-                'author'     => $author,
+                'author_id'  => $authorIds[$author],
                 'status'     => $status,
                 'created_at' => now(),
                 'updated_at' => now(),

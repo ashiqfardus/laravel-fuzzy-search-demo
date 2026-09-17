@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Author;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class ArticleFactory extends Factory
@@ -30,7 +31,7 @@ class ArticleFactory extends Factory
             'title' => fake()->randomElement($titles) . ' - Part ' . fake()->numberBetween(1, 5),
             'body' => fake()->paragraphs(5, true),
             'excerpt' => fake()->paragraph(),
-            'author' => fake()->name(),
+            'author_id' => Author::factory(),
             'status' => fake()->randomElement(['draft', 'published', 'published', 'published', 'archived']),
         ];
     }

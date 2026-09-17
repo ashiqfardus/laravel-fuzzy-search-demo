@@ -2,6 +2,10 @@
 
 @section('title', 'Product search — Fuzzy Search Demo')
 
+@php
+    $categoryName = $category !== '' ? $categories->firstWhere('id', (int) $category)?->name : null;
+@endphp
+
 @section('content')
 <x-page-header eyebrow="Presets · filters · BM25 fallback" title="Product search">
     Config presets tune eight parameters at once. The category filter is honoured on the BM25 index path, and the fuzzy fallback answers when the index has no match.
@@ -21,7 +25,7 @@
         <select id="category" name="category" class="field-control">
             <option value="" @selected($category === '')>All categories</option>
             @foreach($categories as $option)
-                <option value="{{ $option }}" @selected($category === $option)>{{ $option }}</option>
+                <option value="{{ $option->id }}" @selected($category === (string) $option->id)>{{ $option->name }}</option>
             @endforeach
         </select>
     </x-field>
@@ -37,11 +41,11 @@
     <x-callout tone="warn" title="Fallback used" class="mb-8">
         <code class="code">{{ implode(' → ', $attempts) }}</code> —
         <strong>{{ $attempts[0] }}</strong> returned nothing{{ $attempts[0] === 'bm25' ? ' (no index match, or the products index is not built)' : '' }},
-        so the same search was re-run with <strong>{{ last($attempts) }}</strong>{{ $category !== '' ? ', still filtered to “' . $category . '”' : '' }}.
+        so the same search was re-run with <strong>{{ last($attempts) }}</strong>{{ $categoryName ? ', still filtered to “' . $categoryName . '”' : '' }}.
     </x-callout>
 @elseif($query && $engine === 'bm25' && count($attempts) === 1)
     <x-callout tone="success" class="mb-8">
-        Answered by the <strong>BM25 index</strong>{{ $category !== '' ? ' with the “' . $category . '” filter applied before the page was cut' : '' }}; the fuzzy fallback was not needed.
+        Answered by the <strong>BM25 index</strong>{{ $categoryName ? ' with the “' . $categoryName . '” filter applied before the page was cut' : '' }}; the fuzzy fallback was not needed.
     </x-callout>
 @endif
 
@@ -49,7 +53,7 @@
     <x-results :count="$results->count()">
         @if($results->isEmpty())
             <x-empty icon="bag">
-                No products match “{{ $query }}”{{ $category !== '' ? ' in “' . $category . '”' : '' }}.
+                No products match “{{ $query }}”{{ $categoryName ? ' in “' . $categoryName . '”' : '' }}.
                 <x-slot:hint>Try the E-commerce preset, clear the category, or switch the engine.</x-slot:hint>
             </x-empty>
         @else
@@ -57,7 +61,7 @@
                 @foreach($results as $product)
                     <article class="flex flex-col gap-2 rounded-xl border border-line bg-base/40 p-4 transition-colors duration-200 hover:border-accent/50">
                         <div class="flex items-center justify-between gap-2">
-                            <span class="badge bg-raised text-muted">{{ $product->category }}</span>
+                            <span class="badge bg-raised text-muted">{{ $product->category?->name }}</span>
                             @isset($product->_score)
                                 <span class="badge bg-accent/15 text-accent" title="Relevance score">{{ number_format($product->_score, 1) }}</span>
                             @endisset

@@ -13,6 +13,7 @@
     $nav = [
         ['search.users',             'Users'],
         ['search.products',          'Products'],
+        ['search.relations',         'Relations'],
         ['search.articles',          'Articles'],
         ['search.contacts',          'Contacts'],
         ['search.federated',         'Federated'],

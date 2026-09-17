@@ -41,7 +41,7 @@
                         </div>
                         <h3 class="text-lg font-medium text-ink">@fuzzyHighlight($article, 'title')</h3>
                         <p class="text-sm leading-relaxed text-muted">{{ Str::limit($article->excerpt ?? $article->body, 150) }}</p>
-                        <p class="text-xs text-muted">By {{ $article->author }}</p>
+                        <p class="text-xs text-muted">By {{ $article->author?->name }}</p>
                     </li>
                 @endforeach
             </ul>

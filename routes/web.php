@@ -8,6 +8,7 @@ Route::get('/', [SearchController::class, 'index'])->name('search.index');
 Route::middleware('throttle:30,1')->group(function () {
     Route::get('/search/users', [SearchController::class, 'users'])->name('search.users');
     Route::get('/search/products', [SearchController::class, 'products'])->name('search.products');
+    Route::get('/search/relations', [SearchController::class, 'relations'])->name('search.relations');
     Route::get('/search/articles', [SearchController::class, 'articles'])->name('search.articles');
     Route::get('/search/contacts', [SearchController::class, 'contacts'])->name('search.contacts');
     Route::get('/search/federated', [SearchController::class, 'federated'])->name('search.federated');
