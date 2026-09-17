@@ -9,7 +9,7 @@
 
 <x-search-form button="Search articles" cols="md:grid-cols-1">
     <x-field label="Search query" for="q">
-        <input id="q" type="text" name="q" value="{{ $query }}" placeholder="Try an article title, or an author's name…" class="field-control" autofocus>
+        <input id="q" type="text" name="q" value="{{ $query }}" placeholder="Try: laravel, smith…" class="field-control" autofocus>
     </x-field>
 </x-search-form>
 
