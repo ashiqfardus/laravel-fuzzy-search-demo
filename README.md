@@ -17,7 +17,7 @@ A demonstration application showcasing the [ashiqfardus/laravel-fuzzy-search](ht
 | `/search/articles` | Multi-word tokenization with AND / OR logic, author shown via the `Author` relation |
 | `/search/contacts` | Phonetic search — Soundex & Metaphone shadow columns |
 | `/search/federated` | Cross-model federated search with unified ranking, `limitPerModel(10)->paginate(10)` with a reachable-rows total and a dark-theme pager |
-| `/search/smart` | `didYouMean()`, autocomplete suggestions, in-memory search, as-you-type suggest API (`/api/suggest`) on the index |
+| `/search/smart` | `didYouMean()`, autocomplete suggestions, in-memory search — `/api/suggest` is a separate, standalone autocomplete endpoint backed by the index (`useInvertedIndex()->asYouType()`); this page does not call it |
 | `/search/benchmarks` | Side-by-side timing: LIKE vs BM25 inverted index across dataset sizes |
 | `/search/capability-matrix` | Feature availability per algorithm and database driver |
 | `/search/scout-demo` | Laravel Scout integration (`SCOUT_DRIVER=fuzzy-search`) |

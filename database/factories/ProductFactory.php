@@ -7,13 +7,20 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 
 class ProductFactory extends Factory
 {
-    public function definition(): array
+    /**
+     * The fixed catalog of realistic product names, each mapped to a resolved category id.
+     * Built once per process. Exposed as a public static method (not just a local to
+     * definition()) so DatabaseSeeder can firstOrCreate() every entry before drawing random
+     * duplicates — otherwise a random draw of 50 from 15 names can silently skip one, and
+     * whichever page hint mentions that product stops matching until the next reseed.
+     */
+    public static function catalog(): array
     {
         static $products = null;
 
         // Built once per process: the category row only needs firstOrCreate() the first time
         // a given name is seen, not once per generated product.
-        $products ??= array_map(
+        return $products ??= array_map(
             fn (array $p) => $p + ['category_id' => Category::firstOrCreate(['name' => $p['category']])->id],
             [
                 ['name' => 'iPhone 15 Pro Max', 'brand' => 'Apple', 'category' => 'Smartphones'],
@@ -33,8 +40,11 @@ class ProductFactory extends Factory
                 ['name' => 'Nespresso Vertuo Plus', 'brand' => 'Nespresso', 'category' => 'Kitchen'],
             ]
         );
+    }
 
-        $product = fake()->randomElement($products);
+    public function definition(): array
+    {
+        $product = fake()->randomElement(self::catalog());
 
         return [
             'name' => $product['name'],
