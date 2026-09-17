@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use App\Models\User;
 use App\Models\Product;
@@ -10,6 +11,7 @@ use App\Models\Article;
 use App\Models\Contact;
 use App\Models\Category;
 use Ashiqfardus\LaravelFuzzySearch\Events\FuzzySearchExecuted;
+use Ashiqfardus\LaravelFuzzySearch\Facades\SearchAnalytics;
 use Ashiqfardus\LaravelFuzzySearch\FederatedSearch;
 
 class SearchController extends Controller
@@ -268,46 +270,45 @@ class SearchController extends Controller
     }
 
     /**
-     * API endpoint for autocomplete
+     * API endpoint for autocomplete — every model completes from the BM25 dictionary
+     * (suggest()) when it has been indexed, falling back to a table scan otherwise.
      */
-    public function suggest(Request $request)
+    public function suggest(Request $request): \Illuminate\Http\JsonResponse
     {
         $query = $request->input('q', '');
         $model = $request->input('model', 'products');
 
         if (strlen($query) < 2 || strlen($query) > 200) {
-            return response()->json([]);
+            return response()->json(['suggestions' => [], 'source' => 'table', 'latency_ms' => 0.0]);
         }
 
-        if ($model === 'products') {
-            $rows = Product::search($query)
-                ->useInvertedIndex()
-                ->asYouType()
-                ->limit(8)
-                ->get();
-
-            return response()->json($rows->pluck('name')->values());
-        }
-
-        $modelClass = match($model) {
+        $modelClass = match ($model) {
             'users' => User::class,
             'articles' => Article::class,
             'contacts' => Contact::class,
             default => Product::class,
         };
 
-        $searchColumns = match($model) {
+        $searchColumns = match ($model) {
             'users'    => ['name', 'email'],
             'articles' => ['title', 'author.name'],
             'contacts' => ['first_name', 'last_name'],
             default    => ['name'],
         };
 
+        $start = microtime(true);
         $suggestions = $modelClass::search($query)
             ->searchIn($searchColumns)
-            ->suggest(5);
+            ->suggest(8);
+        $latencyMs = round((microtime(true) - $start) * 1000, 2);
 
-        return response()->json($suggestions);
+        $source = DB::table('fuzzy_index_meta')->where('model_type', $modelClass)->exists() ? 'index' : 'table';
+
+        return response()->json([
+            'suggestions' => $suggestions,
+            'source'      => $source,
+            'latency_ms'  => $latencyMs,
+        ]);
     }
 
     /**
@@ -432,6 +433,20 @@ class SearchController extends Controller
         }
 
         return view('search.smart', compact('results', 'query', 'suggestions', 'didYouMean', 'autocomplete'));
+    }
+
+    /**
+     * Persisted search analytics — popular terms, zero-result terms, latency by path and
+     * daily volume, all read from fuzzy_search_logs via the SearchAnalytics facade.
+     */
+    public function analytics(): \Illuminate\View\View
+    {
+        return view('search.analytics', [
+            'popular' => SearchAnalytics::popular(30, 10),
+            'zero'    => SearchAnalytics::zeroResults(30, 10),
+            'latency' => SearchAnalytics::averageLatency(30),
+            'volume'  => SearchAnalytics::volume(30),
+        ]);
     }
 
     /**

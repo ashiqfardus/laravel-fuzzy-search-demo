@@ -17,6 +17,7 @@ Route::middleware('throttle:30,1')->group(function () {
     Route::get('/search/benchmarks', [SearchController::class, 'benchmarks'])->name('search.benchmarks');
     Route::get('/search/scout-demo', [SearchController::class, 'scoutDemo'])->name('search.scout-demo');
     Route::get('/search/playground', [SearchController::class, 'playground'])->name('search.playground');
+    Route::get('/search/analytics', [SearchController::class, 'analytics'])->name('search.analytics');
 });
 
 Route::middleware('throttle:60,1')->group(function () {

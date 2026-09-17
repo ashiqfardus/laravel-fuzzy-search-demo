@@ -13,6 +13,9 @@ class AppServiceProvider extends ServiceProvider
     {
         // The demo runs no queue worker; index synchronously so saves and reindexRelated() take effect immediately.
         config(['fuzzy-search.indexing.async' => false]);
+
+        // Persist search analytics (fuzzy_search_logs) so /search/analytics has data to show.
+        config(['fuzzy-search.analytics.enabled' => true, 'fuzzy-search.analytics.queue' => null]);
     }
 
     /**

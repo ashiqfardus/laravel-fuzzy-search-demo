@@ -21,6 +21,51 @@
     Misspell something on purpose. Every result is scored, and the same pass produces spelling alternatives and completions.
 </x-page-header>
 
+<div class="card mb-8 p-5 sm:p-6" x-data="{
+    q: '',
+    suggestions: [],
+    source: null,
+    latencyMs: null,
+    loading: false,
+    controller: null,
+    async suggest() {
+        if (this.q.length < 2) { this.suggestions = []; this.source = null; return; }
+        this.loading = true;
+        if (this.controller) this.controller.abort();
+        this.controller = new AbortController();
+        try {
+            const resp = await fetch('/api/suggest?model=users&q=' + encodeURIComponent(this.q), { signal: this.controller.signal });
+            const data = await resp.json();
+            this.suggestions = data.suggestions ?? [];
+            this.source = data.source ?? null;
+            this.latencyMs = data.latency_ms ?? null;
+        } catch (e) {
+            if (e.name !== 'AbortError') { this.suggestions = []; this.source = null; }
+        } finally {
+            this.loading = false;
+        }
+    }
+}">
+    <label for="autocomplete" class="mb-1.5 block text-sm font-medium text-ink">Autocomplete — dictionary-backed <span class="text-muted">(users)</span></label>
+    <div class="relative">
+        <input id="autocomplete" type="text" x-model="q" @input.debounce.300ms="suggest()"
+               class="field-control pr-10" placeholder="Start typing a name, e.g. jo…" autocomplete="off">
+        <span x-show="loading" x-cloak class="absolute right-3 top-1/2 -translate-y-1/2 text-accent" aria-hidden="true">
+            <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+            </svg>
+        </span>
+    </div>
+    <ul x-show="suggestions.length > 0" x-cloak class="mt-3 divide-y divide-line overflow-hidden rounded-xl border border-line" aria-label="Suggestions">
+        <template x-for="s in suggestions" :key="s">
+            <li class="px-4 py-2 text-sm text-ink" x-text="s"></li>
+        </template>
+    </ul>
+    <p x-show="!loading && q.length >= 2 && suggestions.length === 0" x-cloak class="mt-3 text-sm text-muted">No completions found.</p>
+    <p x-show="source" x-cloak class="mt-3 font-mono text-xs text-muted"><span x-text="source"></span> · <span x-text="latencyMs"></span> ms</p>
+</div>
+
 <x-search-form button="Smart search" cols="md:grid-cols-1">
     <x-field label="Search query" for="q">
         <input id="q" type="text" name="q" value="{{ $query }}" placeholder="Try misspellings: iphne, macbok, samsng…" class="field-control" autofocus>

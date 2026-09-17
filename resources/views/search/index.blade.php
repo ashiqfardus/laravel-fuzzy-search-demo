@@ -13,6 +13,7 @@
         ['search.benchmarks',        'chart',    'LIKE vs BM25',       'Latency and ordering: pattern search against the inverted index.',                                                      'john'],
         ['search.scout-demo',        'bolt',     'Scout driver',       'SCOUT_DRIVER=fuzzy-search wires the package in as a Scout engine.',                                                     'laravel'],
         ['search.playground',        'code',     'Query playground',   'Extended syntax: ^prefix, word$, =exact, !not, | or, ~typo, field:scope, quoted phrases.',                                                  '^John Doe !banned'],
+        ['search.analytics',         'chart',    'Search analytics',   'Popular and zero-result searches, latency by path and daily volume from fuzzy_search_logs.',                                       'run a few searches first'],
     ];
     $tiles = [
         ['users',    'Users',    'users'],
@@ -31,6 +32,7 @@
         ['Relationship search through dotted columns (<span class="code">author.name</span>)'],
         ['Typo-tolerant, as-you-type BM25 index'],
         ['Extended syntax: <span class="code">~word</span> typo terms and <span class="code">field:</span> scopes'],
+        ['Persisted search analytics and dictionary-backed autocomplete'],
     ];
 @endphp
 
