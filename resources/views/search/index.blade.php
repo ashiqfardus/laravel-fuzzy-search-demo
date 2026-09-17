@@ -27,6 +27,7 @@
         ['Accessor-backed searchable fields reindex via <span class="code">reindex_on</span>'],
         ['CI green on SQLite, MySQL, MariaDB, PostgreSQL and SQL Server'],
         ['Bounded retries for index jobs and an eager-loading rebuild hook'],
+        ['Column weights on the BM25 index'],
         ['Relationship search through dotted columns (<span class="code">author.name</span>)'],
         ['Typo-tolerant, as-you-type BM25 index'],
     ];

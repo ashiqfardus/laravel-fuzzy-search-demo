@@ -8,7 +8,7 @@
 
 @section('content')
 <x-page-header eyebrow="Presets · filters · BM25 fallback" title="Product search">
-    Config presets tune eight parameters at once. The category filter is honoured on the BM25 index path, and the fuzzy fallback answers when the index has no match. The index is typo-tolerant now — try <span class="code">iphne</span>.
+    Config presets tune eight parameters at once. The category filter is honoured on the BM25 index path, and the fuzzy fallback answers when the index has no match. The index is typo-tolerant now — try <span class="code">iphne</span>. Column weights count too: a term in the product name (weight 10) now outranks the same term found only in the description (weight 5).
 </x-page-header>
 
 <x-search-form button="Search products" cols="md:grid-cols-5">

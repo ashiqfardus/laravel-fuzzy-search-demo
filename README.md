@@ -12,7 +12,7 @@ A demonstration application showcasing the [ashiqfardus/laravel-fuzzy-search](ht
 | Page | What it shows |
 | ---- | ------------- |
 | `/search/users` | 8 algorithms, typo tolerance, relevance scoring, `@fuzzyHighlight`, `fallback()` chain with an "answered by" trace, `verified_only` toggle chaining `->whereNotNull('email_verified_at')` straight onto the search builder |
-| `/search/products` | Config presets (`ecommerce`, `exact`), field weighting, `category_id` `filter()` honoured on the BM25 path, typo-tolerant BM25 → fuzzy fallback |
+| `/search/products` | Config presets (`ecommerce`, `exact`), weighted BM25 (`name` outranks `description` on the index), `category_id` `filter()` honoured on the BM25 path, typo-tolerant BM25 → fuzzy fallback |
 | `/search/relations` | `searchIn(['author.name' => 6])` compiled to a `whereHas`/EXISTS clause, relation match scored and highlighted under the dotted key — try `smith` (author "John Smith" is in the fixed seeded pool) |
 | `/search/articles` | Multi-word tokenization with AND / OR logic, author shown via the `Author` relation |
 | `/search/contacts` | Phonetic search — Soundex & Metaphone shadow columns |
