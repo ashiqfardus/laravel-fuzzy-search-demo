@@ -122,8 +122,9 @@ class SearchController extends Controller
             }
 
             if ($engine === 'bm25') {
-                // BM25 has no typo tolerance yet: fall back to the fuzzy driver when the
-                // index has no match (or has not been built for products).
+                // The BM25 index is typo-tolerant on its own now; the fuzzy fallback only
+                // answers when the index has no match at all (or has not been built for
+                // products).
                 $search->useInvertedIndex()->fallback('fuzzy');
             }
 
@@ -276,6 +277,16 @@ class SearchController extends Controller
 
         if (strlen($query) < 2 || strlen($query) > 200) {
             return response()->json([]);
+        }
+
+        if ($model === 'products') {
+            $rows = Product::search($query)
+                ->useInvertedIndex()
+                ->asYouType()
+                ->limit(8)
+                ->get();
+
+            return response()->json($rows->pluck('name')->values());
         }
 
         $modelClass = match($model) {

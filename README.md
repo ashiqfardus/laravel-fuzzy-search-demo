@@ -12,12 +12,12 @@ A demonstration application showcasing the [ashiqfardus/laravel-fuzzy-search](ht
 | Page | What it shows |
 | ---- | ------------- |
 | `/search/users` | 8 algorithms, typo tolerance, relevance scoring, `@fuzzyHighlight`, `fallback()` chain with an "answered by" trace, `verified_only` toggle chaining `->whereNotNull('email_verified_at')` straight onto the search builder |
-| `/search/products` | Config presets (`ecommerce`, `exact`), field weighting, `category_id` `filter()` honoured on the BM25 path, BM25 → fuzzy fallback |
+| `/search/products` | Config presets (`ecommerce`, `exact`), field weighting, `category_id` `filter()` honoured on the BM25 path, typo-tolerant BM25 → fuzzy fallback |
 | `/search/relations` | `searchIn(['author.name' => 6])` compiled to a `whereHas`/EXISTS clause, relation match scored and highlighted under the dotted key — try `smith` (author "John Smith" is in the fixed seeded pool) |
 | `/search/articles` | Multi-word tokenization with AND / OR logic, author shown via the `Author` relation |
 | `/search/contacts` | Phonetic search — Soundex & Metaphone shadow columns |
 | `/search/federated` | Cross-model federated search with unified ranking, `limitPerModel(10)->paginate(10)` with a reachable-rows total and a dark-theme pager |
-| `/search/smart` | `didYouMean()`, autocomplete suggestions, in-memory search |
+| `/search/smart` | `didYouMean()`, autocomplete suggestions, in-memory search, as-you-type suggest API (`/api/suggest`) on the index |
 | `/search/benchmarks` | Side-by-side timing: LIKE vs BM25 inverted index across dataset sizes |
 | `/search/capability-matrix` | Feature availability per algorithm and database driver |
 | `/search/scout-demo` | Laravel Scout integration (`SCOUT_DRIVER=fuzzy-search`) |

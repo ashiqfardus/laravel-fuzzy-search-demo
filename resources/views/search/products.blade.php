@@ -8,12 +8,12 @@
 
 @section('content')
 <x-page-header eyebrow="Presets · filters · BM25 fallback" title="Product search">
-    Config presets tune eight parameters at once. The category filter is honoured on the BM25 index path, and the fuzzy fallback answers when the index has no match.
+    Config presets tune eight parameters at once. The category filter is honoured on the BM25 index path, and the fuzzy fallback answers when the index has no match. The index is typo-tolerant now — try <span class="code">macbok</span>.
 </x-page-header>
 
 <x-search-form button="Search products" cols="md:grid-cols-5">
     <x-field label="Search query" for="q" class="md:col-span-2">
-        <input id="q" type="text" name="q" value="{{ $query }}" placeholder="Try: iphone, macbok, samsng…" class="field-control" autofocus>
+        <input id="q" type="text" name="q" value="{{ $query }}" placeholder="Try: macbok, samsng…" class="field-control" autofocus>
     </x-field>
     <x-field label="Preset" for="preset">
         <select id="preset" name="preset" class="field-control">
