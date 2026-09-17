@@ -30,6 +30,7 @@
         ['Column weights on the BM25 index'],
         ['Relationship search through dotted columns (<span class="code">author.name</span>)'],
         ['Typo-tolerant, as-you-type BM25 index'],
+        ['Extended syntax: <span class="code">~word</span> typo terms and <span class="code">field:</span> scopes'],
     ];
 @endphp
 

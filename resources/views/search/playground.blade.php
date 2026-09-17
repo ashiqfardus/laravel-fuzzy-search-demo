@@ -8,7 +8,7 @@
 </x-page-header>
 
 <div class="mb-6 flex flex-wrap gap-2 text-sm" aria-label="Operators">
-    @foreach([['space', 'AND'], ['|', 'OR'], ['!word', 'NOT'], ['^word', 'prefix'], ['word$', 'suffix'], ['=word', 'exact field'], ["'word", 'include'], ['"a b"', 'phrase']] as [$op, $meaning])
+    @foreach([['space', 'AND'], ['|', 'OR'], ['!word', 'NOT'], ['^word', 'prefix'], ['word$', 'suffix'], ['=word', 'exact field'], ["'word", 'include'], ['"a b"', 'phrase'], ['~word', 'typo'], ['field:term', 'field scope']] as [$op, $meaning])
         <span class="badge bg-raised py-1 text-muted"><span class="text-link">{{ $op }}</span> {{ $meaning }}</span>
     @endforeach
 </div>
@@ -50,7 +50,7 @@
 
     <div class="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted">
         Examples:
-        @foreach(['^John Doe', 'john | jane', '^John Doe !banned', '^Smith Doe$'] as $example)
+        @foreach(['^John Doe', 'john | jane', '^John Doe !banned', '^Smith Doe$', '~jonh', 'email:^admin', 'name:~jonh'] as $example)
             <a href="?q={{ urlencode($example) }}" class="code cursor-pointer transition-colors duration-200 hover:bg-line">{{ $example }}</a>
         @endforeach
     </div>
