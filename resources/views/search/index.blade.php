@@ -12,7 +12,7 @@
         ['search.capability-matrix', 'table',    'Compare algorithms', 'The same term through every algorithm, side by side, with timings.',                                                   'jhn'],
         ['search.benchmarks',        'chart',    'LIKE vs BM25',       'Latency and ordering: pattern search against the inverted index.',                                                      'john'],
         ['search.scout-demo',        'bolt',     'Scout driver',       'SCOUT_DRIVER=fuzzy-search wires the package in as a Scout engine.',                                                     'laravel'],
-        ['search.playground',        'code',     'Query playground',   'Extended syntax: ^prefix, word$, =exact, !not, | or, quoted phrases.',                                                  '^John Doe !banned'],
+        ['search.playground',        'code',     'Query playground',   'Extended syntax: ^prefix, word$, =exact, !not, | or, ~typo, field:scope, quoted phrases.',                                                  '^John Doe !banned'],
     ];
     $tiles = [
         ['users',    'Users',    'users'],
