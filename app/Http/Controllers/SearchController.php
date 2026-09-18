@@ -310,6 +310,34 @@ class SearchController extends Controller
     }
 
     /**
+     * As-you-type product search: prefix expansion of the last word against the BM25
+     * dictionary (asYouType()), typo tolerance from the model's $searchable config, and the
+     * package's own JSON envelope so the payload shows scores, escaped highlights and meta.
+     */
+    public function asYouType(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $query = $request->input('q', '');
+
+        if (strlen($query) < 2 || strlen($query) > 200) {
+            return response()->json(['data' => [], 'meta' => null]);
+        }
+
+        try {
+            return FuzzySearchCollection::fromBuilder(
+                Product::search($query)->useInvertedIndex()->asYouType()->highlight('mark')->limit(8)
+            )->response();
+        } catch (\Throwable $e) {
+            logger()->error('as-you-type search failed', ['error' => $e->getMessage()]);
+
+            return response()->json([
+                'data' => [],
+                'meta' => null,
+                'error' => 'Index not available — run php artisan fuzzy-search:rebuild "App\Models\Product"',
+            ]);
+        }
+    }
+
+    /**
      * Side-by-side algorithm comparison
      */
     public function capabilityMatrix(): \Illuminate\View\View

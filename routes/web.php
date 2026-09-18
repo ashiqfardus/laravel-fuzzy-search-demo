@@ -24,4 +24,5 @@ Route::middleware('throttle:30,1')->group(function () {
 Route::middleware('throttle:60,1')->group(function () {
     Route::get('/api/suggest', [SearchController::class, 'suggest'])->name('api.suggest');
     Route::get('/api/search/users', [SearchController::class, 'searchUsers'])->name('api.search.users');
+    Route::get('/api/as-you-type', [SearchController::class, 'asYouType'])->name('api.as-you-type');
 });

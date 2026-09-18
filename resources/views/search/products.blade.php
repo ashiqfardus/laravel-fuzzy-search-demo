@@ -11,6 +11,64 @@
     Config presets tune eight parameters at once. The category filter is honoured on the BM25 index path, and the fuzzy fallback answers when the index has no match. The index is typo-tolerant now — try <span class="code">iphne</span>. Column weights count too: a term in the product name (weight 10) now outranks the same term found only in the description (weight 5).
 </x-page-header>
 
+<div class="card mb-8 p-5 sm:p-6" x-data="{
+    q: '',
+    rows: [],
+    meta: null,
+    loading: false,
+    controller: null,
+    async asYouType() {
+        if (this.q.length < 2) { this.rows = []; this.meta = null; return; }
+        this.loading = true;
+        if (this.controller) this.controller.abort();
+        this.controller = new AbortController();
+        try {
+            const resp = await fetch('/api/as-you-type?q=' + encodeURIComponent(this.q), { signal: this.controller.signal });
+            const payload = await resp.json();
+            this.rows = payload.data ?? [];
+            this.meta = payload.meta ?? null;
+        } catch (e) {
+            if (e.name !== 'AbortError') { this.rows = []; this.meta = null; }
+        } finally {
+            this.loading = false;
+        }
+    }
+}">
+    <label for="as-you-type" class="mb-1.5 block text-sm font-medium text-ink">
+        As you type — BM25 index <span class="text-muted">(prefix expansion of the last word, typo tolerant)</span>
+    </label>
+    <div class="relative">
+        <input id="as-you-type" type="text" x-model="q" @input.debounce.200ms="asYouType()"
+               class="field-control pr-10" placeholder="Type three letters, e.g. macb, ipho, sam…" autocomplete="off">
+        <span x-show="loading" x-cloak class="absolute right-3 top-1/2 -translate-y-1/2 text-accent" aria-hidden="true">
+            <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+            </svg>
+        </span>
+    </div>
+    <ul x-show="rows.length > 0" x-cloak class="mt-3 divide-y divide-line overflow-hidden rounded-xl border border-line" aria-label="As-you-type matches">
+        <template x-for="row in rows" :key="row.id ?? row.name">
+            <li class="flex items-center justify-between gap-3 px-4 py-2.5 text-sm">
+                <div class="min-w-0">
+                    <p class="truncate font-medium text-ink">
+                        <span x-show="row._highlighted?.name" x-cloak x-html="row._highlighted?.name"></span>
+                        <span x-show="!row._highlighted?.name" x-cloak x-text="row.name ?? '—'"></span>
+                    </p>
+                    <p class="truncate font-mono text-xs text-muted" x-text="row.brand ?? ''"></p>
+                </div>
+                <span class="badge bg-accent/15 text-accent" x-text="Number(row._score ?? 0).toFixed(4)"></span>
+            </li>
+        </template>
+    </ul>
+    <p x-show="!loading && q.length >= 2 && rows.length === 0" x-cloak class="mt-3 text-sm text-muted">
+        No index matches yet — keep typing, or run <span class="code">php artisan fuzzy-search:rebuild "App\Models\Product"</span>.
+    </p>
+    <p x-show="meta" x-cloak class="mt-3 font-mono text-xs text-muted">
+        <span x-text="meta?.algorithm"></span> · <span x-text="meta?.latency_ms"></span> ms
+    </p>
+</div>
+
 <x-search-form button="Search products" cols="md:grid-cols-5">
     <x-field label="Search query" for="q" class="md:col-span-2">
         <input id="q" type="text" name="q" value="{{ $query }}" placeholder="Try: iphne, macbok, samsng…" class="field-control" autofocus>
