@@ -13,6 +13,7 @@ use App\Models\Category;
 use Ashiqfardus\LaravelFuzzySearch\Events\FuzzySearchExecuted;
 use Ashiqfardus\LaravelFuzzySearch\Facades\SearchAnalytics;
 use Ashiqfardus\LaravelFuzzySearch\FederatedSearch;
+use Ashiqfardus\LaravelFuzzySearch\Http\Resources\FuzzySearchCollection;
 
 class SearchController extends Controller
 {
@@ -249,24 +250,21 @@ class SearchController extends Controller
     }
 
     /**
-     * API endpoint for playground live search — returns full User records as JSON
+     * API endpoint for playground live search — the package's FuzzySearchCollection JSON
+     * resource: each row's model attributes plus _score/_highlighted/etc, and meta
+     * (query, algorithm, latency_ms, suggestions).
      */
     public function searchUsers(Request $request): \Illuminate\Http\JsonResponse
     {
         $query = $request->input('q', '');
 
         if (strlen($query) < 2 || strlen($query) > 200) {
-            return response()->json([]);
+            return response()->json(['data' => [], 'meta' => null]);
         }
 
-        $safe = addcslashes($query, '%_');
-        $results = User::where('name', 'LIKE', '%' . $safe . '%')
-            ->orWhere('email', 'LIKE', '%' . $safe . '%')
-            ->limit(8)
-            ->get(['id', 'name', 'email'])
-            ->map(fn ($u) => ['id' => $u->id, 'name' => $u->name, 'email' => $u->email]);
-
-        return response()->json($results);
+        return FuzzySearchCollection::fromBuilder(
+            User::search($query)->highlight('mark')->limit(10)
+        )->response();
     }
 
     /**

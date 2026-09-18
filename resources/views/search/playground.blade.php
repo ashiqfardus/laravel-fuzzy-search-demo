@@ -16,18 +16,21 @@
 <form method="GET" class="card mb-8 p-5 sm:p-6" x-data="{
     query: @js($query),
     results: [],
+    meta: null,
     loading: false,
     controller: null,
     async suggest() {
-        if (this.query.length < 2) { this.results = []; return; }
+        if (this.query.length < 2) { this.results = []; this.meta = null; return; }
         this.loading = true;
         if (this.controller) this.controller.abort();
         this.controller = new AbortController();
         try {
             const resp = await fetch('/api/search/users?q=' + encodeURIComponent(this.query), { signal: this.controller.signal });
-            this.results = await resp.json();
+            const payload = await resp.json();
+            this.results = payload.data ?? [];
+            this.meta = payload.meta ?? null;
         } catch (e) {
-            if (e.name !== 'AbortError') this.results = [];
+            if (e.name !== 'AbortError') { this.results = []; this.meta = null; }
         } finally {
             this.loading = false;
         }
@@ -62,13 +65,17 @@
         <template x-for="r in results" :key="r.id ?? r.name">
             <li class="flex items-center justify-between gap-3 px-4 py-2.5 text-sm">
                 <div class="min-w-0">
-                    <p class="font-medium text-ink" x-text="r.name ?? r.title ?? r.full_name ?? '—'"></p>
+                    <p class="font-medium text-ink">
+                        <span x-show="r._highlighted?.name" x-cloak x-html="r._highlighted?.name"></span>
+                        <span x-show="!r._highlighted?.name" x-cloak x-text="r.name ?? '—'"></span>
+                    </p>
                     <p class="truncate text-xs text-muted" x-text="r.email ?? ''"></p>
                 </div>
                 <span class="font-mono text-xs text-muted" x-text="r._score != null ? parseFloat(r._score).toFixed(4) : ''"></span>
             </li>
         </template>
     </ul>
+    <p x-show="meta" x-cloak class="mt-3 font-mono text-xs text-muted"><span x-text="meta?.algorithm"></span> · <span x-text="meta?.latency_ms"></span> ms</p>
 </form>
 
 @if($error)

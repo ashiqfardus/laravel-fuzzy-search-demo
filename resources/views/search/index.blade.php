@@ -35,6 +35,7 @@
         ['Extended syntax: <span class="code">~word</span> typo terms and <span class="code">field:</span> scopes'],
         ['Persisted search analytics and dictionary-backed autocomplete'],
         ['Script-aware tokenizer: character bigrams for Chinese, Japanese and Korean'],
+        ['JSON resources: FuzzySearchCollection with scores, highlights and meta'],
     ];
 @endphp
 
