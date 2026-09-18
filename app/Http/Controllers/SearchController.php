@@ -472,11 +472,14 @@ class SearchController extends Controller
     }
 
     /**
-     * LIKE vs BM25 side-by-side benchmark
+     * LIKE vs BM25 side-by-side benchmark. `typo` (0–3) adds a third panel that runs the
+     * same index query with typo expansion on, so the latency cost of dictionary expansion
+     * is visible next to the exact-term index read.
      */
     public function benchmarks(): \Illuminate\View\View
     {
         $term    = request('q', 'john');
+        $typo    = max(0, min(3, (int) request('typo', 0)));
         $results = [];
 
         if ($term) {
@@ -489,23 +492,45 @@ class SearchController extends Controller
                 'label' => 'LIKE Pattern Search',
             ];
 
-            // BM25 inverted index path
-            $start = microtime(true);
-            try {
-                $bm25Results = User::search($term)->useInvertedIndex()->take(5)->get();
-                $results['bm25'] = [
-                    'rows'  => $bm25Results,
-                    'ms'    => round((microtime(true) - $start) * 1000, 2),
-                    'label' => 'BM25 Inverted Index',
-                    'error' => null,
-                ];
-            } catch (\Throwable $e) {
-                logger()->error('BM25 benchmark failed', ['error' => $e->getMessage()]);
-                $results['bm25'] = ['rows' => collect(), 'ms' => 0, 'label' => 'BM25', 'error' => 'Index not available — run php artisan fuzzy-search:rebuild'];
+            // BM25 inverted index path — exact dictionary terms
+            $results['bm25'] = $this->benchmarkIndex($term, 0, 'BM25 Inverted Index');
+
+            // Same index read with typo expansion on (TermExpander widens each term)
+            if ($typo > 0) {
+                $results['bm25_typo'] = $this->benchmarkIndex($term, $typo, 'BM25 + typo tolerance');
             }
         }
 
-        return view('search.benchmarks', compact('term', 'results'));
+        return view('search.benchmarks', compact('term', 'typo', 'results'));
+    }
+
+    /**
+     * One timed BM25 index read. A missing index is reported in the panel instead of
+     * throwing, so the page still renders before the first rebuild.
+     */
+    private function benchmarkIndex(string $term, int $typoTolerance, string $label): array
+    {
+        $start = microtime(true);
+
+        try {
+            $rows = User::search($term)->useInvertedIndex()->typoTolerance($typoTolerance)->take(5)->get();
+
+            return [
+                'rows'  => $rows,
+                'ms'    => round((microtime(true) - $start) * 1000, 2),
+                'label' => $label,
+                'error' => null,
+            ];
+        } catch (\Throwable $e) {
+            logger()->error('BM25 benchmark failed', ['label' => $label, 'error' => $e->getMessage()]);
+
+            return [
+                'rows'  => collect(),
+                'ms'    => 0,
+                'label' => $label,
+                'error' => 'Index not available — run php artisan fuzzy-search:rebuild "App\Models\User"',
+            ];
+        }
     }
 
     /**

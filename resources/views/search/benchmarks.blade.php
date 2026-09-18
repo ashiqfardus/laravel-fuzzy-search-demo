@@ -7,14 +7,21 @@
     Same query, same dataset. LIKE fetches up to 1,000 candidates and re-scores them in PHP; BM25 reads the inverted index directly, so there is no full-table scan.
 </x-page-header>
 
-<x-search-form button="Run benchmark" cols="md:grid-cols-1">
+<x-search-form button="Run benchmark" cols="md:grid-cols-2">
     <x-field label="Search term" for="q">
         <input id="q" type="text" name="q" value="{{ $term }}" placeholder="e.g. john, laravel, smith" class="field-control" autofocus>
+    </x-field>
+    <x-field label="Typo tolerance on the index" for="typo" hint="0 = exact dictionary terms. Above 0 expands each term by edit distance.">
+        <select id="typo" name="typo" class="field-control">
+            @foreach([0, 1, 2, 3] as $level)
+                <option value="{{ $level }}" @selected($typo === $level)>{{ $level === 0 ? 'Off (exact terms)' : $level.' edit'.($level === 1 ? '' : 's') }}</option>
+            @endforeach
+        </select>
     </x-field>
 </x-search-form>
 
 @if($term && !empty($results))
-    <div class="mb-8 grid gap-4 md:grid-cols-2">
+    <div class="mb-8 grid gap-4 md:grid-cols-2 @if(count($results) > 2) lg:grid-cols-3 @endif">
         @foreach($results as $key => $data)
             @php $rows = $data['rows'] ?? collect(); @endphp
             <section class="card overflow-hidden" data-bench-label="{{ $data['label'] }}" data-bench-ms="{{ $data['ms'] }}">
@@ -51,7 +58,7 @@
     </div>
 
     <x-callout tone="info" title="Reading this" class="mb-8">
-        On large tables BM25 is typically 5–20× faster with better relevance ordering. Scores on the left are PHP-side relevance; on the right, corpus-normalised BM25.
+        On large tables BM25 is typically 5–20× faster with better relevance ordering. Scores on the left are PHP-side relevance; on the right, corpus-normalised BM25. Turn typo tolerance up to see what dictionary expansion costs: the third panel runs the same index read with each term widened by edit distance.
     </x-callout>
 @endif
 
@@ -91,7 +98,7 @@
 function benchmarkHistory() {
     return {
         history: [],
-        labels:  ['LIKE Pattern Search', 'BM25 Inverted Index'],
+        labels:  ['LIKE Pattern Search', 'BM25 Inverted Index', 'BM25 + typo tolerance'],
         load() {
             try { this.history = JSON.parse(localStorage.getItem('fzs_bench_history') ?? '[]'); } catch { this.history = []; }
         },
