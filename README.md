@@ -152,14 +152,14 @@ The app registers `ScriptAwareTokenizer` globally, so Han/Hiragana/Katakana/Hang
 
 ### 12. As-you-type on the index (`/search/products`)
 
-The box above the product search form calls `/api/as-you-type`, which runs `Product::search($q)->useInvertedIndex()->asYouType()->highlight('mark')->limit(8)` and returns `FuzzySearchCollection`: `data[]` rows with `_score` and escaped `_highlighted` values, plus `meta.algorithm` and `meta.latency_ms` shown under the results.
+The box above the product search form calls `/api/as-you-type`, which runs `Product::search($q)->useInvertedIndex()->asYouType()->typoTolerance(1)->highlight('mark')->limit(8)` and returns `FuzzySearchCollection`: `data[]` rows with `_score` and escaped `_highlighted` values, plus `meta.algorithm` and `meta.latency_ms` shown under the results.
 
 ## Requirements
 
 - PHP 8.2+
 - Laravel 12.x
 - `ashiqfardus/laravel-fuzzy-search` ^2.0
-- SQLite (default), MySQL 5.7+, PostgreSQL 12+, MariaDB, or SQL Server
+- MySQL 8+, MariaDB 11.4, PostgreSQL 14+, SQL Server 2022, SQLite (the package's CI matrix)
 
 ## Project Structure
 
