@@ -37,7 +37,7 @@ class SearchController extends Controller
      */
     public function users(Request $request)
     {
-        $query = $request->input('q', '');
+        $query = $this->term($request);
         $algorithm = $request->input('algorithm', 'fuzzy');
         $typoTolerance = (int) $request->input('typo_tolerance', 2);
         $fallback = $request->input('fallback', '');
@@ -102,7 +102,7 @@ class SearchController extends Controller
      */
     public function products(Request $request)
     {
-        $query    = $request->input('q', '');
+        $query    = $this->term($request);
         $preset   = $request->input('preset', 'ecommerce');
         $category = (string) $request->input('category', '');
         $engine   = $request->input('engine') === 'bm25' ? 'bm25' : 'like';
@@ -146,7 +146,7 @@ class SearchController extends Controller
      */
     public function articles(Request $request)
     {
-        $query = $request->input('q', '');
+        $query = $this->term($request);
         $matchMode = $request->input('match_mode', 'any');
 
         $results = collect();
@@ -175,7 +175,7 @@ class SearchController extends Controller
      */
     public function contacts(Request $request)
     {
-        $query = $request->input('q', '');
+        $query = $this->term($request);
         $algorithm = $request->input('algorithm', 'soundex');
 
         $results = collect();
@@ -200,7 +200,7 @@ class SearchController extends Controller
      */
     public function federated(Request $request)
     {
-        $query = $request->input('q', '');
+        $query = $this->term($request);
 
         $results = collect();
 
@@ -233,7 +233,7 @@ class SearchController extends Controller
      */
     public function relations(Request $request)
     {
-        $query   = $request->input('q', '');
+        $query   = $this->term($request);
         $results = collect();
 
         if ($query) {
@@ -256,7 +256,7 @@ class SearchController extends Controller
      */
     public function searchUsers(Request $request): \Illuminate\Http\JsonResponse
     {
-        $query = $request->input('q', '');
+        $query = $this->term($request);
 
         if (strlen($query) < 2 || strlen($query) > 200) {
             return response()->json(['data' => [], 'meta' => null]);
@@ -273,7 +273,7 @@ class SearchController extends Controller
      */
     public function suggest(Request $request): \Illuminate\Http\JsonResponse
     {
-        $query = $request->input('q', '');
+        $query = $this->term($request);
         $model = $request->input('model', 'products');
 
         if (strlen($query) < 2 || strlen($query) > 200) {
@@ -316,7 +316,7 @@ class SearchController extends Controller
      */
     public function asYouType(Request $request): \Illuminate\Http\JsonResponse
     {
-        $query = $request->input('q', '');
+        $query = $this->term($request);
 
         if (strlen($query) < 2 || strlen($query) > 200) {
             return response()->json(['data' => [], 'meta' => null]);
@@ -373,7 +373,7 @@ class SearchController extends Controller
      */
     public function smart(Request $request)
     {
-        $query = $request->input('q', '');
+        $query = $this->term($request);
 
         $results = collect();
         $suggestions = [];
@@ -606,5 +606,13 @@ class SearchController extends Controller
         }
 
         return view('search.scout-demo', compact('term', 'results'));
+    }
+
+    /** The q parameter as a string — an array (?q[]=x) or a missing value reads as ''. */
+    private function term(Request $request): string
+    {
+        $q = $request->input('q', '');
+
+        return is_string($q) ? $q : '';
     }
 }
