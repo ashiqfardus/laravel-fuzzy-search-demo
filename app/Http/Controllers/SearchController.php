@@ -311,7 +311,8 @@ class SearchController extends Controller
 
     /**
      * As-you-type product search: prefix expansion of the last word against the BM25
-     * dictionary (asYouType()), typo tolerance from the model's $searchable config, and the
+     * dictionary (asYouType()), typo tolerance 1 (the default of 2 lets a four-letter prefix
+     * such as "macb" expand into unrelated three-letter words like "tab"), and the
      * package's own JSON envelope so the payload shows scores, escaped highlights and meta.
      */
     public function asYouType(Request $request): \Illuminate\Http\JsonResponse
@@ -324,7 +325,7 @@ class SearchController extends Controller
 
         try {
             return FuzzySearchCollection::fromBuilder(
-                Product::search($query)->useInvertedIndex()->asYouType()->highlight('mark')->limit(8)
+                Product::search($query)->useInvertedIndex()->asYouType()->typoTolerance(1)->highlight('mark')->limit(8)
             )->response();
         } catch (\Throwable $e) {
             logger()->error('as-you-type search failed', ['error' => $e->getMessage()]);
