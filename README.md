@@ -12,13 +12,13 @@ A demonstration application showcasing the [ashiqfardus/laravel-fuzzy-search](ht
 | Page | What it shows |
 | ---- | ------------- |
 | `/search/users` | 8 algorithms, typo tolerance, relevance scoring, `@fuzzyHighlight`, `fallback()` chain with an "answered by" trace, `verified_only` toggle chaining `->whereNotNull('email_verified_at')` straight onto the search builder |
-| `/search/products` | Config presets (`ecommerce`, `exact`), weighted BM25 (`name` outranks `description` on the index), `category_id` `filter()` honoured on the BM25 path, typo-tolerant BM25 → fuzzy fallback |
+| `/search/products` | Config presets (`ecommerce`, `exact`), weighted BM25 (`name` weight 10 outranks `description` weight 5 — try `macbook`: the MacBook is the title match, the Dell XPS and iPad only mention it), `category_id` `filter()` honoured on the BM25 path, typo-tolerant BM25 → fuzzy fallback, plus an as-you-type box calling `/api/as-you-type` — `useInvertedIndex()->asYouType()` prefix-expands the last word against the dictionary and returns the package's `FuzzySearchCollection` |
 | `/search/relations` | `searchIn(['author.name' => 6])` compiled to a `whereHas`/EXISTS clause, relation match scored and highlighted under the dotted key — try `smith` (author "John Smith" is in the fixed seeded pool) |
 | `/search/articles` | Multi-word tokenization with AND / OR logic, author shown via the `Author` relation |
 | `/search/contacts` | Phonetic search — Soundex & Metaphone shadow columns |
 | `/search/federated` | Cross-model federated search with unified ranking, `limitPerModel(10)->paginate(10)` with a reachable-rows total and a dark-theme pager |
 | `/search/smart` | `didYouMean()`, autocomplete suggestions, in-memory search, plus a live autocomplete widget calling `/api/suggest?model=users&q=` — dictionary-backed (`suggest()`) when the model is indexed, table scan otherwise |
-| `/search/benchmarks` | Side-by-side timing: LIKE vs BM25 inverted index across dataset sizes |
+| `/search/benchmarks` | Side-by-side timing: LIKE vs the BM25 inverted index, with a typo-tolerance toggle that adds a third panel running the same index read with each term expanded by edit distance |
 | `/search/capability-matrix` | Feature availability per algorithm and database driver |
 | `/search/scout-demo` | Laravel Scout integration (`SCOUT_DRIVER=fuzzy-search`) |
 | `/search/playground` | Extended query syntax: include `'`, exact `=`, prefix `^`, suffix `$`, exclude `!`, OR, grouping `()`, typo `~word`, field scope `field:term`; `extended()->paginate(10)` with the same pager component, plus a live preview calling `/api/search/users` that returns the package's `FuzzySearchCollection` — scores, escaped highlights and search meta (algorithm, latency) |
@@ -100,7 +100,7 @@ Switch between all eight algorithms on the same query and compare ranked output:
 
 ### 3. BM25 inverted index (`/search/benchmarks`)
 
-After running a large seeder, the benchmarks page compares query time for LIKE-pattern search vs `useInvertedIndex()` at 10k, 100k, and 1M rows. BM25 is faster than LIKE on tables above ~500k rows.
+The benchmarks page runs the same term through LIKE-pattern search and the BM25 inverted index and prints both latencies, keeping the last five runs in `localStorage`. Set **Typo tolerance on the index** above 0 to add a third panel: the same index read with each term widened by edit distance. Try `jonh` at 0 (few or no index rows — the dictionary has no such term) and at 2 (the John rows come back, and the extra milliseconds are the cost of dictionary expansion).
 
 ### 4. Extended syntax playground (`/search/playground`)
 
@@ -115,6 +115,8 @@ Try these queries:
 | `!smith` | Exclude records matching "smith" |
 | `john \| jane` | OR — matches either |
 | `john !(doe \| smith)` | john, but not doe or smith |
+| `~jonh` | Typo-tolerant term — edit-distance match inside an extended query |
+| `email:^jon` | Field scope — apply the operator to one column only |
 
 ### 5. Phonetic search (`/search/contacts`)
 
@@ -126,6 +128,8 @@ Try these queries:
 
 Compare `ecommerce` preset (typo-tolerant, partial match) against `exact` preset (strict, no typos) on the same query.
 
+The same page shows weighted BM25. Every fixed catalog product has a real description that names other products, so `macbook` on the BM25 engine ranks **MacBook Pro 16"** (title, weight 10) above **Dell XPS 15** and **iPad Pro 12.9"**, which only mention it in the description (weight 5). The as-you-type box above the form hits `/api/as-you-type` after two characters and completes from the dictionary — type `macb`, `ipho` or `nespr`.
+
 ### 7. Scout driver (`/search/scout-demo`)
 
 Demonstrates `SCOUT_DRIVER=fuzzy-search` — the bundled Scout engine adapter. No extra package required.
@@ -133,6 +137,22 @@ Demonstrates `SCOUT_DRIVER=fuzzy-search` — the bundled Scout engine adapter. N
 ### 8. Federated search (`/search/federated`)
 
 Searches Users, Products, Articles, and Contacts in a single query and merges results with unified `_score` ranking.
+
+### 9. Relationship search (`/search/relations`)
+
+`searchIn(['author.name' => 6])` compiles to a `whereHas`/EXISTS clause. Search `smith` — the author "John Smith" is in the fixed seeded pool, so the match is scored and highlighted under the dotted `author.name` key, not on the article's own columns.
+
+### 10. Persisted search analytics (`/search/analytics`)
+
+Run a handful of searches on the other pages first (`analytics.enabled` is on in `AppServiceProvider`, the queue is disabled, so rows land in `fuzzy_search_logs` synchronously). The page then reads the `SearchAnalytics` facade for popular terms, zero-result terms, latency by path and daily volume.
+
+### 11. CJK search (`/search/i18n`)
+
+The app registers `ScriptAwareTokenizer` globally, so Han/Hiragana/Katakana/Hangul runs are indexed as character bigrams and everything else stays whitespace-tokenized. Search `東京` (finds the Tokyo Tower model and the Kyoto matcha set, whose description mentions 東京), `烤鸭`, `ヘッドホン`, `김치`, and `tokyo` — the ASCII gloss in the description still matches on the same index.
+
+### 12. As-you-type on the index (`/search/products`)
+
+The box above the product search form calls `/api/as-you-type`, which runs `Product::search($q)->useInvertedIndex()->asYouType()->highlight('mark')->limit(8)` and returns `FuzzySearchCollection`: `data[]` rows with `_score` and escaped `_highlighted` values, plus `meta.algorithm` and `meta.latency_ms` shown under the results.
 
 ## Requirements
 

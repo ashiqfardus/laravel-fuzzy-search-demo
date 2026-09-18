@@ -3,14 +3,14 @@
 @php
     $pages = [
         ['search.users',             'users',    'User search',        'Eight algorithms, typo tolerance, relevance scores and a fallback chain that only runs when the primary finds nothing.', 'jonh · simple → fuzzy'],
-        ['search.products',          'bag',      'Product search',     'Config presets, a category filter honoured on the BM25 index path, and a fuzzy fallback.',                              'macbok · category = Laptop'],
+        ['search.products',          'bag',      'Product search',     'Config presets, weighted BM25 (name over description), a category filter honoured on the index path, and an as-you-type box on the dictionary.',            'macbok · type macb'],
         ['search.relations',         'link',     'Relationship search', 'Search through Eloquent relations with dotted columns — author.name compiles to whereHas/EXISTS.',                        'smith'],
         ['search.articles',          'document', 'Article search',     'Multi-word tokenization with match-all and match-any.',                                                                'laravel search fuzzy'],
         ['search.contacts',          'card',     'Contact search',     'Phonetic matching through Soundex and Metaphone shadow columns.',                                                      'steven → Stephen'],
         ['search.federated',         'squares',  'Federated search',   'One query across users, products, articles and contacts, merged into a single ranking.',                              'john'],
         ['search.smart',             'sparkles', 'Smart search',       'Did-you-mean, suggestions and autocomplete from the same pass.',                                                       'iphne → iPhone'],
         ['search.capability-matrix', 'table',    'Compare algorithms', 'The same term through every algorithm, side by side, with timings.',                                                   'jhn'],
-        ['search.benchmarks',        'chart',    'LIKE vs BM25',       'Latency and ordering: pattern search against the inverted index.',                                                      'john'],
+        ['search.benchmarks',        'chart',    'LIKE vs BM25',       'Latency and ordering: pattern search against the inverted index, with a typo-tolerance toggle for the index read.',                                       'jonh · typo 2'],
         ['search.scout-demo',        'bolt',     'Scout driver',       'SCOUT_DRIVER=fuzzy-search wires the package in as a Scout engine.',                                                     'laravel'],
         ['search.playground',        'code',     'Query playground',   'Extended syntax: ^prefix, word$, =exact, !not, | or, ~typo, field:scope, quoted phrases.',                                                  '^John Doe !banned'],
         ['search.analytics',         'chart',    'Search analytics',   'Popular and zero-result searches, latency by path and daily volume from fuzzy_search_logs.',                                       'run a few searches first'],
