@@ -18,6 +18,12 @@ use Ashiqfardus\LaravelFuzzySearch\Http\Resources\FuzzySearchCollection;
 class SearchController extends Controller
 {
     /**
+     * How many users the LIKE-only showcase pages read (the capability matrix, the playground):
+     * over 1M users, seven LIKE algorithms over the whole table took 6.7-7.8 s.
+     */
+    private const USER_SLICE = 10000;
+
+    /**
      * Main search dashboard
      */
     public function index()
@@ -367,23 +373,32 @@ class SearchController extends Controller
     }
 
     /**
-     * Side-by-side algorithm comparison
+     * Side-by-side algorithm comparison, run over the first USER_SLICE users so every
+     * algorithm answers quickly however large the table grows.
      */
     public function capabilityMatrix(): \Illuminate\View\View
     {
         $algorithms = ['simple', 'fuzzy', 'levenshtein', 'trigram', 'soundex', 'metaphone', 'similar_text'];
         $term       = request('q', 'john');
         $results    = [];
+        $slice      = self::USER_SLICE;
 
         if ($term) {
+            $ceiling = $this->userSliceCeiling();
+
             foreach ($algorithms as $algo) {
                 $start = microtime(true);
                 try {
-                    $items = User::search($term)
+                    $search = User::search($term)
                         ->using($algo)
                         ->withRelevance()
-                        ->take(5)
-                        ->get();
+                        ->take(5);
+
+                    if ($ceiling !== null) {
+                        $search->where('id', '<=', $ceiling);
+                    }
+
+                    $items = $search->get();
                     $ms = round((microtime(true) - $start) * 1000, 2);
                     $results[$algo] = ['rows' => $items, 'error' => null, 'ms' => $ms];
                 } catch (\Throwable $e) {
@@ -394,7 +409,19 @@ class SearchController extends Controller
             }
         }
 
-        return view('search.capability-matrix', compact('algorithms', 'term', 'results'));
+        return view('search.capability-matrix', compact('algorithms', 'term', 'results', 'slice'));
+    }
+
+    /**
+     * The key of the USER_SLICE-th user by key, or null when the table holds fewer. A LIKE-only
+     * showcase reads users up to it, a primary-key range, so each of its scans reads at most
+     * USER_SLICE rows.
+     */
+    private function userSliceCeiling(): ?int
+    {
+        $key = User::query()->orderBy('id')->skip(self::USER_SLICE - 1)->value('id');
+
+        return $key === null ? null : (int) $key;
     }
 
     /**

@@ -4,7 +4,7 @@
 
 @section('content')
 <x-page-header eyebrow="Side by side" title="Compare algorithms">
-    The same query through every algorithm at once. Scores are PHP-side relevance; higher is a better match.
+    The same query through every algorithm at once, run over the first {{ number_format($slice) }} users so every algorithm answers quickly on a large table. Scores are PHP-side relevance; higher is a better match.
 </x-page-header>
 
 <x-search-form button="Compare all" cols="md:grid-cols-1">
