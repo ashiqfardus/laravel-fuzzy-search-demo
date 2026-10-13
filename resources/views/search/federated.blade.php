@@ -13,7 +13,7 @@
 
 @section('content')
 <x-page-header eyebrow="Four models · one ranking" title="Federated search">
-    Users, products, articles and contacts are searched together and merged into a single list ranked by a normalised score.
+    Users, products, articles and contacts are searched together and merged into a single list ranked by a normalised score. Each model runs its own LIKE search (federated search has no index path), so the page searches the short name columns only — <span class="code">name</span>, <span class="code">title</span>, <span class="code">first_name</span>, <span class="code">last_name</span> — to stay fast on large tables.
 </x-page-header>
 
 <x-search-form button="Search everything" cols="md:grid-cols-1">

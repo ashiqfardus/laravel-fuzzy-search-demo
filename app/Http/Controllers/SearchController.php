@@ -209,7 +209,10 @@ class SearchController extends Controller
     }
 
     /**
-     * Federated search across all models
+     * Federated search across all models. FederatedSearch runs each model's own LIKE search
+     * (it has no index path), and paginate() reads each table twice (count + page), so it
+     * searches the short name columns only: email and the long product description made it
+     * 1.7-1.9 s at 100k rows per model.
      */
     public function federated(Request $request)
     {
@@ -225,7 +228,7 @@ class SearchController extends Controller
                 Contact::class,
             ])
                 ->search($query)
-                ->searchIn(['name', 'title', 'first_name', 'email', 'description'])
+                ->searchIn(['name', 'title', 'first_name', 'last_name'])
                 ->limitPerModel(10)
                 ->paginate(10)
                 ->withQueryString();
