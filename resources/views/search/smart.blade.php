@@ -18,7 +18,7 @@
 
 @section('content')
 <x-page-header eyebrow="Did you mean · suggestions · autocomplete" title="Smart search">
-    Misspell something on purpose. Every result is scored, and the same pass produces spelling alternatives and completions.
+    Misspell something on purpose. Every result is scored, and the same pass produces spelling alternatives and completions. On the BM25 index each model is one typo-tolerant index search and “Did you mean” reads the index dictionary; the LIKE table scan runs levenshtein and fuzzy over every row of all four tables instead.
 </x-page-header>
 
 <div class="card mb-8 p-5 sm:p-6" x-data="{
@@ -66,10 +66,11 @@
     <p x-show="source" x-cloak class="mt-3 font-mono text-xs text-muted"><span x-text="source"></span> · <span x-text="latencyMs"></span> ms</p>
 </div>
 
-<x-search-form button="Smart search" cols="md:grid-cols-1">
-    <x-field label="Search query" for="q">
+<x-search-form button="Smart search" cols="md:grid-cols-3">
+    <x-field label="Search query" for="q" class="md:col-span-2">
         <input id="q" type="text" name="q" value="{{ $query }}" placeholder="Try misspellings: iphne, macbok, samsng…" class="field-control" autofocus>
     </x-field>
+    <x-engine-field :engine="$engine" hint="The table scan reads every row of all four tables, twice, so it is slow on large tables. A model whose index is not built yet is searched with fuzzy LIKE." />
 </x-search-form>
 
 @if($query)
@@ -85,7 +86,7 @@
                     <ul class="space-y-1.5">
                         @foreach($items as $term)
                             <li>
-                                <a href="?q={{ urlencode($term) }}" class="block cursor-pointer rounded-lg border border-line bg-base/40 px-3 py-2 text-sm text-ink transition-colors duration-200 hover:border-accent/50 hover:bg-raised">{{ $term }}</a>
+                                <a href="?{{ http_build_query(['q' => $term] + ($engine === 'like' ? ['engine' => 'like'] : [])) }}" class="block cursor-pointer rounded-lg border border-line bg-base/40 px-3 py-2 text-sm text-ink transition-colors duration-200 hover:border-accent/50 hover:bg-raised">{{ $term }}</a>
                             </li>
                         @endforeach
                     </ul>

@@ -395,11 +395,15 @@ class SearchController extends Controller
     }
 
     /**
-     * Smart search features: Did You Mean, Suggestions, Autocomplete
+     * Smart search features: Did You Mean, Suggestions, Autocomplete. On the BM25 index (the
+     * default) each model is one typo-tolerant index search and "Did you mean" reads the index
+     * dictionary (didYouMean()); on the LIKE table scan (?engine=like) each model runs
+     * levenshtein and fuzzy over every row.
      */
     public function smart(Request $request)
     {
         $query = $this->term($request);
+        $engine = $this->engine($request);
 
         $results = collect();
         $suggestions = [];
@@ -407,26 +411,46 @@ class SearchController extends Controller
         $autocomplete = [];
 
         if ($query) {
+            // A model whose index is not built yet is searched with fuzzy LIKE instead. Not
+            // fallback('fuzzy'): a term usually lives in one or two of the four models, so a
+            // fallback on every miss would scan the other tables on almost every search.
+            $indexed = $engine === 'bm25' ? DB::table('fuzzy_index_meta')->pluck('model_type')->all() : [];
+
             // Helper function to search and map results with similarity
-            $searchModel = function($modelClass, $type, $nameField) use ($query) {
-                // Try levenshtein first (better for typos)
-                $levenResults = $modelClass::search($query)
-                    ->using('levenshtein')
-                    ->typoTolerance(3)
-                    ->withRelevance()
-                    ->highlight('mark')
-                    ->get();
+            $searchModel = function($modelClass, $type, $nameField) use ($query, $engine, $indexed) {
+                if ($engine === 'bm25') {
+                    $search = $modelClass::search($query)
+                        ->typoTolerance(2)
+                        ->withRelevance()
+                        ->highlight('mark');
 
-                // Also try fuzzy for broader matches
-                $fuzzyResults = $modelClass::search($query)
-                    ->using('fuzzy')
-                    ->typoTolerance(4)
-                    ->withRelevance()
-                    ->highlight('mark')
-                    ->get();
+                    if (in_array($modelClass, $indexed, true)) {
+                        $search->useInvertedIndex();
+                    } else {
+                        $search->using('fuzzy');
+                    }
 
-                // Merge and deduplicate
-                $merged = $levenResults->merge($fuzzyResults)->unique('id');
+                    $merged = $search->get();
+                } else {
+                    // Try levenshtein first (better for typos)
+                    $levenResults = $modelClass::search($query)
+                        ->using('levenshtein')
+                        ->typoTolerance(3)
+                        ->withRelevance()
+                        ->highlight('mark')
+                        ->get();
+
+                    // Also try fuzzy for broader matches
+                    $fuzzyResults = $modelClass::search($query)
+                        ->using('fuzzy')
+                        ->typoTolerance(4)
+                        ->withRelevance()
+                        ->highlight('mark')
+                        ->get();
+
+                    // Merge and deduplicate
+                    $merged = $levenResults->merge($fuzzyResults)->unique('id');
+                }
 
                 return $merged->map(function($item) use ($query, $type, $nameField) {
                     $similarity = 0;
@@ -466,25 +490,40 @@ class SearchController extends Controller
                 };
             })->filter()->unique()->values()->toArray();
 
-            // Generate "Did You Mean" from top results if query doesn't match exactly
-            $didYouMean = $results->take(3)->map(function($r) {
-                $item = $r['item'];
-                $type = $r['type'];
-                $term = match($type) {
-                    'Product' => $item->name,
-                    'User' => $item->name,
-                    'Article' => $item->title,
-                    'Contact' => $item->first_name,
-                    default => null
-                };
-                return ['term' => $term, 'type' => $type];
-            })->filter(fn($d) => $d['term'] !== null)->values()->toArray();
+            if ($engine === 'bm25') {
+                // "Did you mean" from the index dictionary: each model's own words within a few
+                // edits of the query, closest first, then the most confident.
+                $didYouMean = collect([Product::class, User::class, Article::class, Contact::class])
+                    ->flatMap(fn ($modelClass) => array_map(
+                        fn ($alternative) => $alternative + ['type' => class_basename($modelClass)],
+                        $modelClass::search($query)->didYouMean(3)
+                    ))
+                    ->sortBy([['distance', 'asc'], ['confidence', 'desc']])
+                    ->unique('term')
+                    ->take(3)
+                    ->values()
+                    ->toArray();
+            } else {
+                // Generate "Did You Mean" from top results if query doesn't match exactly
+                $didYouMean = $results->take(3)->map(function($r) {
+                    $item = $r['item'];
+                    $type = $r['type'];
+                    $term = match($type) {
+                        'Product' => $item->name,
+                        'User' => $item->name,
+                        'Article' => $item->title,
+                        'Contact' => $item->first_name,
+                        default => null
+                    };
+                    return ['term' => $term, 'type' => $type];
+                })->filter(fn($d) => $d['term'] !== null)->values()->toArray();
+            }
 
             // Suggestions - same as autocomplete for now
             $suggestions = collect($autocomplete)->map(fn($s) => ['text' => $s])->toArray();
         }
 
-        return view('search.smart', compact('results', 'query', 'suggestions', 'didYouMean', 'autocomplete'));
+        return view('search.smart', compact('results', 'query', 'engine', 'suggestions', 'didYouMean', 'autocomplete'));
     }
 
     /**
