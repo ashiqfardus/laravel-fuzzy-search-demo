@@ -68,7 +68,11 @@
         @if($results->isEmpty())
             <x-empty icon="search">
                 No users match “{{ $query }}”.
-                <x-slot:hint>Raise the typo tolerance, switch algorithm, or add a fallback.</x-slot:hint>
+                @if(($attempts[0] ?? null) === 'metaphone')
+                    <x-slot:hint>Metaphone matches the sound of the whole name, so one word of it finds nothing: try “jane smith”.</x-slot:hint>
+                @else
+                    <x-slot:hint>Raise the typo tolerance, switch algorithm, or add a fallback.</x-slot:hint>
+                @endif
             </x-empty>
         @else
             <ul class="divide-y divide-line">

@@ -92,7 +92,7 @@ Set the engine to the LIKE table scan, then switch between all eight algorithms 
 | `fuzzy` | General purpose, handles typos |
 | `levenshtein` | Edit-distance with configurable threshold |
 | `soundex` | English phonetic matching |
-| `metaphone` | More accurate phonetics than Soundex |
+| `metaphone` | More accurate phonetics than Soundex; it matches the sound of the whole stored value, so search `jane smith`, not `smith` |
 | `trigram` | N-gram similarity (best on PostgreSQL with `pg_trgm`) |
 | `similar_text` | Percentage-based similarity |
 | `simple` | Basic LIKE — fastest, no typo tolerance |

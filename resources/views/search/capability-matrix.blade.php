@@ -39,6 +39,8 @@
                         <p class="text-sm text-muted">No results</p>
                         @if($algo === 'soundex')
                             <p class="mt-2 text-xs leading-relaxed text-muted">Soundex needs a true phonetic match (same sound code). Try <span class="code">john</span>, <span class="code">stephen</span> or <span class="code">steven</span>.</p>
+                        @elseif($algo === 'metaphone')
+                            <p class="mt-2 text-xs leading-relaxed text-muted">Metaphone matches the sound of the whole name, so one word of it finds nothing: try <a href="?q={{ urlencode('jane smith') }}" class="code cursor-pointer transition-colors duration-200 hover:bg-line">jane smith</a>.</p>
                         @endif
                     @else
                         <ol class="space-y-2">
