@@ -158,18 +158,20 @@ class SearchController extends Controller
     }
 
     /**
-     * Search articles with tokenization. The BM25 index answers by default (matchAll() holds
-     * on it too); ?engine=like runs the blog preset's fuzzy LIKE patterns over title, body
-     * and excerpt instead, which read every row.
+     * Search articles with tokenization. The BM25 index answers by default once articles are
+     * indexed (matchAll() holds on it too); ?engine=like, or an index not built yet, runs the
+     * blog preset's fuzzy LIKE patterns over title, body and excerpt, which read every row.
+     * No fallback() on the index: a miss would then scan the table (2.2-2.9 s at 100k), so
+     * the empty page links to the LIKE scan instead.
      */
     public function articles(Request $request)
     {
         $query = $this->term($request);
         $matchMode = $request->input('match_mode', 'any');
         $engine = $this->engine($request);
+        $useIndex = $engine === 'bm25' && $this->isIndexed(Article::class);
 
         $results = collect();
-        $attempts = $this->recordSearchAttempts();
 
         if ($query) {
             $searchQuery = Article::search($query)
@@ -184,10 +186,8 @@ class SearchController extends Controller
                 $searchQuery->matchAny();
             }
 
-            if ($engine === 'bm25') {
-                // As on products: the fuzzy fallback answers only when the index has no match
-                // (or has not been built for articles).
-                $searchQuery->useInvertedIndex()->fallback('fuzzy');
+            if ($useIndex) {
+                $searchQuery->useInvertedIndex();
             }
 
             $results = $searchQuery->get();
@@ -195,7 +195,7 @@ class SearchController extends Controller
 
         return view('search.articles', [
             'results' => $results, 'query' => $query, 'matchMode' => $matchMode,
-            'engine' => $engine, 'attempts' => $attempts->all(),
+            'engine' => $engine, 'useIndex' => $useIndex,
         ]);
     }
 

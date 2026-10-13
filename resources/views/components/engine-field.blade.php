@@ -1,4 +1,4 @@
-@props(['engine', 'model' => null, 'index' => 'BM25 index → fuzzy fallback', 'scan' => 'The table scan reads every row, so it is slow on a large table.'])
+@props(['engine', 'model' => null, 'index' => 'BM25 index', 'scan' => 'The table scan reads every row, so it is slow on a large table.'])
 @php
     $hint = $scan . ($model ? ' Build the index once: php artisan fuzzy-search:rebuild "' . $model . '"' : '');
 @endphp

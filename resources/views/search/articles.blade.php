@@ -4,7 +4,7 @@
 
 @section('content')
 <x-page-header eyebrow="Tokenization · blog preset · BM25 index" title="Article search">
-    Multi-word queries are split into tokens. Match any token (OR) for recall, or require every token (AND) for precision — on the BM25 index too, which answers by default. The LIKE table scan runs the blog preset's fuzzy patterns over every article's title, body and excerpt instead.
+    Multi-word queries are split into tokens. Match any token (OR) for recall, or require every token (AND) for precision — on the BM25 index too, which answers by default. The LIKE table scan runs the blog preset's fuzzy patterns over every article's title, body and excerpt instead; it is one click away when the index finds nothing.
 </x-page-header>
 
 <x-search-form button="Search articles" cols="md:grid-cols-4">
@@ -20,15 +20,11 @@
     <x-engine-field :engine="$engine" model="App\Models\Article" />
 </x-search-form>
 
-@if($query && count($attempts) > 1)
-    <x-callout tone="warn" title="Fallback used" class="mb-8">
-        <code class="code">{{ implode(' → ', $attempts) }}</code> —
-        <strong>{{ $attempts[0] }}</strong> returned nothing (no index match, or the articles index is not built),
-        so the same search was re-run with <strong>{{ last($attempts) }}</strong>.
-    </x-callout>
-@elseif($query && $engine === 'bm25' && count($attempts) === 1)
+@if($query && $engine === 'bm25' && !$useIndex)
+    <x-index-not-built model="App\Models\Article" class="mb-8" />
+@elseif($query && $useIndex && $results->isNotEmpty())
     <x-callout tone="success" class="mb-8">
-        Answered by the <strong>BM25 index</strong>; the fuzzy fallback was not needed.
+        Answered by the <strong>BM25 index</strong>.
     </x-callout>
 @endif
 
@@ -37,7 +33,11 @@
         @if($results->isEmpty())
             <x-empty icon="document">
                 No articles match “{{ $query }}”.
-                <x-slot:hint>Switch to “match any” to widen the search.</x-slot:hint>
+                @if($useIndex)
+                    <x-slot:hint><x-index-miss /></x-slot:hint>
+                @else
+                    <x-slot:hint>Switch to “match any” to widen the search.</x-slot:hint>
+                @endif
             </x-empty>
         @else
             <ul class="divide-y divide-line">
