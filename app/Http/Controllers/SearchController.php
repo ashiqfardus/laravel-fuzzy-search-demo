@@ -56,6 +56,7 @@ class SearchController extends Controller
             $fallback = '';
         }
         $verifiedOnly = $request->boolean('verified_only');
+        $useIndex = $engine === 'bm25' && $this->isIndexed(User::class);
 
         $results = collect();
         $debugInfo = [];
@@ -68,7 +69,7 @@ class SearchController extends Controller
                     ->withRelevance()
                     ->highlight('mark');
 
-                if ($engine === 'bm25' && $this->isIndexed(User::class)) {
+                if ($useIndex) {
                     $searchQuery->useInvertedIndex();
                 } else {
                     $searchQuery->using($algorithm);
@@ -92,7 +93,7 @@ class SearchController extends Controller
         }
 
         return view('search.users', [
-            'results' => $results, 'query' => $query, 'engine' => $engine, 'algorithm' => $algorithm,
+            'results' => $results, 'query' => $query, 'engine' => $engine, 'useIndex' => $useIndex, 'algorithm' => $algorithm,
             'typoTolerance' => $typoTolerance, 'fallback' => $fallback,
             'verifiedOnly' => $verifiedOnly, 'debugInfo' => $debugInfo, 'attempts' => $attempts->all(),
         ]);

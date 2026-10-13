@@ -53,7 +53,9 @@
         <code class="code">{{ implode(' → ', $attempts) }}</code> —
         <strong>{{ $attempts[0] }}</strong> returned nothing, so the same search was re-run with <strong>{{ last($attempts) }}</strong>.
     </x-callout>
-@elseif($query && ($attempts[0] ?? null) === 'bm25')
+@elseif($query && $engine === 'bm25' && !$useIndex)
+    <x-index-not-built model="App\Models\User" class="mb-8" />
+@elseif($query && $useIndex && $results->isNotEmpty())
     <x-callout tone="success" class="mb-8">
         Answered by the <strong>BM25 index</strong>. The algorithm and the fallback apply to the LIKE table scan.
     </x-callout>
@@ -68,7 +70,12 @@
         @if($results->isEmpty())
             <x-empty icon="search">
                 No users match “{{ $query }}”.
-                @if(($attempts[0] ?? null) === 'metaphone')
+                @if($useIndex)
+                    <x-slot:hint>
+                        <x-index-miss />
+                        The index matches whole words; for prefixes, see the <a href="{{ route('search.products') }}" class="text-link underline">as-you-type box on product search</a>.
+                    </x-slot:hint>
+                @elseif(($attempts[0] ?? null) === 'metaphone')
                     <x-slot:hint>Metaphone matches the sound of the whole name, so one word of it finds nothing: try “jane smith”.</x-slot:hint>
                 @else
                     <x-slot:hint>Raise the typo tolerance, switch algorithm, or add a fallback.</x-slot:hint>
