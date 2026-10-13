@@ -70,7 +70,7 @@
     <x-field label="Search query" for="q" class="md:col-span-2">
         <input id="q" type="text" name="q" value="{{ $query }}" placeholder="Try misspellings: iphne, macbok, samsng…" class="field-control" autofocus>
     </x-field>
-    <x-engine-field :engine="$engine" hint="The table scan reads every row of all four tables, twice, so it is slow on large tables. A model whose index is not built yet is searched with fuzzy LIKE." />
+    <x-engine-field :engine="$engine" index="BM25 index" scan="The table scan reads every row of all four tables, twice, so it is slow on large tables. A model whose index is not built yet is searched with fuzzy LIKE." />
 </x-search-form>
 
 @if($query)

@@ -39,11 +39,16 @@ class SearchController extends Controller
     }
 
     /**
-     * Search users with various options
+     * Search users with various options. The BM25 index answers by default once users are
+     * indexed (typo tolerance and the verified-only filter hold on it); the algorithm and the
+     * fallback chain are the LIKE table scan's (?engine=like), which also answers while the
+     * users index is not built. Not fallback() on the index: at 1M users a miss would then
+     * scan the table, twice with a LIKE fallback chain (5 s).
      */
     public function users(Request $request)
     {
         $query = $this->term($request);
+        $engine = $this->engine($request);
         $algorithm = $request->input('algorithm', 'fuzzy');
         $typoTolerance = (int) $request->input('typo_tolerance', 2);
         $fallback = $request->input('fallback', '');
@@ -59,14 +64,19 @@ class SearchController extends Controller
         if ($query) {
             try {
                 $searchQuery = User::search($query)
-                    ->using($algorithm)
                     ->typoTolerance($typoTolerance)
                     ->withRelevance()
                     ->highlight('mark');
 
-                if ($fallback !== '') {
-                    // Re-runs the search with this algorithm only if the primary finds nothing.
-                    $searchQuery->fallback($fallback);
+                if ($engine === 'bm25' && $this->isIndexed(User::class)) {
+                    $searchQuery->useInvertedIndex();
+                } else {
+                    $searchQuery->using($algorithm);
+
+                    if ($fallback !== '') {
+                        // Re-runs the search with this algorithm only if the primary finds nothing.
+                        $searchQuery->fallback($fallback);
+                    }
                 }
 
                 if ($verifiedOnly) {
@@ -82,7 +92,7 @@ class SearchController extends Controller
         }
 
         return view('search.users', [
-            'results' => $results, 'query' => $query, 'algorithm' => $algorithm,
+            'results' => $results, 'query' => $query, 'engine' => $engine, 'algorithm' => $algorithm,
             'typoTolerance' => $typoTolerance, 'fallback' => $fallback,
             'verifiedOnly' => $verifiedOnly, 'debugInfo' => $debugInfo, 'attempts' => $attempts->all(),
         ]);
@@ -286,7 +296,8 @@ class SearchController extends Controller
     /**
      * API endpoint for playground live search — the package's FuzzySearchCollection JSON
      * resource: each row's model attributes plus _score/_highlighted/etc, and meta
-     * (query, algorithm, latency_ms, suggestions).
+     * (query, algorithm, latency_ms, suggestions). It reads the BM25 index once users are
+     * indexed: a LIKE scan per keystroke took 2.26 s at 1M users.
      */
     public function searchUsers(Request $request): \Illuminate\Http\JsonResponse
     {
@@ -296,9 +307,13 @@ class SearchController extends Controller
             return response()->json(['data' => [], 'meta' => null]);
         }
 
-        return FuzzySearchCollection::fromBuilder(
-            User::search($query)->highlight('mark')->limit(10)
-        )->response();
+        $search = User::search($query)->highlight('mark')->limit(10);
+
+        if ($this->isIndexed(User::class)) {
+            $search->useInvertedIndex();
+        }
+
+        return FuzzySearchCollection::fromBuilder($search)->response();
     }
 
     /**
@@ -717,6 +732,12 @@ class SearchController extends Controller
         $q = $request->input('q', '');
 
         return is_string($q) ? $q : '';
+    }
+
+    /** Whether the model's BM25 index is built: fuzzy-search:rebuild writes its meta row. */
+    private function isIndexed(string $modelClass): bool
+    {
+        return DB::table('fuzzy_index_meta')->where('model_type', $modelClass)->exists();
     }
 
     /**

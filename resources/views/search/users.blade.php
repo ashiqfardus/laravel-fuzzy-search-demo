@@ -3,15 +3,16 @@
 @section('title', 'User search — Fuzzy Search Demo')
 
 @section('content')
-<x-page-header eyebrow="Algorithms · typo tolerance · fallback" title="User search">
-    Pick an algorithm, choose how many typos to forgive, and optionally chain a fallback that only runs when the primary finds nothing.
+<x-page-header eyebrow="BM25 index · algorithms · typo tolerance · fallback" title="User search">
+    Choose how many typos to forgive. The BM25 index answers by default; switch the engine to the LIKE table scan to pick an algorithm and optionally chain a fallback that only runs when the primary finds nothing.
 </x-page-header>
 
 <x-search-form button="Search users" cols="md:grid-cols-6">
-    <x-field label="Search query" for="q" class="md:col-span-3">
+    <x-field label="Search query" for="q" class="md:col-span-2">
         <input id="q" type="text" name="q" value="{{ $query }}" placeholder="Try: jonh, jon, johnny…" class="field-control" autofocus>
     </x-field>
-    <x-field label="Algorithm" for="algorithm">
+    <x-engine-field :engine="$engine" index="BM25 index" model="App\Models\User" scan="Each LIKE algorithm scans the table: about 2–4 s at 1M users, and a fallback can run two scans." />
+    <x-field label="Algorithm" for="algorithm" hint="Table scan only.">
         <select id="algorithm" name="algorithm" class="field-control">
             @foreach(['fuzzy' => 'Fuzzy', 'levenshtein' => 'Levenshtein', 'soundex' => 'Soundex', 'metaphone' => 'Metaphone', 'simple' => 'Simple (LIKE)'] as $value => $label)
                 <option value="{{ $value }}" @selected($algorithm === $value)>{{ $label }}</option>
@@ -25,7 +26,7 @@
             @endfor
         </select>
     </x-field>
-    <x-field label="Fallback" for="fallback" hint="Runs only if the primary finds nothing. Try Simple + “jonh” with Fuzzy.">
+    <x-field label="Fallback" for="fallback" hint="Table scan only: runs if the primary finds nothing. Try Simple + “jonh” with Fuzzy.">
         <select id="fallback" name="fallback" class="field-control">
             <option value="" @selected($fallback === '')>None</option>
             @foreach(['fuzzy' => 'Fuzzy', 'levenshtein' => 'Levenshtein', 'soundex' => 'Soundex', 'metaphone' => 'Metaphone', 'simple' => 'Simple (LIKE)'] as $value => $label)
@@ -51,6 +52,10 @@
     <x-callout tone="warn" title="Fallback used" class="mb-8">
         <code class="code">{{ implode(' → ', $attempts) }}</code> —
         <strong>{{ $attempts[0] }}</strong> returned nothing, so the same search was re-run with <strong>{{ last($attempts) }}</strong>.
+    </x-callout>
+@elseif($query && ($attempts[0] ?? null) === 'bm25')
+    <x-callout tone="success" class="mb-8">
+        Answered by the <strong>BM25 index</strong>. The algorithm and the fallback apply to the LIKE table scan.
     </x-callout>
 @elseif($query && $fallback !== '' && count($attempts) === 1)
     <x-callout tone="success" class="mb-8">

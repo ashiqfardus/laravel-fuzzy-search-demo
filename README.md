@@ -11,7 +11,7 @@ A demonstration application showcasing the [ashiqfardus/laravel-fuzzy-search](ht
 
 | Page | What it shows |
 | ---- | ------------- |
-| `/search/users` | 8 algorithms, typo tolerance, relevance scoring, `@fuzzyHighlight`, `fallback()` chain with an "answered by" trace, `verified_only` toggle chaining `->whereNotNull('email_verified_at')` straight onto the search builder |
+| `/search/users` | 8 algorithms, typo tolerance, relevance scoring, `@fuzzyHighlight`, `fallback()` chain with an "answered by" trace, `verified_only` toggle chaining `->whereNotNull('email_verified_at')` straight onto the search builder. **Engine:** the BM25 index by default once users are indexed (typo tolerance and the verified filter hold on it), because each LIKE algorithm scans the table (2.26 s for fuzzy `smith` at 1M users, 5.0 s for a miss with a levenshtein fallback: two scans). The algorithms and the fallback chain are the labelled `?engine=like` opt-in, which also answers while the users index is not built (no `fallback()` on the index, so a miss never turns into a scan) |
 | `/search/products` | Config presets (`ecommerce`, `exact`), weighted BM25 (`name` weight 10 outranks `description` weight 5 — try `macbook`: the MacBook is the title match, the Dell XPS and iPad only mention it), `category_id` `filter()` honoured on the BM25 path, typo-tolerant BM25 → fuzzy fallback, plus an as-you-type box calling `/api/as-you-type` — `useInvertedIndex()->asYouType()` prefix-expands the last word against the dictionary and returns the package's `FuzzySearchCollection` |
 | `/search/relations` | `searchIn(['author.name' => 6])`: the relation match is scored and highlighted under the dotted key — try `smith` (author "John Smith" is in the fixed seeded pool). **Engine:** the BM25 index by default (`useInvertedIndex()->fallback('fuzzy')`), which holds the author's name with each article, so the dotted column is a column-restricted index search; the fuzzy LIKE scan reads every article (2.7–4.5 s at 100k), so it is the labelled opt-in `?engine=like`, where the dotted column compiles to a `whereHas`/EXISTS clause |
 | `/search/articles` | Multi-word tokenization with AND / OR logic (`matchAll()` holds on the index too), author shown via the `Author` relation. **Engine:** the BM25 index by default (`useInvertedIndex()->fallback('fuzzy')`), because the blog preset's LIKE patterns read every article's long `body` (2.2–2.9 s at 100k articles); `?engine=like` keeps that table scan as a labelled opt-in |
@@ -21,7 +21,7 @@ A demonstration application showcasing the [ashiqfardus/laravel-fuzzy-search](ht
 | `/search/benchmarks` | Side-by-side timing: LIKE vs the BM25 inverted index, with a typo-tolerance toggle that adds a third panel running the same index read with each term expanded by edit distance |
 | `/search/capability-matrix` | The same term through seven algorithms side by side, with timings. **Engine:** LIKE — comparing the LIKE algorithms is the page's point — run over the first 10,000 users by key, so every algorithm answers quickly (over 1M users the whole-table matrix took 6.7–7.8 s) |
 | `/search/scout-demo` | Laravel Scout integration (`SCOUT_DRIVER=fuzzy-search`) |
-| `/search/playground` | Extended query syntax: include `'`, exact `=`, prefix `^`, suffix `$`, exclude `!`, OR, grouping `()`, typo `~word`, field scope `field:term`; `extended()->paginate(10)` with the same pager component, plus a live preview calling `/api/search/users` that returns the package's `FuzzySearchCollection` — scores, escaped highlights and search meta (algorithm, latency). **Engine:** LIKE — `extended()` compiles to LIKE and has no index path — run over the first 10,000 users by key, as on the capability matrix, so a query stays quick on a large table |
+| `/search/playground` | Extended query syntax: include `'`, exact `=`, prefix `^`, suffix `$`, exclude `!`, OR, grouping `()`, typo `~word`, field scope `field:term`; `extended()->paginate(10)` with the same pager component, plus a live preview calling `/api/search/users` (the BM25 index once users are indexed) that returns the package's `FuzzySearchCollection` — scores, escaped highlights and search meta (algorithm, latency). **Engine:** LIKE — `extended()` compiles to LIKE and has no index path — run over the first 10,000 users by key, as on the capability matrix, so a query stays quick on a large table |
 | `/search/analytics` | Popular and zero-result searches, latency by path and daily volume, read from `fuzzy_search_logs` via the `SearchAnalytics` facade |
 | `/search/i18n` | Chinese, Japanese and Korean product names through the `ScriptAwareTokenizer` — character bigrams for CJK runs, whitespace for everything else, same BM25 index |
 
@@ -79,13 +79,13 @@ php artisan demo:seed --huge
 
 ### 1. Typo tolerance (`/search/users`)
 
-- Search `jonh` → finds "John" (single-character transposition)
+- Search `jonh` → finds "John" (single-character transposition), on the BM25 index or the LIKE table scan
 - Search `smyth` → finds "Smith" (phonetic near-match)
 - Slide the typo tolerance control to see how threshold affects recall
 
 ### 2. Algorithm comparison (`/search/users`)
 
-Switch between all eight algorithms on the same query and compare ranked output:
+Set the engine to the LIKE table scan, then switch between all eight algorithms on the same query and compare ranked output:
 
 | Algorithm | Strengths |
 | --------- | --------- |
