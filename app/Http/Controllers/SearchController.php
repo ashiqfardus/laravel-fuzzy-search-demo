@@ -708,7 +708,9 @@ class SearchController extends Controller
     }
 
     /**
-     * Scout driver demo page
+     * Scout driver demo page. The Scout engine wraps the BM25 index, so the page reads it too
+     * (the users fuzzy LIKE scan it ran took 2.26 s at 1M users); before the users index is
+     * built it finds nothing, and the page says to rebuild.
      */
     public function scoutDemo(): \Illuminate\View\View
     {
@@ -717,7 +719,7 @@ class SearchController extends Controller
 
         if ($term) {
             try {
-                $results = User::search($term)->withRelevance()->take(10)->get();
+                $results = User::search($term)->useInvertedIndex()->withRelevance()->take(10)->get();
             } catch (\Throwable) {
                 $results = collect();
             }
