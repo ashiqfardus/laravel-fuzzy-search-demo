@@ -532,7 +532,8 @@ class SearchController extends Controller
             $articleResults = $searchModel(Article::class, 'Article', 'title');
             $contactResults = $searchModel(Contact::class, 'Contact', 'first_name');
 
-            // Combine and sort by similarity score (higher = better match)
+            // Merge by name similarity (higher = better match): each model's relevance scores
+            // are on its own scale, so they cannot order rows across models.
             $results = $productResults
                 ->concat($userResults)
                 ->concat($articleResults)

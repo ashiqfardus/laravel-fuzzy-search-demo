@@ -18,7 +18,7 @@
 
 @section('content')
 <x-page-header eyebrow="Did you mean · suggestions · autocomplete" title="Smart search">
-    Misspell something on purpose. Every result is scored, and the same pass produces spelling alternatives and completions. On the BM25 index each model is one typo-tolerant index search and “Did you mean” reads the index dictionary; the LIKE table scan runs levenshtein and fuzzy instead. LIKE mode searches the first {{ number_format($slice) }} rows of each model so every scan answers quickly on a large table.
+    Misspell something on purpose. Each model's search finds and scores its matches, and the same pass produces spelling alternatives and completions. Relevance scores from four models are not on one scale, so the merged list is ordered by how closely each result's name matches your query — the match %. On the BM25 index each model is one typo-tolerant index search and “Did you mean” reads the index dictionary; the LIKE table scan runs levenshtein and fuzzy instead. LIKE mode searches the first {{ number_format($slice) }} rows of each model so every scan answers quickly on a large table.
 </x-page-header>
 
 <div class="card mb-8 p-5 sm:p-6" x-data="{
@@ -100,7 +100,7 @@
             <li><span class="code">volet</span> → Violet VonRueden (typo correction)</li>
             <li><span class="code">iphne</span> → iPhone (did you mean)</li>
             <li><span class="code">mac</span> → completions from product names</li>
-            <li>Every result is ranked by the package's relevance score</li>
+            <li>Results are merged by name similarity to the query (the match %)</li>
         </ul>
     </x-callout>
 @endif
@@ -122,7 +122,7 @@
                         <div class="min-w-0">
                             <div class="mb-1.5 flex flex-wrap items-center gap-2">
                                 <span class="badge {{ $tones[$type] ?? 'bg-raised text-muted' }}">{{ $type }}</span>
-                                <span class="badge bg-raised text-muted">match {{ number_format($result['similarity'] ?? 0) }}%</span>
+                                <span class="badge bg-raised text-muted" title="How closely the name matches the query (PHP similar_text), the order of the merged list">match {{ number_format($result['similarity'] ?? 0) }}%</span>
                             </div>
                             <p class="font-medium text-ink">
                                 @if($type === 'Product')
