@@ -4,7 +4,7 @@
 
 @section('content')
 <x-page-header eyebrow="Phonetic matching" title="Contact search">
-    Soundex and Metaphone match names that sound alike, so “steven” finds Stephen and “jon” finds John.
+    Soundex matches names that sound alike, so “steven” finds Stefan and “jon” finds Johnny. It keeps the first letter, so “philip” never finds Filip, nor “katherine” Catherine.
 </x-page-header>
 
 <x-search-form button="Search contacts" cols="md:grid-cols-3">
@@ -23,10 +23,10 @@
 @unless($query)
     <x-callout tone="info" title="Try a sound-alike" class="mb-8">
         <ul class="grid gap-1 sm:grid-cols-2">
-            <li><span class="code">steven</span> finds Stephen, Stefan</li>
-            <li><span class="code">jon</span> finds John, Jonathan</li>
-            <li><span class="code">katherine</span> finds Catherine, Kathryn</li>
-            <li><span class="code">philip</span> finds Phillip, Filip</li>
+            <li><span class="code">steven</span> finds Stefan, Stephen</li>
+            <li><span class="code">jon</span> finds John, Johnny</li>
+            <li><span class="code">katherine</span> finds Kathryn</li>
+            <li><span class="code">eric</span> finds Erik, Erich</li>
         </ul>
     </x-callout>
 @endunless
@@ -36,7 +36,7 @@
         @if($results->isEmpty())
             <x-empty icon="card">
                 No contacts sound like “{{ $query }}”.
-                <x-slot:hint>Soundex needs a true phonetic match; try Levenshtein for typo-style differences.</x-slot:hint>
+                <x-slot:hint>Soundex needs a true phonetic match that starts with the same letter; try Levenshtein for typo-style differences.</x-slot:hint>
             </x-empty>
         @else
             <div class="grid gap-4 p-4 sm:p-5 md:grid-cols-2">

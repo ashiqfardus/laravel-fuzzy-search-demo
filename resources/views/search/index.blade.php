@@ -6,7 +6,7 @@
         ['search.products',          'bag',      'Product search',     'Config presets, weighted BM25 (name over description), a category filter honoured on the index path, and an as-you-type box on the dictionary.',            'macbok · type macb'],
         ['search.relations',         'link',     'Relationship search', 'Search through Eloquent relations with dotted columns — author.name on the BM25 index, or whereHas/EXISTS on the table scan.', 'smith'],
         ['search.articles',          'document', 'Article search',     'Multi-word tokenization with match-all and match-any.',                                                                'laravel search fuzzy'],
-        ['search.contacts',          'card',     'Contact search',     'Phonetic matching through Soundex and Metaphone shadow columns.',                                                      'steven → Stephen'],
+        ['search.contacts',          'card',     'Contact search',     'Phonetic matching with Soundex: names that sound alike and start with the same letter.',                                  'steven → Stefan'],
         ['search.federated',         'squares',  'Federated search',   'One query across users, products, articles and contacts, merged into a single ranking.',                              'john'],
         ['search.smart',             'sparkles', 'Smart search',       'Did-you-mean from the index dictionary, suggestions and autocomplete across four models.',                              'iphne → iPhone'],
         ['search.capability-matrix', 'table',    'Compare algorithms', 'The same term through every algorithm, side by side, with timings.',                                                   'jhn'],
