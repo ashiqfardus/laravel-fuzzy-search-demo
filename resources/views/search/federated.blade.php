@@ -13,7 +13,7 @@
 
 @section('content')
 <x-page-header eyebrow="Four models · one ranking" title="Federated search">
-    Users, products, articles and contacts are searched together and merged into a single list ranked by a normalised score. Each model runs its own LIKE search (federated search has no index path), so the page searches the short name columns only — <span class="code">name</span>, <span class="code">title</span>, <span class="code">first_name</span>, <span class="code">last_name</span> — to stay fast on large tables.
+    Users, products, articles and contacts are searched together and merged into a single list ranked by a normalised score. Each model is searched through its BM25 index (<span class="code">useInvertedIndex()</span>) on its own configured columns. Until every model's index is built, each runs its own LIKE search instead, on the short name columns only — <span class="code">name</span>, <span class="code">title</span>, <span class="code">first_name</span>, <span class="code">last_name</span> — to stay fast on large tables.
 </x-page-header>
 
 <x-search-form button="Search everything" cols="md:grid-cols-1">
@@ -22,10 +22,24 @@
     </x-field>
 </x-search-form>
 
+@if($query && $missing !== [])
+    <x-callout tone="warn" title="Index not built" class="mb-8">
+        Not every model has a BM25 index yet, so each model's LIKE table scan answered, on the short name columns. Build the missing ones once:
+        @foreach($missing as $model)
+            <span class="code">php artisan fuzzy-search:rebuild "{{ $model }}"</span>
+        @endforeach
+    </x-callout>
+@endif
+
 @if($query)
     <x-results title="Across all models" :count="$results->total()">
         @if($results->isEmpty())
-            <x-empty icon="squares">Nothing matches “{{ $query }}” in any model.</x-empty>
+            <x-empty icon="squares">
+                Nothing matches “{{ $query }}” in any model.
+                @if($missing === [])
+                    <x-slot:hint>The index found no word close enough in any model.</x-slot:hint>
+                @endif
+            </x-empty>
         @else
             <ul class="divide-y divide-line">
                 @foreach($results as $item)

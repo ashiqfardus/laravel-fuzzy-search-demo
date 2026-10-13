@@ -5,7 +5,9 @@ namespace Tests\Feature;
 use App\Models\Article;
 use App\Models\Author;
 use App\Models\Category;
+use App\Models\Contact;
 use App\Models\Product;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -107,6 +109,37 @@ class DefaultEngineTest extends TestCase
             ->assertSee('engine=like', false));
         $this->assertSame([], $scans);
         $this->assertNotSame([], $this->modelTableScans('products', fn () => $this->get('/search/products?q=qwxz&engine=like')));
+    }
+
+    public function test_federated_search_answers_through_like_until_every_model_is_indexed_then_reads_only_the_index(): void
+    {
+        User::factory()->create(['name' => 'Kubernetes Kate']);
+        Contact::factory()->create(['first_name' => 'Kubernetes', 'last_name' => 'Kowalski']);
+
+        $this->get('/search/federated?q=kubernetes')
+            ->assertOk()
+            ->assertSee('Operators Explained')
+            ->assertSee('Index not built')
+            ->assertSee('fuzzy-search:rebuild "App\\Models\\User"', false);
+
+        foreach ([User::class, Product::class, Article::class, Contact::class] as $model) {
+            $this->artisan('fuzzy-search:rebuild', ['model' => $model])->assertSuccessful();
+        }
+
+        foreach (['/search/federated?q=kubernetes', '/search/federated?q=zebrafish', '/search/federated?q=qwxz'] as $uri) {
+            $scans = [];
+            foreach (['users', 'products', 'articles', 'contacts'] as $table) {
+                $scans = array_merge($scans, $this->modelTableScans($table, fn () => $this->get($uri)->assertOk()->assertDontSee('Index not built')));
+            }
+            $this->assertSame([], $scans, $uri);
+        }
+
+        $this->get('/search/federated?q=kubernetes')
+            ->assertSee('Operators Explained')
+            ->assertSee('Kubernetes Kate')
+            ->assertSee('Kowalski');
+        $this->get('/search/federated?q=zebrafish')->assertSee('Aquarium Heater');
+        $this->get('/search/federated?q=qwxz')->assertSee('found no word close enough in any model');
     }
 
     public function test_an_unknown_preset_falls_back_to_ecommerce_instead_of_failing(): void

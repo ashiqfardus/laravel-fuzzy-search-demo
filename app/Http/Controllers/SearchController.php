@@ -228,29 +228,32 @@ class SearchController extends Controller
     }
 
     /**
-     * Federated search across all models. FederatedSearch runs each model's own LIKE search
-     * (it has no index path), and paginate() reads each table twice (count + page), so it
-     * searches the short name columns only: email and the long product description made it
-     * 1.7-1.9 s at 100k rows per model.
+     * Federated search across all models. Once every model is indexed, each is searched
+     * through its BM25 index (FederatedSearch::useInvertedIndex()) on its own configured
+     * columns. While any index is missing, each model runs its own LIKE search instead, and
+     * paginate() reads each table twice (count + page), so that scan searches the short name
+     * columns only: email and the long product description made it 1.7-1.9 s at 100k rows
+     * per model.
      */
     public function federated(Request $request)
     {
         $query = $this->term($request);
+        $models = [User::class, Product::class, Article::class, Contact::class];
 
         $results = collect();
+        $missing = [];
 
         if ($query) {
-            $results = FederatedSearch::across([
-                User::class,
-                Product::class,
-                Article::class,
-                Contact::class,
-            ])
-                ->search($query)
-                ->searchIn(['name', 'title', 'first_name', 'last_name'])
-                ->limitPerModel(10)
-                ->paginate(10)
-                ->withQueryString();
+            $missing = array_values(array_filter($models, fn (string $model) => !$this->isIndexed($model)));
+            $search = FederatedSearch::across($models)->search($query)->limitPerModel(10);
+
+            if ($missing === []) {
+                $search->useInvertedIndex();
+            } else {
+                $search->searchIn(['name', 'title', 'first_name', 'last_name']);
+            }
+
+            $results = $search->paginate(10)->withQueryString();
 
             // FederatedSearch fetches each model separately, so the Article rows it returns
             // don't have author eager loaded — load it in one query rather than per row.
@@ -259,7 +262,7 @@ class SearchController extends Controller
             )->load('author');
         }
 
-        return view('search.federated', compact('results', 'query'));
+        return view('search.federated', compact('results', 'query', 'missing'));
     }
 
     /**
