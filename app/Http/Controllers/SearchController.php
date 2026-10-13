@@ -18,10 +18,11 @@ use Ashiqfardus\LaravelFuzzySearch\Http\Resources\FuzzySearchCollection;
 class SearchController extends Controller
 {
     /**
-     * How many users the LIKE-only showcase pages read (the capability matrix, the playground):
-     * over 1M users, seven LIKE algorithms over the whole table took 6.7-7.8 s.
+     * How many rows of a model a LIKE showcase reads: the capability matrix and the playground
+     * (users), and smart search's LIKE mode (each model). Over 1M users, seven LIKE algorithms
+     * over the whole table took 6.7-7.8 s; smart's eight whole-table scans took 29 s.
      */
-    private const USER_SLICE = 10000;
+    private const LIKE_SLICE = 10000;
 
     /**
      * Main search dashboard
@@ -396,7 +397,7 @@ class SearchController extends Controller
     }
 
     /**
-     * Side-by-side algorithm comparison, run over the first USER_SLICE users so every
+     * Side-by-side algorithm comparison, run over the first LIKE_SLICE users so every
      * algorithm answers quickly however large the table grows.
      */
     public function capabilityMatrix(): \Illuminate\View\View
@@ -404,10 +405,10 @@ class SearchController extends Controller
         $algorithms = ['simple', 'fuzzy', 'levenshtein', 'trigram', 'soundex', 'metaphone', 'similar_text'];
         $term       = request('q', 'john');
         $results    = [];
-        $slice      = self::USER_SLICE;
+        $slice      = self::LIKE_SLICE;
 
         if ($term) {
-            $ceiling = $this->userSliceCeiling();
+            $ceiling = $this->sliceCeiling(User::class);
 
             foreach ($algorithms as $algo) {
                 $start = microtime(true);
@@ -436,13 +437,14 @@ class SearchController extends Controller
     }
 
     /**
-     * The key of the USER_SLICE-th user by key, or null when the table holds fewer. A LIKE-only
-     * showcase reads users up to it, a primary-key range, so each of its scans reads at most
-     * USER_SLICE rows.
+     * The key of the model's LIKE_SLICE-th row by key, or null when the table holds fewer. A
+     * LIKE showcase reads rows up to it, a primary-key range, so each of its scans reads at
+     * most LIKE_SLICE rows.
      */
-    private function userSliceCeiling(): ?int
+    private function sliceCeiling(string $modelClass): ?int
     {
-        $key = User::query()->orderBy('id')->skip(self::USER_SLICE - 1)->value('id');
+        $keyName = (new $modelClass())->getKeyName();
+        $key = $modelClass::query()->orderBy($keyName)->skip(self::LIKE_SLICE - 1)->value($keyName);
 
         return $key === null ? null : (int) $key;
     }
@@ -485,21 +487,30 @@ class SearchController extends Controller
 
                     $merged = $search->get();
                 } else {
+                    // Both passes read only the model's first LIKE_SLICE rows, by a primary-key
+                    // bound: eight whole-table scans took 29 s at 1M rows, past PHP's 30 s limit.
+                    $ceiling = $this->sliceCeiling($modelClass);
+                    $sliced = function ($search) use ($modelClass, $ceiling) {
+                        if ($ceiling !== null) {
+                            $search->where((new $modelClass())->getQualifiedKeyName(), '<=', $ceiling);
+                        }
+
+                        return $search->get();
+                    };
+
                     // Try levenshtein first (better for typos)
-                    $levenResults = $modelClass::search($query)
+                    $levenResults = $sliced($modelClass::search($query)
                         ->using('levenshtein')
                         ->typoTolerance(3)
                         ->withRelevance()
-                        ->highlight('mark')
-                        ->get();
+                        ->highlight('mark'));
 
                     // Also try fuzzy for broader matches
-                    $fuzzyResults = $modelClass::search($query)
+                    $fuzzyResults = $sliced($modelClass::search($query)
                         ->using('fuzzy')
                         ->typoTolerance(4)
                         ->withRelevance()
-                        ->highlight('mark')
-                        ->get();
+                        ->highlight('mark'));
 
                     // Merge and deduplicate
                     $merged = $levenResults->merge($fuzzyResults)->unique('id');
@@ -576,7 +587,9 @@ class SearchController extends Controller
             $suggestions = collect($autocomplete)->map(fn($s) => ['text' => $s])->toArray();
         }
 
-        return view('search.smart', compact('results', 'query', 'engine', 'suggestions', 'didYouMean', 'autocomplete'));
+        $slice = self::LIKE_SLICE;
+
+        return view('search.smart', compact('results', 'query', 'engine', 'slice', 'suggestions', 'didYouMean', 'autocomplete'));
     }
 
     /**
@@ -681,12 +694,12 @@ class SearchController extends Controller
 
     /**
      * Extended-search syntax playground. extended() compiles to LIKE (it has no index path),
-     * so it runs over the first USER_SLICE users, like the capability matrix.
+     * so it runs over the first LIKE_SLICE users, like the capability matrix.
      */
     public function playground(): \Illuminate\View\View
     {
         $query = request('q', "^John Doe !banned");
-        $slice = self::USER_SLICE;
+        $slice = self::LIKE_SLICE;
 
         $ast     = null;
         $error   = null;
@@ -699,7 +712,7 @@ class SearchController extends Controller
 
                 $search = User::search($query)->extended();
 
-                if (($ceiling = $this->userSliceCeiling()) !== null) {
+                if (($ceiling = $this->sliceCeiling(User::class)) !== null) {
                     $search->where('id', '<=', $ceiling);
                 }
 

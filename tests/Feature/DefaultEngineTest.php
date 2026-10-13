@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\SearchController;
 use App\Models\Article;
 use App\Models\Author;
 use App\Models\Category;
@@ -140,6 +141,49 @@ class DefaultEngineTest extends TestCase
             ->assertSee('Kowalski');
         $this->get('/search/federated?q=zebrafish')->assertSee('Aquarium Heater');
         $this->get('/search/federated?q=qwxz')->assertSee('found no word close enough in any model');
+    }
+
+    public function test_smart_search_like_mode_reads_only_the_first_slice_of_each_model(): void
+    {
+        $slice = (new \ReflectionClassConstant(SearchController::class, 'LIKE_SLICE'))->getValue();
+        $now = now();
+        $categoryId = Category::value('id');
+        $authorId = Author::value('id');
+
+        // Every table past the slice, so each model's LIKE passes get a key bound.
+        $this->fill('users', $slice, fn (int $i) => ['name' => "Filler $i", 'email' => "filler$i@example.test", 'password' => 'x', 'created_at' => $now, 'updated_at' => $now]);
+        $this->fill('products', $slice, fn (int $i) => ['name' => "Filler $i", 'sku' => "FIL-$i", 'category_id' => $categoryId, 'price' => 1, 'created_at' => $now, 'updated_at' => $now]);
+        $this->fill('articles', $slice, fn (int $i) => ['title' => "Filler $i", 'body' => 'Filler', 'author_id' => $authorId, 'status' => 'published', 'created_at' => $now, 'updated_at' => $now]);
+        $this->fill('contacts', $slice, fn (int $i) => ['first_name' => 'Filler', 'last_name' => "N$i", 'email' => "filler$i@example.test", 'created_at' => $now, 'updated_at' => $now]);
+
+        $likeReads = [];
+        DB::listen(function ($query) use (&$likeReads) {
+            if (preg_match('/from "(users|products|articles|contacts)"/', $query->sql, $m) && stripos($query->sql, ' like ') !== false) {
+                $likeReads[$m[1]][] = $query->sql;
+            }
+        });
+
+        $this->get('/search/smart?q=kubernetes&engine=like')
+            ->assertOk()
+            ->assertSee('first ' . number_format($slice) . ' rows of each model')
+            ->assertSee('Operators Explained');
+
+        ksort($likeReads);
+        $this->assertSame(['articles', 'contacts', 'products', 'users'], array_keys($likeReads));
+        foreach ($likeReads as $table => $sqls) {
+            $this->assertCount(2, $sqls, $table); // levenshtein and fuzzy
+            foreach ($sqls as $sql) {
+                $this->assertStringContainsString('"' . $table . '"."id" <= ?', $sql);
+            }
+        }
+    }
+
+    /** Insert $rows rows into $table in chunks, bypassing models (and indexing). */
+    private function fill(string $table, int $rows, \Closure $row): void
+    {
+        foreach (array_chunk(range(1, $rows), 500) as $chunk) {
+            DB::table($table)->insert(array_map($row, $chunk));
+        }
     }
 
     public function test_an_unknown_preset_falls_back_to_ecommerce_instead_of_failing(): void

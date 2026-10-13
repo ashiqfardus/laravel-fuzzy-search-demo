@@ -18,7 +18,7 @@
 
 @section('content')
 <x-page-header eyebrow="Did you mean · suggestions · autocomplete" title="Smart search">
-    Misspell something on purpose. Every result is scored, and the same pass produces spelling alternatives and completions. On the BM25 index each model is one typo-tolerant index search and “Did you mean” reads the index dictionary; the LIKE table scan runs levenshtein and fuzzy over every row of all four tables instead.
+    Misspell something on purpose. Every result is scored, and the same pass produces spelling alternatives and completions. On the BM25 index each model is one typo-tolerant index search and “Did you mean” reads the index dictionary; the LIKE table scan runs levenshtein and fuzzy instead. LIKE mode searches the first {{ number_format($slice) }} rows of each model so every scan answers quickly on a large table.
 </x-page-header>
 
 <div class="card mb-8 p-5 sm:p-6" x-data="{
@@ -70,7 +70,7 @@
     <x-field label="Search query" for="q" class="md:col-span-2">
         <input id="q" type="text" name="q" value="{{ $query }}" placeholder="Try misspellings: iphne, macbok, samsng…" class="field-control" autofocus>
     </x-field>
-    <x-engine-field :engine="$engine" index="BM25 index" scan="The table scan reads every row of all four tables, twice, so it is slow on large tables. A model whose index is not built yet is searched with fuzzy LIKE." />
+    <x-engine-field :engine="$engine" index="BM25 index" :scan="'The table scan reads the first ' . number_format($slice) . ' rows of each model, twice, so it is slower than the index. A model whose index is not built yet is searched with fuzzy LIKE.'" />
 </x-search-form>
 
 @if($query)
