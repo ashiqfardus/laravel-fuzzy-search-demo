@@ -47,6 +47,7 @@ class DatabaseSeeder extends Seeder
         Article::factory(max(0, 30 - Article::count()))->recycle($authors)->create();
 
         Contact::factory(max(0, 40 - Contact::count()))->create();
+        $this->call(FixedContactsSeeder::class);
 
         $this->command->info(sprintf(
             'Seeded: %d users, %d products, %d articles, %d contacts',

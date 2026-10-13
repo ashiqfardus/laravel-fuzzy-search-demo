@@ -61,7 +61,7 @@ The default seeder (`php artisan db:seed`) creates:
 | Users | 25 | `name`, `email` |
 | Products | 50 | `name`, `description`, `sku`, `brand`, `category.name` |
 | Articles | 30 | `title`, `body`, `excerpt`, `author.name` |
-| Contacts | 40 | `first_name`, `last_name`, `email`, `company` |
+| Contacts | 40 random, plus the 13 names the contact hints use | `first_name`, `last_name`, `email`, `company` |
 
 ### Large dataset (benchmarks)
 
@@ -125,7 +125,7 @@ Try these queries:
 - Search `jon` → finds "John", "Johnny"
 - Search `eric` → finds "Erik", "Erich"
 
-Soundex keeps the first letter and codes the rest, so `philip` never finds "Filip", `katherine` never finds "Catherine", and `jon` never finds "Jonathan" (J500 against J535). The seeded contacts are drawn at random from these names, so a reseed may hold only some of them.
+Soundex keeps the first letter and codes the rest, so `philip` never finds "Filip", `katherine` never finds "Catherine", and `jon` never finds "Jonathan" (J500 against J535). The 40 random contacts are drawn from a name list, so `FixedContactsSeeder` (run by `db:seed`) adds a contact for each name the hints use (Stefan, Stephen, Steven, John, Johnny, Jon, Kathryn, Katherine, Catherine, Erik, Erich, Eric, Filip) that no contact has yet; running it again adds nothing. On a database seeded before it existed, run `php artisan db:seed --class=FixedContactsSeeder`. These hints describe `SOUNDEX()` (MySQL, MariaDB, PostgreSQL); SQLite has none, and the package matches phonetic patterns there instead.
 
 ### 6. Config presets (`/search/products`)
 
@@ -182,7 +182,8 @@ app/
 database/
 ├── migrations/
 └── seeders/
-    ├── DatabaseSeeder.php         # Default: 25 users, 50 products, 30 articles, 40 contacts
+    ├── DatabaseSeeder.php         # Default: 25 users, 50 products, 30 articles, 40 contacts + the hinted ones
+    ├── FixedContactsSeeder.php    # The contact names the contact page's hints name, added once
     ├── LargeDatasetSeeder.php     # 100k rows per model (400k total)
     └── HugeDatasetSeeder.php      # 1M users
 resources/views/
