@@ -142,14 +142,18 @@ class SearchController extends Controller
     }
 
     /**
-     * Search articles with tokenization
+     * Search articles with tokenization. The BM25 index answers by default (matchAll() holds
+     * on it too); ?engine=like runs the blog preset's fuzzy LIKE patterns over title, body
+     * and excerpt instead, which read every row.
      */
     public function articles(Request $request)
     {
         $query = $this->term($request);
         $matchMode = $request->input('match_mode', 'any');
+        $engine = $this->engine($request);
 
         $results = collect();
+        $attempts = $this->recordSearchAttempts();
 
         if ($query) {
             $searchQuery = Article::search($query)
@@ -164,10 +168,19 @@ class SearchController extends Controller
                 $searchQuery->matchAny();
             }
 
+            if ($engine === 'bm25') {
+                // As on products: the fuzzy fallback answers only when the index has no match
+                // (or has not been built for articles).
+                $searchQuery->useInvertedIndex()->fallback('fuzzy');
+            }
+
             $results = $searchQuery->get();
         }
 
-        return view('search.articles', compact('results', 'query', 'matchMode'));
+        return view('search.articles', [
+            'results' => $results, 'query' => $query, 'matchMode' => $matchMode,
+            'engine' => $engine, 'attempts' => $attempts->all(),
+        ]);
     }
 
     /**
@@ -615,5 +628,14 @@ class SearchController extends Controller
         $q = $request->input('q', '');
 
         return is_string($q) ? $q : '';
+    }
+
+    /**
+     * The engine a page searches with: the BM25 index by default, the LIKE table scan only
+     * when ?engine=like asks for it. The scan reads every row, so it is slow on a large table.
+     */
+    private function engine(Request $request): string
+    {
+        return $request->input('engine') === 'like' ? 'like' : 'bm25';
     }
 }
