@@ -40,6 +40,11 @@ class DefaultEngineTest extends TestCase
             ->assertOk()
             ->assertSee('Operators Explained')
             ->assertSee('Index not built');
+
+        $this->get('/search/relations?q=zebulon')
+            ->assertOk()
+            ->assertSee('Operators Explained')
+            ->assertSee('Index not built');
     }
 
     public function test_an_indexed_model_is_read_from_the_index_and_a_miss_never_scans_the_table(): void
@@ -63,6 +68,18 @@ class DefaultEngineTest extends TestCase
             ->assertOk()
             ->assertSee('Operators Explained')
             ->assertDontSee('Answered by the');
+
+        $this->get('/search/relations?q=zebulon')
+            ->assertOk()
+            ->assertSee('Zebulon</mark>', false)
+            ->assertSee('-&gt;useInvertedIndex()', false)
+            ->assertDontSee('Index not built');
+
+        $scans = $this->modelTableScans('articles', fn () => $this->get('/search/relations?q=qwxz')
+            ->assertOk()
+            ->assertSee('found no word close enough'));
+        $this->assertSame([], $scans);
+        $this->assertNotSame([], $this->modelTableScans('articles', fn () => $this->get('/search/relations?q=qwxz&engine=like')));
     }
 
     /** The LIKE reads of $table that $request runs. */

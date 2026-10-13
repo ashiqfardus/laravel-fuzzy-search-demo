@@ -17,21 +17,26 @@
 <x-callout tone="info" title="What ran" class="mb-8">
     <pre class="overflow-x-auto font-mono text-xs leading-relaxed">Article::search($query)
     ->searchIn(['title' => 10, 'excerpt' => 3, 'author.name' => 6])
-    {{ $engine === 'bm25' ? "->useInvertedIndex()->fallback('fuzzy')" : "->using('fuzzy')" }}
+    {{ $useIndex ? '->useInvertedIndex()' : "->using('fuzzy')" }}
     ->withRelevance()
     ->highlight('mark')
     ->paginate(10);</pre>
-    @if($query && count($attempts) > 1)
-        <p class="mt-2"><strong>Fallback used:</strong> <code class="code">{{ implode(' → ', $attempts) }}</code> — the index had no match (or the articles index is not built), so the fuzzy table scan answered.</p>
-    @endif
 </x-callout>
+
+@if($query && $engine === 'bm25' && !$useIndex)
+    <x-index-not-built model="App\Models\Article" class="mb-8" />
+@endif
 
 @if($query)
     <x-results :count="$results->total()">
         @if($results->isEmpty())
             <x-empty icon="document">
                 No articles match “{{ $query }}”, by title or by author.
-                <x-slot:hint>Try a partial author name — it compiles to the same whereHas clause.</x-slot:hint>
+                @if($useIndex)
+                    <x-slot:hint><x-index-miss /></x-slot:hint>
+                @else
+                    <x-slot:hint>Try a partial author name — it compiles to the same whereHas clause.</x-slot:hint>
+                @endif
             </x-empty>
         @else
             <ul class="divide-y divide-line">

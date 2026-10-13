@@ -261,16 +261,18 @@ class SearchController extends Controller
 
     /**
      * Relationship search: a match on author.name is scored and highlighted under the dotted
-     * key. On the BM25 index (the default) the author's name is indexed with the article, so
-     * it is a column-restricted index search; on the LIKE table scan (?engine=like) it
-     * compiles to a whereHas/EXISTS clause on the Article query.
+     * key. On the BM25 index (the default, once articles are indexed) the author's name is
+     * indexed with the article, so it is a column-restricted index search; on the LIKE table
+     * scan (?engine=like, or an index not built yet) it compiles to a whereHas/EXISTS clause
+     * on the Article query. No fallback() on the index: a miss would then scan the table
+     * (2.7-4.5 s at 100k), so the empty page links to the LIKE scan instead.
      */
     public function relations(Request $request)
     {
         $query    = $this->term($request);
         $engine   = $this->engine($request);
+        $useIndex = $engine === 'bm25' && $this->isIndexed(Article::class);
         $results  = collect();
-        $attempts = $this->recordSearchAttempts();
 
         if ($query) {
             $search = Article::search($query)
@@ -278,8 +280,8 @@ class SearchController extends Controller
                 ->withRelevance()
                 ->highlight('mark');
 
-            if ($engine === 'bm25') {
-                $search->useInvertedIndex()->fallback('fuzzy');
+            if ($useIndex) {
+                $search->useInvertedIndex();
             } else {
                 $search->using('fuzzy');
             }
@@ -289,7 +291,7 @@ class SearchController extends Controller
 
         return view('search.relations', [
             'results' => $results, 'query' => $query,
-            'engine' => $engine, 'attempts' => $attempts->all(),
+            'engine' => $engine, 'useIndex' => $useIndex,
         ]);
     }
 
