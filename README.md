@@ -1,6 +1,6 @@
 # Laravel Fuzzy Search Demo
 
-A demonstration application showcasing the [ashiqfardus/laravel-fuzzy-search](https://github.com/ashiqfardus/laravel-fuzzy-search) package — **v2.0.0**.
+A demonstration application showcasing the [ashiqfardus/laravel-fuzzy-search](https://github.com/ashiqfardus/laravel-fuzzy-search) package — **v2.1.0**.
 
 ## Links
 
@@ -158,7 +158,7 @@ The box above the product search form calls `/api/as-you-type`, which runs `Prod
 
 - PHP 8.2+
 - Laravel 12.x
-- `ashiqfardus/laravel-fuzzy-search` ^2.0
+- `ashiqfardus/laravel-fuzzy-search` ^2.1
 - MySQL 8+, MariaDB 11.4, PostgreSQL 14+, SQL Server 2022, SQLite (the package's CI matrix)
 
 ## Project Structure
