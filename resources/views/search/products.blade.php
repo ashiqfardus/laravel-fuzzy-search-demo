@@ -8,7 +8,7 @@
 
 @section('content')
 <x-page-header eyebrow="Presets · filters · BM25 index" title="Product search">
-    The BM25 index answers by default. It is typo-tolerant — try <span class="code">iphne</span> — and it honours the category filter. Column weights count too: a term in the product name (weight 10) outranks the same term found only in the description (weight 5) — try <span class="code">macbook</span>. Config presets tune eight parameters at once: on the LIKE table scan (<span class="code">?engine=like</span>) they pick the algorithm, and their typo tolerance holds on the index too, so Exact turns the index's typo matching off.
+    The BM25 index answers by default. It is typo-tolerant — try <span class="code">iphne</span> — and it honours the category filter. Column weights count too: a term in the product name (weight 10) outranks the same term found only in the description (weight 5) — try <span class="code">macbook</span>. Config presets set several search options at once: on the LIKE table scan (<span class="code">?engine=like</span>) they pick the algorithm, and their typo tolerance holds on the index too, so Exact turns the index's typo matching off.
 </x-page-header>
 
 <div class="card mb-8 p-5 sm:p-6" x-data="{

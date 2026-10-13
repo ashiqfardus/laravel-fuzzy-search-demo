@@ -2,12 +2,12 @@ export function fuzzyTour() {
     const steps = [
         {
             title:  '1 / 8 — Multi-Algorithm User Search',
-            body:   'Try levenshtein, soundex, fuzzy, and metaphone side-by-side. Toggle typo tolerance and see how ranking changes.',
+            body:   'The BM25 index answers by default, typo-tolerant. Switch the engine to the LIKE table scan to compare fuzzy, levenshtein, soundex, metaphone and simple LIKE, and chain a fallback.',
             href:   '/search/users',
         },
         {
             title:  '2 / 8 — Product Search (Config Presets)',
-            body:   'Pick a preset (ecommerce, blog, exact) — each tunes eight parameters at once via config/fuzzy-search.php.',
+            body:   'Weighted BM25 by default: try macbook. On the LIKE table scan, the ecommerce and exact presets from config/fuzzy-search.php set the algorithm and typo tolerance.',
             href:   '/search/products',
         },
         {
@@ -32,12 +32,12 @@ export function fuzzyTour() {
         },
         {
             title:  '7 / 8 — Scout Driver',
-            body:   'SCOUT_DRIVER=fuzzy-search wires in the package as a Laravel Scout engine. No extra package required.',
+            body:   'SCOUT_DRIVER=fuzzy-search wires in the package as a Laravel Scout engine once laravel/scout is installed. No separate driver package.',
             href:   '/search/scout-demo',
         },
         {
             title:  '8 / 8 — Capability Matrix',
-            body:   'Every feature, every DB engine, every algorithm. Green means it works on your hardware right now.',
+            body:   'The same term through seven LIKE algorithms side by side, with their timings, over the first 10,000 users.',
             href:   '/search/capability-matrix',
         },
     ];

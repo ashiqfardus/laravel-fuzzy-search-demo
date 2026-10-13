@@ -2,7 +2,7 @@
 
 @php
     $pages = [
-        ['search.users',             'users',    'User search',        'The BM25 index by default, or eight LIKE algorithms with typo tolerance and a fallback chain that only runs when the primary finds nothing.', 'jonh · simple → fuzzy'],
+        ['search.users',             'users',    'User search',        'The BM25 index by default, or five LIKE algorithms with typo tolerance and a fallback chain that only runs when the primary finds nothing.', 'jonh · simple → fuzzy'],
         ['search.products',          'bag',      'Product search',     'Config presets, weighted BM25 (name over description), a category filter honoured on the index path, and an as-you-type box on the dictionary.',            'macbok · type macb'],
         ['search.relations',         'link',     'Relationship search', 'Search through Eloquent relations with dotted columns — author.name on the BM25 index, or whereHas/EXISTS on the table scan.', 'smith'],
         ['search.articles',          'document', 'Article search',     'Multi-word tokenization with match-all and match-any.',                                                                'laravel search fuzzy'],

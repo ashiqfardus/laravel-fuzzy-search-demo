@@ -11,7 +11,7 @@ A demonstration application showcasing the [ashiqfardus/laravel-fuzzy-search](ht
 
 | Page | What it shows |
 | ---- | ------------- |
-| `/search/users` | 8 algorithms, typo tolerance, relevance scoring, `@fuzzyHighlight`, `fallback()` chain with an "answered by" trace, `verified_only` toggle chaining `->whereNotNull('email_verified_at')` straight onto the search builder. **Engine:** the BM25 index by default once users are indexed (typo tolerance and the verified filter hold on it), because each LIKE algorithm scans the table (2.26 s for fuzzy `smith` at 1M users, 5.0 s for a miss with a levenshtein fallback: two scans). The algorithms and the fallback chain are the labelled `?engine=like` opt-in, which also answers while the users index is not built (no `fallback()` on the index, so a miss never turns into a scan) |
+| `/search/users` | 5 LIKE algorithms (the package has eight), typo tolerance, relevance scoring, `@fuzzyHighlight`, `fallback()` chain with an "answered by" trace, `verified_only` toggle chaining `->whereNotNull('email_verified_at')` straight onto the search builder. **Engine:** the BM25 index by default once users are indexed (typo tolerance and the verified filter hold on it), because each LIKE algorithm scans the table (2.26 s for fuzzy `smith` at 1M users, 5.0 s for a miss with a levenshtein fallback: two scans). The algorithms and the fallback chain are the labelled `?engine=like` opt-in, which also answers while the users index is not built (no `fallback()` on the index, so a miss never turns into a scan) |
 | `/search/products` | Config presets (`ecommerce`, `exact`), weighted BM25 (`name` weight 10 outranks `description` weight 5 — try `macbook`: the MacBook is the title match, the Dell XPS and iPad only mention it), `category_id` `filter()` honoured on the BM25 path, a typo-tolerant BM25 index, plus an as-you-type box calling `/api/as-you-type` — `useInvertedIndex()->asYouType()` prefix-expands the last word against the dictionary and returns the package's `FuzzySearchCollection`. **Engine:** the BM25 index by default once products are indexed (`useInvertedIndex()`), because the LIKE scan took 6.2–7.8 s at 1M products (`laptop`, `lapto`, `nikon`). `?engine=like` is the labelled opt-in, where the presets pick the algorithm, and it also answers while the index is not built. No `fallback()` on the index: a miss links to the LIKE scan instead of running it |
 | `/search/relations` | `searchIn(['author.name' => 6])`: the relation match is scored and highlighted under the dotted key — try `smith` (author "John Smith" is in the fixed seeded pool). **Engine:** the BM25 index by default once articles are indexed (`useInvertedIndex()`), which holds the author's name with each article, so the dotted column is a column-restricted index search; the fuzzy LIKE scan reads every article (2.7–4.5 s at 100k), so it is the labelled opt-in `?engine=like`, where the dotted column compiles to a `whereHas`/EXISTS clause, and it also answers while the index is not built. No `fallback()` on the index: a miss links to the LIKE scan instead of running it |
 | `/search/articles` | Multi-word tokenization with AND / OR logic (`matchAll()` holds on the index too), author shown via the `Author` relation. **Engine:** the BM25 index by default once articles are indexed (`useInvertedIndex()`), because the blog preset's LIKE patterns read every article's long `body` (2.2–2.9 s at 100k articles); `?engine=like` keeps that table scan as a labelled opt-in, and it also answers while the index is not built. No `fallback()` on the index, so a miss never scans the table: the empty page links to the LIKE scan instead |
@@ -58,7 +58,7 @@ The default seeder (`php artisan db:seed`) creates:
 
 | Model | Count | Searchable columns |
 | ----- | ----- | ------------------ |
-| Users | 24 | `name`, `email` |
+| Users | 25 | `name`, `email` |
 | Products | 50 | `name`, `description`, `sku`, `brand`, `category.name` |
 | Articles | 30 | `title`, `body`, `excerpt`, `author.name` |
 | Contacts | 40 | `first_name`, `last_name`, `email`, `company` |
@@ -85,7 +85,7 @@ php artisan demo:seed --huge
 
 ### 2. Algorithm comparison (`/search/users`)
 
-Set the engine to the LIKE table scan, then switch between all eight algorithms on the same query and compare ranked output:
+Set the engine to the LIKE table scan, then switch between the page's five algorithms (`fuzzy`, `levenshtein`, `soundex`, `metaphone`, `simple`) on the same query and compare ranked output. The package has eight; `/search/capability-matrix` runs seven of them side by side:
 
 | Algorithm | Strengths |
 | --------- | --------- |
@@ -135,7 +135,7 @@ The page shows weighted BM25 by default. Every fixed catalog product has a real 
 
 ### 7. Scout driver (`/search/scout-demo`)
 
-Demonstrates `SCOUT_DRIVER=fuzzy-search` — the bundled Scout engine adapter. No extra package required.
+Demonstrates `SCOUT_DRIVER=fuzzy-search` — the Scout engine built into the package. It needs `laravel/scout` installed, but no separate driver package. This demo does not install Scout, so the page runs the same BM25 index search directly (`useInvertedIndex()`).
 
 ### 8. Federated search (`/search/federated`)
 
@@ -182,7 +182,7 @@ app/
 database/
 ├── migrations/
 └── seeders/
-    ├── DatabaseSeeder.php         # Default: 24 users, 50 products, 30 articles, 40 contacts
+    ├── DatabaseSeeder.php         # Default: 25 users, 50 products, 30 articles, 40 contacts
     ├── LargeDatasetSeeder.php     # 100k rows per model (400k total)
     └── HugeDatasetSeeder.php      # 1M users
 resources/views/

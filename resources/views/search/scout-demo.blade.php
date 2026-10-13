@@ -4,7 +4,7 @@
 
 @section('content')
 <x-page-header eyebrow="Laravel Scout" title="Scout driver">
-    Set <span class="code">SCOUT_DRIVER=fuzzy-search</span> and the package becomes a Scout engine, bundled in core with no extra dependency. It wraps the same BM25 inverted index as <span class="code">->useInvertedIndex()</span> and returns a <span class="code">_score</span> on every model.
+    Set <span class="code">SCOUT_DRIVER=fuzzy-search</span> and the package becomes a Scout engine once <span class="code">laravel/scout</span> is installed; no separate driver package. It wraps the same BM25 inverted index as <span class="code">->useInvertedIndex()</span> and returns a <span class="code">_score</span> on every model.
 </x-page-header>
 
 <x-search-form button="Search" cols="md:grid-cols-1">
