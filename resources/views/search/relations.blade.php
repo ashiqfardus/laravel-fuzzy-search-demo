@@ -3,23 +3,27 @@
 @section('title', 'Relationship search — Fuzzy Search Demo')
 
 @section('content')
-<x-page-header eyebrow="whereHas · dotted columns" title="Relationship search">
-    Articles belong to an <span class="code">Author</span>. Adding <span class="code">'author.name'</span> to <span class="code">searchIn()</span> compiles to a <span class="code">whereHas</span>/EXISTS clause, and a match on the author's name is scored and highlighted under that dotted key — no join, no N+1.
+<x-page-header eyebrow="Dotted columns · BM25 index · whereHas" title="Relationship search">
+    Articles belong to an <span class="code">Author</span>. Add <span class="code">'author.name'</span> to <span class="code">searchIn()</span> and a match on the author's name is scored and highlighted under that dotted key — no join, no N+1. The BM25 index holds the author's name with each article, so it answers by default; the LIKE table scan compiles the same column to a <span class="code">whereHas</span>/EXISTS clause.
 </x-page-header>
 
-<x-search-form button="Search articles" cols="md:grid-cols-1">
-    <x-field label="Search query" for="q">
+<x-search-form button="Search articles" cols="md:grid-cols-3">
+    <x-field label="Search query" for="q" class="md:col-span-2">
         <input id="q" type="text" name="q" value="{{ $query }}" placeholder="Try: laravel, smith…" class="field-control" autofocus>
     </x-field>
+    <x-engine-field :engine="$engine" model="App\Models\Article" />
 </x-search-form>
 
 <x-callout tone="info" title="What ran" class="mb-8">
     <pre class="overflow-x-auto font-mono text-xs leading-relaxed">Article::search($query)
     ->searchIn(['title' => 10, 'excerpt' => 3, 'author.name' => 6])
-    ->using('fuzzy')
+    {{ $engine === 'bm25' ? "->useInvertedIndex()->fallback('fuzzy')" : "->using('fuzzy')" }}
     ->withRelevance()
     ->highlight('mark')
     ->paginate(10);</pre>
+    @if($query && count($attempts) > 1)
+        <p class="mt-2"><strong>Fallback used:</strong> <code class="code">{{ implode(' → ', $attempts) }}</code> — the index had no match (or the articles index is not built), so the fuzzy table scan answered.</p>
+    @endif
 </x-callout>
 
 @if($query)

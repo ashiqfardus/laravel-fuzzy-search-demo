@@ -241,25 +241,37 @@ class SearchController extends Controller
     }
 
     /**
-     * Relationship search: author.name compiles to a whereHas/EXISTS clause on the
-     * Article query, and its match is scored and highlighted under the dotted key.
+     * Relationship search: a match on author.name is scored and highlighted under the dotted
+     * key. On the BM25 index (the default) the author's name is indexed with the article, so
+     * it is a column-restricted index search; on the LIKE table scan (?engine=like) it
+     * compiles to a whereHas/EXISTS clause on the Article query.
      */
     public function relations(Request $request)
     {
-        $query   = $this->term($request);
-        $results = collect();
+        $query    = $this->term($request);
+        $engine   = $this->engine($request);
+        $results  = collect();
+        $attempts = $this->recordSearchAttempts();
 
         if ($query) {
-            $results = Article::search($query)
+            $search = Article::search($query)
                 ->searchIn(['title' => 10, 'excerpt' => 3, 'author.name' => 6])
-                ->using('fuzzy')
                 ->withRelevance()
-                ->highlight('mark')
-                ->paginate(10)
-                ->withQueryString();
+                ->highlight('mark');
+
+            if ($engine === 'bm25') {
+                $search->useInvertedIndex()->fallback('fuzzy');
+            } else {
+                $search->using('fuzzy');
+            }
+
+            $results = $search->paginate(10)->withQueryString();
         }
 
-        return view('search.relations', compact('results', 'query'));
+        return view('search.relations', [
+            'results' => $results, 'query' => $query,
+            'engine' => $engine, 'attempts' => $attempts->all(),
+        ]);
     }
 
     /**

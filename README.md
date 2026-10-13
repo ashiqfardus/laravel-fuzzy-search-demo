@@ -13,7 +13,7 @@ A demonstration application showcasing the [ashiqfardus/laravel-fuzzy-search](ht
 | ---- | ------------- |
 | `/search/users` | 8 algorithms, typo tolerance, relevance scoring, `@fuzzyHighlight`, `fallback()` chain with an "answered by" trace, `verified_only` toggle chaining `->whereNotNull('email_verified_at')` straight onto the search builder |
 | `/search/products` | Config presets (`ecommerce`, `exact`), weighted BM25 (`name` weight 10 outranks `description` weight 5 — try `macbook`: the MacBook is the title match, the Dell XPS and iPad only mention it), `category_id` `filter()` honoured on the BM25 path, typo-tolerant BM25 → fuzzy fallback, plus an as-you-type box calling `/api/as-you-type` — `useInvertedIndex()->asYouType()` prefix-expands the last word against the dictionary and returns the package's `FuzzySearchCollection` |
-| `/search/relations` | `searchIn(['author.name' => 6])` compiled to a `whereHas`/EXISTS clause, relation match scored and highlighted under the dotted key — try `smith` (author "John Smith" is in the fixed seeded pool) |
+| `/search/relations` | `searchIn(['author.name' => 6])`: the relation match is scored and highlighted under the dotted key — try `smith` (author "John Smith" is in the fixed seeded pool). **Engine:** the BM25 index by default (`useInvertedIndex()->fallback('fuzzy')`), which holds the author's name with each article, so the dotted column is a column-restricted index search; the fuzzy LIKE scan reads every article (2.7–4.5 s at 100k), so it is the labelled opt-in `?engine=like`, where the dotted column compiles to a `whereHas`/EXISTS clause |
 | `/search/articles` | Multi-word tokenization with AND / OR logic (`matchAll()` holds on the index too), author shown via the `Author` relation. **Engine:** the BM25 index by default (`useInvertedIndex()->fallback('fuzzy')`), because the blog preset's LIKE patterns read every article's long `body` (2.2–2.9 s at 100k articles); `?engine=like` keeps that table scan as a labelled opt-in |
 | `/search/contacts` | Phonetic search — Soundex & Metaphone shadow columns |
 | `/search/federated` | Cross-model federated search with unified ranking, `limitPerModel(10)->paginate(10)` with a reachable-rows total and a dark-theme pager |
@@ -140,7 +140,7 @@ Searches Users, Products, Articles, and Contacts in a single query and merges re
 
 ### 9. Relationship search (`/search/relations`)
 
-`searchIn(['author.name' => 6])` compiles to a `whereHas`/EXISTS clause. Search `smith` — the author "John Smith" is in the fixed seeded pool, so the match is scored and highlighted under the dotted `author.name` key, not on the article's own columns.
+Search `smith` — the author "John Smith" is in the fixed seeded pool, so the match is scored and highlighted under the dotted `author.name` key, not on the article's own columns. On the BM25 index (the default) the author's name is indexed with each article; switch the engine to the LIKE table scan and `searchIn(['author.name' => 6])` compiles to a `whereHas`/EXISTS clause instead.
 
 ### 10. Persisted search analytics (`/search/analytics`)
 
