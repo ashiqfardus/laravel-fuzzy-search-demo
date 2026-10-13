@@ -125,7 +125,7 @@ Try these queries:
 - Search `jon` → finds "John", "Johnny"
 - Search `eric` → finds "Erik", "Erich"
 
-Soundex keeps the first letter and codes the rest, so `philip` never finds "Filip", `katherine` never finds "Catherine", and `jon` never finds "Jonathan" (J500 against J535). The 40 random contacts are drawn from a name list, so `FixedContactsSeeder` (run by `db:seed`) adds a contact for each name the hints use (Stefan, Stephen, Steven, John, Johnny, Jon, Kathryn, Katherine, Catherine, Erik, Erich, Eric, Filip) that no contact has yet; running it again adds nothing. On a database seeded before it existed, run `php artisan db:seed --class=FixedContactsSeeder`. These hints describe `SOUNDEX()` (MySQL, MariaDB, PostgreSQL); SQLite has none, and the package matches phonetic patterns there instead.
+On MySQL/MariaDB, Soundex keeps the first letter and codes the rest, so `philip` never finds "Filip", `katherine` never finds "Catherine", and `jon` never finds "Jonathan" (J500 against J535). The 40 random contacts are drawn from a name list, so `FixedContactsSeeder` (run by `db:seed`) adds a contact for each name the hints use (Stefan, Stephen, Steven, John, Johnny, Jon, Kathryn, Katherine, Catherine, Erik, Erich, Eric, Filip) that no contact has yet; running it again adds nothing. On a database seeded before it existed, run `php artisan db:seed --class=FixedContactsSeeder`. These examples are MySQL/MariaDB's native `SOUNDEX()`, which the demo runs on. Other databases (PostgreSQL, SQLite, SQL Server) use the package's phonetic pattern fallback, which matches differently: there `jon` also finds "Jonathan" and `philip` finds "Filip".
 
 ### 6. Config presets (`/search/products`)
 

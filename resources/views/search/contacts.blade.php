@@ -4,7 +4,7 @@
 
 @section('content')
 <x-page-header eyebrow="Phonetic matching" title="Contact search">
-    Soundex matches names that sound alike, so “steven” finds Stefan and “jon” finds Johnny. It keeps the first letter, so “philip” never finds Filip, nor “katherine” Catherine.
+    Soundex matches names that sound alike, so “steven” finds Stefan and “jon” finds Johnny. It keeps the first letter, so “philip” never finds Filip, nor “katherine” Catherine. These examples are MySQL/MariaDB's native SOUNDEX(), which this demo runs on; other databases use the package's phonetic pattern matching, which matches differently.
 </x-page-header>
 
 <x-search-form button="Search contacts" cols="md:grid-cols-3">

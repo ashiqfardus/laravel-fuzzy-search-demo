@@ -34,15 +34,16 @@ class ContactHintsTest extends TestCase
     }
 
     /**
-     * The hints describe SOUNDEX(), which MySQL, MariaDB and PostgreSQL run natively; SQLite has
-     * none and matches phonetic patterns instead (there "jon" misses John and "philip" finds
-     * Filip). To run this on MySQL, point the suite at a scratch database it may refresh:
+     * The hints are MySQL/MariaDB SOUNDEX() results (the demo runs on MySQL). Other databases use
+     * the package's phonetic pattern fallback, which matches differently (on SQLite and PostgreSQL
+     * "jon" finds Jonathan and "philip" finds Filip). To run this on MySQL, point the suite at a
+     * scratch database it may refresh:
      * DB_CONNECTION=mysql DB_DATABASE=<scratch> php artisan test --filter=ContactHintsTest
      */
     public function test_each_hinted_search_returns_the_rows_it_names_and_never_a_name_with_another_first_letter(): void
     {
-        if (!in_array(DB::getDriverName(), ['mysql', 'mariadb', 'pgsql'], true)) {
-            $this->markTestSkipped('SQLite has no SOUNDEX(): the package matches phonetic patterns there instead.');
+        if (!in_array(DB::getDriverName(), ['mysql', 'mariadb'], true)) {
+            $this->markTestSkipped("The examples are MySQL/MariaDB SOUNDEX; other databases' phonetic matching differs.");
         }
 
         foreach (self::HINTS as $query => $names) {
