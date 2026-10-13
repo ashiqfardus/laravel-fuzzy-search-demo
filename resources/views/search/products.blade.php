@@ -103,7 +103,9 @@
         @if($results->isEmpty())
             <x-empty icon="bag">
                 No products match “{{ $query }}”{{ $categoryName ? ' in “' . $categoryName . '”' : '' }}.
-                @if($useIndex)
+                @if($useIndex && $category !== '')
+                    <x-slot:hint>Nothing in this category matches. <a href="{{ request()->fullUrlWithQuery(['category' => null]) }}" class="text-link underline">Search all categories</a>.</x-slot:hint>
+                @elseif($useIndex)
                     <x-slot:hint><x-index-miss /></x-slot:hint>
                 @else
                     <x-slot:hint>Try the E-commerce preset, clear the category, or switch the engine.</x-slot:hint>

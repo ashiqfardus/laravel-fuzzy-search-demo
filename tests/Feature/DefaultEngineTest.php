@@ -186,6 +186,28 @@ class DefaultEngineTest extends TestCase
         }
     }
 
+    public function test_a_filter_that_empties_an_index_search_offers_clearing_it_not_the_like_scan(): void
+    {
+        $garden = Category::create(['name' => 'Garden']);
+        User::factory()->create(['name' => 'Quincy Unverified', 'email_verified_at' => null]);
+        $this->artisan('fuzzy-search:rebuild', ['model' => Product::class])->assertSuccessful();
+        $this->artisan('fuzzy-search:rebuild', ['model' => User::class])->assertSuccessful();
+
+        $this->get('/search/products?q=zebrafish&category=' . $garden->id)
+            ->assertOk()
+            ->assertSee('Nothing in this category matches')
+            ->assertSee('/search/products?q=zebrafish" class="text-link underline">Search all categories', false)
+            ->assertDontSee('found no word close enough');
+        $this->get('/search/products?q=zebrafish')->assertSee('Aquarium Heater');
+
+        $this->get('/search/users?q=quincy&verified_only=1')
+            ->assertOk()
+            ->assertSee('No verified user matches')
+            ->assertSee('/search/users?q=quincy" class="text-link underline">Include unverified users', false)
+            ->assertDontSee('found no word close enough');
+        $this->get('/search/users?q=quincy')->assertSee('Unverified');
+    }
+
     public function test_an_unknown_preset_falls_back_to_ecommerce_instead_of_failing(): void
     {
         $this->get('/search/products?q=zebrafish&preset=bogus')

@@ -70,7 +70,9 @@
         @if($results->isEmpty())
             <x-empty icon="search">
                 No users match “{{ $query }}”.
-                @if($useIndex)
+                @if($useIndex && $verifiedOnly)
+                    <x-slot:hint>No verified user matches. <a href="{{ request()->fullUrlWithQuery(['verified_only' => null]) }}" class="text-link underline">Include unverified users</a>.</x-slot:hint>
+                @elseif($useIndex)
                     <x-slot:hint>
                         <x-index-miss />
                         The index matches whole words; for prefixes, see the <a href="{{ route('search.products') }}" class="text-link underline">as-you-type box on product search</a>.
