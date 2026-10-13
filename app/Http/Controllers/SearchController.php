@@ -657,11 +657,13 @@ class SearchController extends Controller
     }
 
     /**
-     * Extended-search syntax playground
+     * Extended-search syntax playground. extended() compiles to LIKE (it has no index path),
+     * so it runs over the first USER_SLICE users, like the capability matrix.
      */
     public function playground(): \Illuminate\View\View
     {
         $query = request('q', "^John Doe !banned");
+        $slice = self::USER_SLICE;
 
         $ast     = null;
         $error   = null;
@@ -672,7 +674,13 @@ class SearchController extends Controller
                 $tokens = (new \Ashiqfardus\LaravelFuzzySearch\Query\Lexer())->tokenize($query);
                 $ast    = (new \Ashiqfardus\LaravelFuzzySearch\Query\ExtendedQueryParser())->parse($tokens);
 
-                $results = User::search($query)->extended()->paginate(10)->withQueryString();
+                $search = User::search($query)->extended();
+
+                if (($ceiling = $this->userSliceCeiling()) !== null) {
+                    $search->where('id', '<=', $ceiling);
+                }
+
+                $results = $search->paginate(10)->withQueryString();
             } catch (\Ashiqfardus\LaravelFuzzySearch\Exceptions\QuerySyntaxException $e) {
                 $error = $e->getMessage();
             } catch (\Throwable $e) {
@@ -681,7 +689,7 @@ class SearchController extends Controller
             }
         }
 
-        return view('search.playground', compact('query', 'ast', 'error', 'results'));
+        return view('search.playground', compact('query', 'ast', 'error', 'results', 'slice'));
     }
 
     /**

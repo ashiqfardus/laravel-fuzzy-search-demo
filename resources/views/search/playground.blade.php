@@ -4,7 +4,7 @@
 
 @section('content')
 <x-page-header eyebrow="Extended syntax" title="Query playground">
-    Fuse-style operators, compiled by the package's lexer → parser → SQL compiler. Type below for a live preview; submit for the full extended query and its parsed AST.
+    Fuse-style operators, compiled by the package's lexer → parser → SQL compiler. Type below for a live preview; submit for the full extended query and its parsed AST. Extended queries compile to LIKE, so they run over the first {{ number_format($slice) }} users to stay quick on a large table.
 </x-page-header>
 
 <div class="mb-6 flex flex-wrap gap-2 text-sm" aria-label="Operators">
