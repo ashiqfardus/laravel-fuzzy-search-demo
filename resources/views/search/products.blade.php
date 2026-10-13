@@ -7,8 +7,8 @@
 @endphp
 
 @section('content')
-<x-page-header eyebrow="Presets · filters · BM25 fallback" title="Product search">
-    Config presets tune eight parameters at once. The category filter is honoured on the BM25 index path, and the fuzzy fallback answers when the index has no match. The index is typo-tolerant now — try <span class="code">iphne</span>. Column weights count too: a term in the product name (weight 10) now outranks the same term found only in the description (weight 5).
+<x-page-header eyebrow="Presets · filters · BM25 index" title="Product search">
+    The BM25 index answers by default. It is typo-tolerant — try <span class="code">iphne</span> — and it honours the category filter. Column weights count too: a term in the product name (weight 10) outranks the same term found only in the description (weight 5) — try <span class="code">macbook</span>. Config presets tune eight parameters at once: on the LIKE table scan (<span class="code">?engine=like</span>) they pick the algorithm, and their typo tolerance holds on the index too, so Exact turns the index's typo matching off.
 </x-page-header>
 
 <div class="card mb-8 p-5 sm:p-6" x-data="{
@@ -87,23 +87,14 @@
             @endforeach
         </select>
     </x-field>
-    <x-field label="Engine" for="engine" hint='Build the index once: php artisan fuzzy-search:rebuild "App\Models\Product"'>
-        <select id="engine" name="engine" class="field-control">
-            <option value="like" @selected($engine === 'like')>LIKE patterns</option>
-            <option value="bm25" @selected($engine === 'bm25')>BM25 index → fuzzy fallback</option>
-        </select>
-    </x-field>
+    <x-engine-field :engine="$engine" model="App\Models\Product" />
 </x-search-form>
 
-@if($query && count($attempts) > 1)
-    <x-callout tone="warn" title="Fallback used" class="mb-8">
-        <code class="code">{{ implode(' → ', $attempts) }}</code> —
-        <strong>{{ $attempts[0] }}</strong> returned nothing{{ $attempts[0] === 'bm25' ? ' (no index match, or the products index is not built)' : '' }},
-        so the same search was re-run with <strong>{{ last($attempts) }}</strong>{{ $categoryName ? ', still filtered to “' . $categoryName . '”' : '' }}.
-    </x-callout>
-@elseif($query && $engine === 'bm25' && count($attempts) === 1)
+@if($query && $engine === 'bm25' && !$useIndex)
+    <x-index-not-built model="App\Models\Product" class="mb-8" />
+@elseif($query && $useIndex && $results->isNotEmpty())
     <x-callout tone="success" class="mb-8">
-        Answered by the <strong>BM25 index</strong>{{ $categoryName ? ' with the “' . $categoryName . '” filter applied before the page was cut' : '' }}; the fuzzy fallback was not needed.
+        Answered by the <strong>BM25 index</strong>{{ $categoryName ? ' with the “' . $categoryName . '” filter applied before the page was cut' : '' }}.
     </x-callout>
 @endif
 
@@ -112,7 +103,11 @@
         @if($results->isEmpty())
             <x-empty icon="bag">
                 No products match “{{ $query }}”{{ $categoryName ? ' in “' . $categoryName . '”' : '' }}.
-                <x-slot:hint>Try the E-commerce preset, clear the category, or switch the engine.</x-slot:hint>
+                @if($useIndex)
+                    <x-slot:hint><x-index-miss /></x-slot:hint>
+                @else
+                    <x-slot:hint>Try the E-commerce preset, clear the category, or switch the engine.</x-slot:hint>
+                @endif
             </x-empty>
         @else
             <div class="grid gap-4 p-4 sm:p-5 md:grid-cols-2 lg:grid-cols-3">

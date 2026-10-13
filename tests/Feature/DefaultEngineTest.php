@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\Article;
 use App\Models\Author;
+use App\Models\Category;
+use App\Models\Product;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -30,6 +32,11 @@ class DefaultEngineTest extends TestCase
             'excerpt' => 'Reconcile loops for stateful workloads.',
             'status'  => 'published',
         ]);
+        Product::factory()->create([
+            'name'        => 'Zebrafish Aquarium Heater',
+            'brand'       => 'Aquaria',
+            'category_id' => Category::create(['name' => 'Aquatics'])->id,
+        ]);
     }
 
     public function test_a_fresh_install_without_an_index_finds_rows_on_the_default_engine(): void
@@ -44,6 +51,11 @@ class DefaultEngineTest extends TestCase
         $this->get('/search/relations?q=zebulon')
             ->assertOk()
             ->assertSee('Operators Explained')
+            ->assertSee('Index not built');
+
+        $this->get('/search/products?q=zebrafish')
+            ->assertOk()
+            ->assertSee('Aquarium Heater')
             ->assertSee('Index not built');
     }
 
@@ -80,6 +92,28 @@ class DefaultEngineTest extends TestCase
             ->assertSee('found no word close enough'));
         $this->assertSame([], $scans);
         $this->assertNotSame([], $this->modelTableScans('articles', fn () => $this->get('/search/relations?q=qwxz&engine=like')));
+
+        $this->artisan('fuzzy-search:rebuild', ['model' => Product::class])->assertSuccessful();
+
+        $this->get('/search/products?q=zebrafish')
+            ->assertOk()
+            ->assertSee('Aquarium Heater')
+            ->assertSee('Answered by the')
+            ->assertDontSee('Index not built');
+
+        $scans = $this->modelTableScans('products', fn () => $this->get('/search/products?q=qwxz')
+            ->assertOk()
+            ->assertSee('found no word close enough')
+            ->assertSee('engine=like', false));
+        $this->assertSame([], $scans);
+        $this->assertNotSame([], $this->modelTableScans('products', fn () => $this->get('/search/products?q=qwxz&engine=like')));
+    }
+
+    public function test_an_unknown_preset_falls_back_to_ecommerce_instead_of_failing(): void
+    {
+        $this->get('/search/products?q=zebrafish&preset=bogus')
+            ->assertOk()
+            ->assertSee('Aquarium Heater');
     }
 
     /** The LIKE reads of $table that $request runs. */

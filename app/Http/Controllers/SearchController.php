@@ -114,18 +114,23 @@ class SearchController extends Controller
     }
 
     /**
-     * Search products with preset
+     * Search products with preset. The BM25 index answers by default once products are
+     * indexed; ?engine=like, or an index not built yet, runs the LIKE table scan, where the
+     * preset picks the algorithm (its typo tolerance holds on the index too). No fallback()
+     * on the index: a miss would then scan the table (6.2-7.8 s at 1M products), so the
+     * empty page links to the LIKE scan instead.
      */
     public function products(Request $request)
     {
         $query    = $this->term($request);
-        $preset   = $request->input('preset', 'ecommerce');
+        $preset   = $request->input('preset');
+        $preset   = in_array($preset, ['ecommerce', 'exact'], true) ? $preset : 'ecommerce';
         $category = (string) $request->input('category', '');
-        $engine   = $request->input('engine') === 'bm25' ? 'bm25' : 'like';
+        $engine   = $this->engine($request);
+        $useIndex = $engine === 'bm25' && $this->isIndexed(Product::class);
 
         $categories = Category::orderBy('name')->get(['id', 'name']);
         $results    = collect();
-        $attempts   = $this->recordSearchAttempts();
 
         if ($query) {
             $search = Product::search($query)
@@ -140,11 +145,8 @@ class SearchController extends Controller
                 $search->filter('category_id', (int) $category);
             }
 
-            if ($engine === 'bm25') {
-                // The BM25 index is typo-tolerant on its own now; the fuzzy fallback only
-                // answers when the index has no match at all (or has not been built for
-                // products).
-                $search->useInvertedIndex()->fallback('fuzzy');
+            if ($useIndex) {
+                $search->useInvertedIndex();
             }
 
             $results = $search->get();
@@ -153,7 +155,7 @@ class SearchController extends Controller
         return view('search.products', [
             'results' => $results, 'query' => $query, 'preset' => $preset,
             'category' => $category, 'categories' => $categories,
-            'engine' => $engine, 'attempts' => $attempts->all(),
+            'engine' => $engine, 'useIndex' => $useIndex,
         ]);
     }
 
