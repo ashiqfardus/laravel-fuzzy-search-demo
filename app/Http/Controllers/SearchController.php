@@ -50,7 +50,7 @@ class SearchController extends Controller
     {
         $query = $this->term($request);
         $engine = $this->engine($request);
-        $algorithm = $request->input('algorithm', 'fuzzy');
+        $algorithm = $this->stringInput($request, 'algorithm', 'fuzzy');
         $typoTolerance = (int) $request->input('typo_tolerance', 2);
         $fallback = $request->input('fallback', '');
         if (!in_array($fallback, ['fuzzy', 'levenshtein', 'soundex', 'metaphone', 'simple'], true) || $fallback === $algorithm) {
@@ -127,7 +127,7 @@ class SearchController extends Controller
         $query    = $this->term($request);
         $preset   = $request->input('preset');
         $preset   = in_array($preset, ['ecommerce', 'exact'], true) ? $preset : 'ecommerce';
-        $category = (string) $request->input('category', '');
+        $category = $this->stringInput($request, 'category', '');
         $engine   = $this->engine($request);
         $useIndex = $engine === 'bm25' && $this->isIndexed(Product::class);
 
@@ -209,7 +209,7 @@ class SearchController extends Controller
     public function contacts(Request $request)
     {
         $query = $this->term($request);
-        $algorithm = $request->input('algorithm', 'soundex');
+        $algorithm = $this->stringInput($request, 'algorithm', 'soundex');
 
         $results = collect();
 
@@ -403,7 +403,7 @@ class SearchController extends Controller
     public function capabilityMatrix(): \Illuminate\View\View
     {
         $algorithms = ['simple', 'fuzzy', 'levenshtein', 'trigram', 'soundex', 'metaphone', 'similar_text'];
-        $term       = request('q', 'john');
+        $term       = $this->term(request(), 'john');
         $results    = [];
         $slice      = self::LIKE_SLICE;
 
@@ -614,20 +614,25 @@ class SearchController extends Controller
      */
     public function i18n(): \Illuminate\View\View
     {
-        $query = request('q', '東京');
+        $query = $this->term(request(), '東京');
+        $results = collect();
+        $indexTerms = [];
 
-        $search = Product::search($query)
-            ->useInvertedIndex()
-            ->withRelevance()
-            ->highlight('mark')
-            ->limit(20);
+        if ($query !== '') {
+            $search = Product::search($query)
+                ->useInvertedIndex()
+                ->withRelevance()
+                ->highlight('mark')
+                ->limit(20);
 
-        $results = $search->get();
+            $results = $search->get();
+            $indexTerms = $search->getDebugInfo()['index_terms'];
+        }
 
         return view('search.i18n', [
             'results'    => $results,
             'query'      => $query,
-            'indexTerms' => $search->getDebugInfo()['index_terms'],
+            'indexTerms' => $indexTerms,
         ]);
     }
 
@@ -638,7 +643,7 @@ class SearchController extends Controller
      */
     public function benchmarks(): \Illuminate\View\View
     {
-        $term    = request('q', 'john');
+        $term    = $this->term(request(), 'john');
         $typo    = max(0, min(3, (int) request('typo', 0)));
         $results = [];
 
@@ -699,7 +704,7 @@ class SearchController extends Controller
      */
     public function playground(): \Illuminate\View\View
     {
-        $query = request('q', "^John Doe !banned");
+        $query = $this->term(request(), "^John Doe !banned");
         $slice = self::LIKE_SLICE;
 
         $ast     = null;
@@ -736,7 +741,7 @@ class SearchController extends Controller
      */
     public function scoutDemo(): \Illuminate\View\View
     {
-        $term    = request('q', '');
+        $term    = $this->term(request());
         $results = collect();
 
         if ($term) {
@@ -750,12 +755,20 @@ class SearchController extends Controller
         return view('search.scout-demo', compact('term', 'results'));
     }
 
-    /** The q parameter as a string — an array (?q[]=x) or a missing value reads as ''. */
-    private function term(Request $request): string
+    /** The q parameter as a string: a missing one reads as $default, an empty one or an array (?q[]=x) as ''. */
+    private function term(Request $request, string $default = ''): string
     {
-        $q = $request->input('q', '');
+        $q = $request->input('q', $default);
 
         return is_string($q) ? $q : '';
+    }
+
+    /** A select's parameter as a string: a missing or empty one, or an array (?x[]=1), reads as $default. */
+    private function stringInput(Request $request, string $key, string $default): string
+    {
+        $value = $request->input($key, $default);
+
+        return is_string($value) ? $value : $default;
     }
 
     /** Whether the model's BM25 index is built: fuzzy-search:rebuild writes its meta row. */
