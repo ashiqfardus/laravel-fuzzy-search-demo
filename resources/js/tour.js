@@ -44,24 +44,32 @@ export function fuzzyTour() {
 
     const STORAGE_KEY = 'fzs_tour';
 
+    // On the start card (the dashboard) the tour is a modal; on a stop's own page the card is
+    // docked beside it (no backdrop) so the page stays usable, and it describes that page.
     return {
         active:  false,
+        docked:  false,
         step:    0,
         steps,
         get current()  { return this.steps[this.step]; },
         get isLast()   { return this.step === this.steps.length - 1; },
+        get here()     { return this.current.href === window.location.pathname; },
         start()  {
             this.step = 0;
             this.active = true;
+            this.docked = false;
             this._save();
+        },
+        // Open the current stop's page. The href is read before anything changes, so the page
+        // opened is always the one the card names.
+        go()     {
+            this._save();
+            window.location.assign(this.current.href);
         },
         next()   {
             if (this.isLast) { this.finish(); return; }
             this.step++;
-            this._save();
-        },
-        prev()   {
-            if (this.step > 0) { this.step--; this._save(); }
+            this.go();
         },
         finish() {
             this.active = false;
@@ -72,8 +80,12 @@ export function fuzzyTour() {
                 const saved = JSON.parse(sessionStorage.getItem(STORAGE_KEY) ?? 'null');
                 if (saved && saved.active && Number.isInteger(saved.step)
                     && saved.step >= 0 && saved.step < this.steps.length) {
-                    this.step   = saved.step;
+                    // Back/forward or the nav can land on another stop: show that stop's card.
+                    const here = this.steps.findIndex(s => s.href === window.location.pathname);
+                    this.step   = here >= 0 ? here : saved.step;
                     this.active = true;
+                    this.docked = true;
+                    this._save();
                 }
             } catch {}
         },

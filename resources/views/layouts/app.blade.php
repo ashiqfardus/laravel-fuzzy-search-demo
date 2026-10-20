@@ -25,7 +25,7 @@
     ];
 @endphp
 <body class="min-h-full bg-base font-sans text-ink antialiased" x-data="{ tour: fuzzyTour(), menu: false }" x-init="tour.restore()">
-    <header class="sticky top-0 z-50 border-b border-line bg-base/90 backdrop-blur">
+    <header class="sticky top-0 z-50 border-b border-line bg-base/90 backdrop-blur" :inert="tour.active && !tour.docked">
         <div class="mx-auto flex h-16 max-w-7xl items-center gap-6 px-4 sm:px-6 lg:px-8">
             <a href="{{ route('search.index') }}" class="flex shrink-0 items-center gap-2 font-mono text-sm font-semibold text-ink">
                 <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-slate-950">
@@ -68,11 +68,11 @@
         </nav>
     </header>
 
-    <main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+    <main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12" :inert="tour.active && !tour.docked">
         @yield('content')
     </main>
 
-    <footer class="mx-auto max-w-7xl px-4 py-8 text-sm text-muted sm:px-6 lg:px-8">
+    <footer class="mx-auto max-w-7xl px-4 py-8 text-sm text-muted sm:px-6 lg:px-8" :inert="tour.active && !tour.docked">
         <div class="flex flex-col items-start gap-2 border-t border-line pt-6 sm:flex-row sm:items-center sm:justify-between">
             <span class="font-mono break-all">ashiqfardus/laravel-fuzzy-search</span>
             <span>MIT · <a href="https://github.com/ashiqfardus/laravel-fuzzy-search" class="text-link hover:underline">Source</a></span>
