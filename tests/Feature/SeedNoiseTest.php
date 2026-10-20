@@ -11,7 +11,9 @@ use Tests\TestCase;
 
 /**
  * The seeded rows carry real text, so the showcase pages' own example terms are not drowned in
- * index typo matches against lorem ipsum (N5-L6).
+ * index typo matches against lorem ipsum (N5-L6). Product SKUs are SKU-digits, not random letters:
+ * a random SKU such as JEN or AON sits within typo distance of "john" and ranked a product beside
+ * John Doe.
  */
 class SeedNoiseTest extends TestCase
 {

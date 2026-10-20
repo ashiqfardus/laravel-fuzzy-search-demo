@@ -3,6 +3,7 @@
 @section('title', 'Contact search — Fuzzy Search Demo')
 
 @section('content')
+@php($algorithmLabels = ['soundex' => 'Soundex', 'levenshtein' => 'Levenshtein', 'fuzzy' => 'Fuzzy', 'similar_text' => 'Similar text'])
 <x-page-header eyebrow="Phonetic matching" title="Contact search">
     @if($nativeSoundex)
         Soundex matches names that sound alike, so “steven” finds Stefan and “jon” finds Johnny. It keeps the first letter, so “philip” never finds Filip and “katherine” never finds Catherine. This database (MySQL/MariaDB) runs SOUNDEX() natively; PostgreSQL, SQLite and SQL Server use the package's phonetic pattern fallback, which matches differently.
@@ -17,7 +18,7 @@
     </x-field>
     <x-field label="Algorithm" for="algorithm">
         <select id="algorithm" name="algorithm" class="field-control">
-            @foreach(['soundex' => 'Soundex', 'levenshtein' => 'Levenshtein', 'fuzzy' => 'Fuzzy', 'similar_text' => 'Similar text'] as $value => $label)
+            @foreach($algorithmLabels as $value => $label)
                 <option value="{{ $value }}" @selected($algorithm === $value)>{{ $label }}</option>
             @endforeach
         </select>
@@ -43,8 +44,13 @@
     <x-results :count="$results->count()">
         @if($results->isEmpty())
             <x-empty icon="card">
-                No contacts sound like “{{ $query }}”.
-                <x-slot:hint>Soundex needs a true phonetic match that starts with the same letter; try Levenshtein for typo-style differences.</x-slot:hint>
+                @if($algorithm === 'soundex')
+                    No contacts sound like “{{ $query }}”.
+                    <x-slot:hint>Soundex needs a true phonetic match that starts with the same letter; try Levenshtein for typo-style differences.</x-slot:hint>
+                @else
+                    No contacts match “{{ $query }}” with {{ $algorithmLabels[$algorithm] ?? $algorithm }}.
+                    <x-slot:hint>Check the spelling, or pick another algorithm from the list.</x-slot:hint>
+                @endif
             </x-empty>
         @else
             <div class="grid gap-4 p-4 sm:p-5 md:grid-cols-2">

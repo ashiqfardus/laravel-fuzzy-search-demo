@@ -19,16 +19,24 @@ class DatabaseSeeder extends Seeder
         $named = [
             ['John Doe', 'john@example.com'],
             ['Jane Smith', 'jane@example.com'],
-            ['Jon Snow', 'jon.snow@example.com'],
-            ['Johnny Bravo', 'johnny@example.com'],
+            ['Jon Snow', 'jon.snow@example.com', false],
+            ['Johnny Bravo', 'johnny@example.com', false],
             ['Violet VonRueden', 'violet@example.com'],
         ];
 
-        foreach ($named as [$name, $email]) {
-            User::firstOrCreate(
+        // The third value is false for the few left unverified, so the users page's
+        // "verified users only" toggle visibly changes its list.
+        foreach ($named as $entry) {
+            [$name, $email] = $entry;
+            $verified = $entry[2] ?? true;
+            $user = User::firstOrCreate(
                 ['email' => $email],
-                User::factory()->raw(['name' => $name, 'email' => $email])
+                User::factory()->raw(['name' => $name, 'email' => $email] + ($verified ? [] : ['email_verified_at' => null]))
             );
+
+            if (! $verified && $user->email_verified_at !== null) {
+                $user->update(['email_verified_at' => null]);
+            }
         }
 
         // Top-ups are "fill to N", never "add N": a reseed creates zero random rows, so the
@@ -69,7 +77,7 @@ class DatabaseSeeder extends Seeder
         foreach (ProductFactory::catalog() as $entry) {
             $product = Product::firstOrCreate(['name' => $entry['name']], [
                 'description' => $entry['description'] ?? fake()->paragraph(3),
-                'sku' => strtoupper(fake()->unique()->bothify('???-#####')),
+                'sku' => fake()->unique()->bothify('SKU-#####'),
                 'brand' => $entry['brand'],
                 'category_id' => ProductFactory::category($entry),
                 'price' => fake()->randomFloat(2, 29.99, 2999.99),
