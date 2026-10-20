@@ -709,8 +709,10 @@ class SearchController extends Controller
 
         if ($query) {
             try {
+                // The package's @internal lexer and parser: the demo is first-party and moves with
+                // the package (PlaygroundAstTest fails if they change shape).
                 $tokens = (new \Ashiqfardus\LaravelFuzzySearch\Query\Lexer())->tokenize($query);
-                $ast    = (new \Ashiqfardus\LaravelFuzzySearch\Query\ExtendedQueryParser())->parse($tokens);
+                $ast    = $this->astTree((new \Ashiqfardus\LaravelFuzzySearch\Query\ExtendedQueryParser())->parse($tokens));
 
                 $search = User::search($query)->extended();
 
@@ -728,6 +730,29 @@ class SearchController extends Controller
         }
 
         return view('search.playground', compact('query', 'ast', 'error', 'results', 'slice'));
+    }
+
+    /**
+     * The parsed query for the AST panel: each node's type and the operator it was read from
+     * (a plain word or quoted phrase has none), then its fields, children mapped the same way.
+     * Each node is a class with public properties only, so json_encode() alone drops the type.
+     */
+    private function astTree(\Ashiqfardus\LaravelFuzzySearch\Query\AstNodes\AstNode $node): array
+    {
+        $type = class_basename($node);
+        $operator = ['AndNode' => 'AND', 'OrNode' => '|', 'NotNode' => '!', 'ExactTerm' => '=', 'PrefixTerm' => '^',
+            'SuffixTerm' => '$', 'IncludeMatchTerm' => "'", 'TypoTerm' => '~', 'FieldTerm' => 'field:'][$type] ?? null;
+
+        $tree = ['type' => $type] + ($operator === null ? [] : ['operator' => $operator]);
+        foreach (get_object_vars($node) as $key => $value) {
+            $tree[$key] = match (true) {
+                $value instanceof \Ashiqfardus\LaravelFuzzySearch\Query\AstNodes\AstNode => $this->astTree($value),
+                is_array($value) => array_map(fn ($child) => $this->astTree($child), $value),
+                default => $value,
+            };
+        }
+
+        return $tree;
     }
 
     /**
