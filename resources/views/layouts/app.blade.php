@@ -28,7 +28,7 @@
 @endphp
 <body class="min-h-full bg-base font-sans text-ink antialiased" x-data="{ tour: fuzzyTour(), menu: false }" x-init="tour.restore()">
     <header class="sticky top-0 z-50 border-b border-line bg-base/90 backdrop-blur" :inert="tour.active && !tour.docked">
-        <div class="mx-auto flex h-16 max-w-7xl items-center gap-6 px-4 sm:px-6 lg:px-8">
+        <div class="mx-auto flex min-h-16 max-w-7xl items-center gap-x-6 gap-y-1 py-2 px-4 sm:px-6 lg:px-8">
             <a href="{{ route('search.index') }}" class="flex shrink-0 items-center gap-2 font-mono text-sm font-semibold text-ink">
                 <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-slate-950">
                     <x-icon name="search" class="h-4 w-4" />
@@ -37,7 +37,7 @@
                 <span class="badge bg-raised text-muted">v2.1</span>
             </a>
 
-            <nav class="hidden min-w-0 flex-1 items-center gap-1 overflow-x-auto md:flex" aria-label="Primary">
+            <nav class="hidden min-w-0 flex-1 flex-wrap items-center gap-1 md:flex" aria-label="Primary">
                 @foreach($nav as [$route, $label])
                     <a href="{{ route($route) }}"
                        @class([
@@ -59,11 +59,12 @@
             </button>
         </div>
 
-        <nav id="mobile-nav" x-show="menu" x-cloak @click.outside="menu = false" class="border-t border-line bg-base px-4 py-3 md:hidden" aria-label="Primary">
+        <nav id="mobile-nav" x-show="menu" x-cloak @click.outside="menu = false" @keydown.escape.window="menu = false" class="border-t border-line bg-base px-4 py-3 md:hidden" aria-label="Primary">
             <div class="grid grid-cols-2 gap-1">
                 @foreach($nav as [$route, $label])
                     <a href="{{ route($route) }}"
-                       @class(['rounded-md px-3 py-2 text-sm', 'bg-raised text-ink' => request()->routeIs($route), 'text-muted' => !request()->routeIs($route)])>{{ $label }}</a>
+                       @class(['rounded-md px-3 py-2 text-sm', 'bg-raised text-ink' => request()->routeIs($route), 'text-muted' => !request()->routeIs($route)])
+                       @if(request()->routeIs($route)) aria-current="page" @endif>{{ $label }}</a>
                 @endforeach
                 <a href="https://github.com/ashiqfardus/laravel-fuzzy-search" class="rounded-md px-3 py-2 text-sm text-muted">GitHub</a>
             </div>
