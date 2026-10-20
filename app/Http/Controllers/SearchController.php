@@ -312,7 +312,7 @@ class SearchController extends Controller
     {
         $query = $this->term($request);
 
-        if (strlen($query) < 2 || strlen($query) > 200) {
+        if (mb_strlen($query) < 2 || mb_strlen($query) > 200) {
             return response()->json(['data' => [], 'meta' => null]);
         }
 
@@ -334,7 +334,7 @@ class SearchController extends Controller
         $query = $this->term($request);
         $model = $request->input('model', 'products');
 
-        if (strlen($query) < 2 || strlen($query) > 200) {
+        if (mb_strlen($query) < 2 || mb_strlen($query) > 200) {
             return response()->json(['suggestions' => [], 'source' => 'table', 'latency_ms' => 0.0]);
         }
 
@@ -377,7 +377,7 @@ class SearchController extends Controller
     {
         $query = $this->term($request);
 
-        if (strlen($query) < 2 || strlen($query) > 200) {
+        if (mb_strlen($query) < 2 || mb_strlen($query) > 200) {
             return response()->json(['data' => [], 'meta' => null]);
         }
 
