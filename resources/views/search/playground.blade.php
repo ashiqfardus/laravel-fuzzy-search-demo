@@ -4,7 +4,7 @@
 
 @section('content')
 <x-page-header eyebrow="Extended syntax" title="Query playground">
-    Fuse-style operators, compiled by the package's lexer → parser → SQL compiler. Type below for a live preview from the BM25 index; submit for the full extended query and its parsed AST. Extended queries compile to LIKE, so they run over the first {{ number_format($slice) }} users to stay quick on a large table.
+    Fuse-style operators, compiled by the package's lexer → parser → SQL compiler. Type plain words below for a live preview from the BM25 index (it ignores operators); submit for the full extended query and its parsed AST. Extended queries compile to LIKE, so they run over the first {{ number_format($slice) }} users to stay quick on a large table.
 </x-page-header>
 
 <div class="mb-6 flex flex-wrap gap-2 text-sm" aria-label="Operators">
@@ -19,10 +19,11 @@
     meta: null,
     loading: false,
     controller: null,
+    get hasOperators() { return /[!^$=|~&quot;':]/.test(this.query); },
     async suggest() {
-        if (this.query.length < 2) { this.results = []; this.meta = null; return; }
-        this.loading = true;
         if (this.controller) this.controller.abort();
+        if (this.query.length < 2 || this.hasOperators) { this.results = []; this.meta = null; this.loading = false; return; }
+        this.loading = true;
         this.controller = new AbortController();
         try {
             const resp = await fetch('/api/search/users?q=' + encodeURIComponent(this.query), { signal: this.controller.signal });
@@ -58,7 +59,10 @@
         @endforeach
     </div>
 
-    <p x-show="!loading && results.length === 0 && query.length >= 2" x-cloak class="mt-4 text-sm text-muted">
+    <p x-show="hasOperators" x-cloak class="mt-4 text-sm text-muted" data-preview-note>
+        The live preview matches plain words only and ignores operators. Run the query to apply them.
+    </p>
+    <p x-show="!loading && !hasOperators && results.length === 0 && query.length >= 2" x-cloak class="mt-4 text-sm text-muted">
         No live matches — run the query for the full extended search.
     </p>
     <ul x-show="results.length > 0" x-cloak class="mt-4 divide-y divide-line overflow-hidden rounded-xl border border-line" aria-label="Live preview">
