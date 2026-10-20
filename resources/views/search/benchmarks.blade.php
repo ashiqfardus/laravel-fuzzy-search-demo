@@ -58,7 +58,7 @@
     </div>
 
     <x-callout tone="info" title="Reading this" class="mb-8">
-        On large tables BM25 is typically 5–20× faster with better relevance ordering. Scores on the left are PHP-side relevance; on the right, corpus-normalised BM25. Turn typo tolerance up to see what dictionary expansion costs: the third panel runs the same index read with each term widened by edit distance.
+        Each panel shows the latency measured for this term on this table; compare them, and the table size, before drawing a conclusion. The LIKE panel's scores are PHP-side relevance; the BM25 panel's are corpus-normalised. Turn typo tolerance up to see what dictionary expansion costs: the third panel runs the same index read with each term widened by edit distance.
     </x-callout>
 @endif
 
@@ -124,7 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const history = JSON.parse(localStorage.getItem('fzs_bench_history') ?? '[]');
     history.unshift({ term, ms, ts: Date.now() });
     localStorage.setItem('fzs_bench_history', JSON.stringify(history.slice(0, 5)));
-    document.dispatchEvent(new CustomEvent('bench-run-saved'));
+    window.dispatchEvent(new CustomEvent('bench-run-saved'));
 });
 </script>
 @endsection
