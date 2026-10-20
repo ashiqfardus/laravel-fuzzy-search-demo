@@ -66,7 +66,7 @@
 <div x-data="benchmarkHistory()" x-init="load()" @bench-run-saved.window="load()" x-show="history.length > 0" x-cloak>
     <div class="mb-3 flex items-center justify-between">
         <h3 class="font-mono text-xs uppercase tracking-[0.15em] text-muted">Run history <span class="normal-case tracking-normal">(last 5)</span></h3>
-        <button type="button" @click="clear()" class="cursor-pointer text-xs text-muted transition-colors duration-200 hover:text-red-300">Clear</button>
+        <button type="button" @click="clear()" class="inline-flex min-h-6 min-w-6 cursor-pointer items-center justify-center rounded-md px-3 py-1.5 text-xs text-muted transition-colors duration-200 hover:text-red-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60">Clear</button>
     </div>
     <div class="card overflow-x-auto">
         <table class="w-full text-left text-sm">
