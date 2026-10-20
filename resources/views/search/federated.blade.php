@@ -27,7 +27,7 @@
         @if($leftOut !== [])
             Left out until built: {{ collect($leftOut)->map(fn ($m) => class_basename($m))->join(', ') }}. The other models answered from their BM25 index. Build the missing ones once:
         @else
-            Not every model has a BM25 index yet, so each model's LIKE table scan answered, on the short name columns. Build the missing ones once:
+            No model has a BM25 index yet, so each model's LIKE table scan answered, on the short name columns. Build the missing ones once:
         @endif
         @foreach($missing as $model)
             <span class="code">php artisan fuzzy-search:rebuild "{{ $model }}"</span>
