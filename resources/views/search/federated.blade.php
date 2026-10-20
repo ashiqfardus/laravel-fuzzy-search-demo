@@ -33,7 +33,12 @@
 
 @if($query)
     <x-results title="Across all models" :count="$results->total()">
-        @if($results->isEmpty())
+        @if($results->isEmpty() && $results->total() > 0)
+            <x-empty icon="squares">
+                No results on page {{ $results->currentPage() }}.
+                <x-slot:hint><a href="{{ $results->url(1) }}" class="text-link hover:underline">Back to page 1</a> of {{ $results->lastPage() }}.</x-slot:hint>
+            </x-empty>
+        @elseif($results->isEmpty())
             <x-empty icon="squares">
                 Nothing matches “{{ $query }}” in any model.
                 @if($missing === [])
