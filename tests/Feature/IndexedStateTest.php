@@ -35,4 +35,24 @@ class IndexedStateTest extends TestCase
 
         $this->assertSame([], array_values($counts));
     }
+
+    /** The cached count is stale-while-revalidate: no COUNT inside 600 s, and a new total_docs checks again. */
+    public function test_the_count_is_not_repeated_within_600_seconds_and_a_total_docs_change_rechecks(): void
+    {
+        config(['cache.default' => 'array']);
+        \Illuminate\Support\Facades\Cache::flush();
+        User::factory()->create(['name' => 'Indexed Person']);
+        $this->get('/search/users?q=person')->assertOk();
+
+        $counts = fn () => count(array_filter(\Illuminate\Support\Facades\DB::getQueryLog(), fn ($q) => preg_match('/select count\(\*\) as aggregate from "users"/i', $q['query'])));
+
+        \Illuminate\Support\Facades\DB::enableQueryLog();
+        $this->travel(599)->seconds();
+        $this->get('/search/users?q=person')->assertOk();
+        $this->assertSame(0, $counts());
+
+        \Illuminate\Support\Facades\DB::table('fuzzy_index_meta')->where('model_type', User::class)->increment('total_docs');
+        $this->get('/search/users?q=person')->assertOk();
+        $this->assertSame(1, $counts());
+    }
 }

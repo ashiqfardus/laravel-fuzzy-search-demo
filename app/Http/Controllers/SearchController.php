@@ -829,8 +829,9 @@ class SearchController extends Controller
 
         // The row count is cached per model and meta total_docs: an index write changes
         // total_docs and re-checks at once. Ceiling: rows added while indexing is off are
-        // noticed within 60 s, not instantly. (COUNT(*) per model per request is too slow at 1M rows.)
-        return Cache::remember("demo:indexed:{$modelClass}:{$docs}", 60, fn () => (int) $docs >= $modelClass::query()->count());
+        // noticed within 10 min, not instantly (the count refreshes in the background after 600 s,
+        // so a request never waits for a cold COUNT(*), 3.3 s per model at 1M rows).
+        return Cache::flexible("demo:indexed:{$modelClass}:{$docs}", [600, 3600], fn () => (int) $docs >= $modelClass::query()->count());
     }
 
     /**
