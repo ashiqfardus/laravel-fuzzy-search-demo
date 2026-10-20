@@ -41,6 +41,7 @@ class IndexedStateTest extends TestCase
     {
         config(['cache.default' => 'array']);
         \Illuminate\Support\Facades\Cache::flush();
+        $this->freezeTime(); // travel(599) must be 599 s after the cached count, not 600 when a second ticks
         User::factory()->create(['name' => 'Indexed Person']);
         $this->get('/search/users?q=person')->assertOk();
 
