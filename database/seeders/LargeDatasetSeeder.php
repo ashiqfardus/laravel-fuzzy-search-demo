@@ -7,20 +7,22 @@ use Illuminate\Support\Facades\DB;
 
 class LargeDatasetSeeder extends Seeder
 {
-    private const ROWS_PER_MODEL = 100_000;
-    private const CHUNK_SIZE     = 1_000;
+    private const CHUNK_SIZE = 1_000;
+
+    /** Rows each table is filled up to. A property so a test can fill a few instead of 100k. */
+    public int $rowsPerModel = 100_000;
 
     public function run(): void
     {
-        $this->command->info('Seeding 100k rows per model (400k total) using bulk inserts...');
+        $this->say("Filling each table up to {$this->rowsPerModel} rows with bulk inserts...");
 
         $this->seedUsers();
         $this->seedProducts();
         $this->seedArticles();
         $this->seedContacts();
 
-        $this->command->info('Done.');
-        $this->command->table(
+        $this->say('Done.');
+        $this->command?->table(
             ['Model', 'Count'],
             [
                 ['Users',    DB::table('users')->count()],
@@ -33,7 +35,7 @@ class LargeDatasetSeeder extends Seeder
 
     private function seedUsers(): void
     {
-        $this->command->info('Seeding users...');
+        $this->say('Seeding users...');
         $this->bulkInsert('users', function (int $i) {
             static $firstNames = ['John','Jane','Jon','Johnny','Jonathan','Johanna','James','Jack','Jake',
                 'Jennifer','Jessica','Julia','Justin','Jason','Jordan','Jamie','Jean','Jeff','Jeremy',
@@ -57,7 +59,7 @@ class LargeDatasetSeeder extends Seeder
 
     private function seedProducts(): void
     {
-        $this->command->info('Seeding products...');
+        $this->say('Seeding products...');
         $categoryIds = [];
         $this->bulkInsert('products', function (int $i) use (&$categoryIds) {
             static $brands    = ['Apple','Samsung','Sony','Dell','HP','Lenovo','Asus','Acer','Microsoft',
@@ -87,7 +89,7 @@ class LargeDatasetSeeder extends Seeder
 
     private function seedArticles(): void
     {
-        $this->command->info('Seeding articles...');
+        $this->say('Seeding articles...');
         $authorIds = [];
         $this->bulkInsert('articles', function (int $i) use (&$authorIds) {
             static $topics  = ['Laravel','PHP','JavaScript','React','Vue','Docker','Kubernetes',
@@ -119,7 +121,7 @@ class LargeDatasetSeeder extends Seeder
 
     private function seedContacts(): void
     {
-        $this->command->info('Seeding contacts...');
+        $this->say('Seeding contacts...');
         $this->bulkInsert('contacts', function (int $i) {
             static $firstNames = ['John','Jane','Jon','Johnny','Jonathan','Johanna','James','Jack',
                 'Jennifer','Jessica','Julia','Justin','Jason','Jordan','Jean','Jamie','Jeremy',
@@ -140,27 +142,46 @@ class LargeDatasetSeeder extends Seeder
         });
     }
 
+    private function say(string $message): void
+    {
+        $this->command?->info($message);
+    }
+
+    /**
+     * Fills the table up to $rowsPerModel (a second run, or a run after HugeDatasetSeeder, adds
+     * nothing instead of colliding on the unique emails). New rows are numbered from the highest
+     * id, so their emails and SKUs cannot repeat an existing row's.
+     */
     private function bulkInsert(string $table, callable $rowGenerator): void
     {
-        $bar   = $this->command->getOutput()->createProgressBar(self::ROWS_PER_MODEL);
-        $chunk = [];
+        $have = DB::table($table)->count();
 
-        for ($i = 1; $i <= self::ROWS_PER_MODEL; $i++) {
+        if ($have >= $this->rowsPerModel) {
+            $this->say("{$table} already holds {$have} rows; nothing to add.");
+            return;
+        }
+
+        $needed = $this->rowsPerModel - $have;
+        $start  = (int) DB::table($table)->max('id') + 1;
+        $bar    = $this->command?->getOutput()->createProgressBar($needed);
+        $chunk  = [];
+
+        for ($i = $start; $i < $start + $needed; $i++) {
             $chunk[] = $rowGenerator($i);
 
             if (count($chunk) === self::CHUNK_SIZE) {
                 DB::table($table)->insert($chunk);
                 $chunk = [];
-                $bar->advance(self::CHUNK_SIZE);
+                $bar?->advance(self::CHUNK_SIZE);
             }
         }
 
         if (!empty($chunk)) {
             DB::table($table)->insert($chunk);
-            $bar->advance(count($chunk));
+            $bar?->advance(count($chunk));
         }
 
-        $bar->finish();
-        $this->command->newLine();
+        $bar?->finish();
+        $this->command?->newLine();
     }
 }
