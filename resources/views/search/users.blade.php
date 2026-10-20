@@ -66,7 +66,7 @@
 @endif
 
 @if($query)
-    <x-results :count="$results->count()">
+    <x-results :count="$results->total()">
         @if($results->isEmpty())
             <x-empty icon="search">
                 No users match “{{ $query }}”.
@@ -99,6 +99,7 @@
             </ul>
         @endif
     </x-results>
+    <x-pager :paginator="$results" class="mt-4" />
 
     @if(!empty($debugInfo))
         <details class="card mt-6 p-5">

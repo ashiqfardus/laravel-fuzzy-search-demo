@@ -88,7 +88,7 @@ class SearchController extends Controller
                 $searchQuery->whereNotNull('email_verified_at');
             }
 
-            $results = $searchQuery->get();
+            $results = $searchQuery->paginate(10)->withQueryString();
             $debugInfo = $searchQuery->getDebugInfo();
         }
 
@@ -149,7 +149,7 @@ class SearchController extends Controller
                 $search->useInvertedIndex();
             }
 
-            $results = $search->get();
+            $results = $search->paginate(10)->withQueryString();
         }
 
         return view('search.products', [
@@ -192,7 +192,7 @@ class SearchController extends Controller
                 $searchQuery->useInvertedIndex();
             }
 
-            $results = $searchQuery->get();
+            $results = $searchQuery->paginate(10)->withQueryString();
         }
 
         return view('search.articles', [
@@ -218,7 +218,7 @@ class SearchController extends Controller
                 ->using($algorithm)
                 ->withRelevance()
                 ->highlight('mark')
-                ->get();
+                ->paginate(10)->withQueryString();
         }
 
         // MySQL/MariaDB run SOUNDEX() natively; the others take the package's phonetic pattern
