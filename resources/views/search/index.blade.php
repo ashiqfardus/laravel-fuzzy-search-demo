@@ -119,7 +119,7 @@ User::search('jonh')
 <section class="card p-6" aria-labelledby="new-heading">
     <div class="flex items-center gap-2">
         <span class="badge bg-accent/15 text-accent">v2.1</span>
-        <h2 id="new-heading" class="font-semibold text-ink">What this demo exercises from the next release</h2>
+        <h2 id="new-heading" class="font-semibold text-ink">What this demo exercises in v2.1</h2>
     </div>
     <ul class="mt-4 grid gap-x-8 gap-y-2 text-sm text-muted sm:grid-cols-2">
         @foreach($new as [$item])
