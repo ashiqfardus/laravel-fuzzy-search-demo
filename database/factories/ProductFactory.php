@@ -8,8 +8,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 class ProductFactory extends Factory
 {
     /**
-     * The fixed catalog of realistic product names, each mapped to a resolved category id.
-     * Built once per process. Exposed as a public static method (not just a local to
+     * The fixed catalog of realistic product names, each with its category's name. Exposed as a
+     * public static method (not just a local to
      * definition()) so DatabaseSeeder can firstOrCreate() every entry before drawing random
      * duplicates — otherwise a random draw of 50 from 15 names can silently skip one, and
      * whichever page hint mentions that product stops matching until the next reseed.
@@ -18,13 +18,9 @@ class ProductFactory extends Factory
      */
     public static function catalog(): array
     {
-        static $products = null;
-
-        // Built once per process: the category row only needs firstOrCreate() the first time
-        // a given name is seen, not once per generated product.
-        return $products ??= array_map(
-            fn (array $p) => $p + ['category_id' => Category::firstOrCreate(['name' => $p['category']])->id],
-            [
+        // No category ids here: an id kept for the process outlives a refreshed database (each
+        // test's), so the caller resolves the category it uses (category()).
+        return [
                 ['name' => 'iPhone 15 Pro Max', 'brand' => 'Apple', 'category' => 'Smartphones', 'description' => 'Apple titanium flagship with a 6.7-inch display, the A17 Pro chip and USB-C. It pairs instantly with AirPods Pro 2 and mirrors to an iPad Pro for sketching. Buyers cross-shopping the Samsung Galaxy S24 Ultra usually decide on camera processing.'],
                 ['name' => 'Samsung Galaxy S24 Ultra', 'brand' => 'Samsung', 'category' => 'Smartphones', 'description' => 'A 6.8-inch flagship with a built-in S Pen, a 200 MP camera and seven years of updates. It shares DeX desktop mode with the Galaxy Tab S9 and casts straight to a Neo QLED 8K panel. The usual comparison is the iPhone 15 Pro Max on zoom range.'],
                 ['name' => 'MacBook Pro 16"', 'brand' => 'Apple', 'category' => 'Laptops', 'description' => 'A 16-inch laptop with the M3 Pro chip, 22-hour battery and a mini-LED display. Developers pick it over the Dell XPS 15 for quiet thermals under sustained load. Sidecar turns an iPad Pro into a second display.'],
@@ -49,8 +45,13 @@ class ProductFactory extends Factory
                 ['name' => '华为 手机壳', 'brand' => 'Huawei', 'category' => 'Accessories', 'description' => 'A slim protective case for Huawei smartphones with reinforced corners.'],
                 ['name' => '京都 抹茶 セット', 'brand' => 'Ippodo', 'category' => 'Souvenirs', 'description' => "A ceremonial-grade matcha gift set from Kyoto, once Japan's imperial capital before Tokyo (東京) became the seat of government."],
                 ['name' => '서울 김치 세트', 'brand' => 'Jongga', 'category' => 'Kitchen', 'description' => 'A jarred set of napa cabbage and radish kimchi, fermented in small batches in Seoul.'],
-            ]
-        );
+        ];
+    }
+
+    /** The id of a catalog entry's category, created on first use. */
+    public static function category(array $entry): int
+    {
+        return Category::firstOrCreate(['name' => $entry['category']])->id;
     }
 
     public function definition(): array
@@ -59,10 +60,10 @@ class ProductFactory extends Factory
 
         return [
             'name' => $product['name'],
-            'description' => fake()->paragraph(3),
+            'description' => $product['description'],
             'sku' => strtoupper(fake()->unique()->bothify('???-#####')),
             'brand' => $product['brand'],
-            'category_id' => $product['category_id'],
+            'category_id' => self::category($product),
             'price' => fake()->randomFloat(2, 29.99, 2999.99),
         ];
     }

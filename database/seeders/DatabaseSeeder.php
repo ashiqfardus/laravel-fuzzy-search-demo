@@ -71,7 +71,7 @@ class DatabaseSeeder extends Seeder
                 'description' => $entry['description'] ?? fake()->paragraph(3),
                 'sku' => strtoupper(fake()->unique()->bothify('???-#####')),
                 'brand' => $entry['brand'],
-                'category_id' => $entry['category_id'],
+                'category_id' => ProductFactory::category($entry),
                 'price' => fake()->randomFloat(2, 29.99, 2999.99),
             ]);
 
