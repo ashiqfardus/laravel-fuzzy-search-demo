@@ -666,7 +666,9 @@ class SearchController extends Controller
             }
         }
 
-        return view('search.benchmarks', compact('term', 'typo', 'results'));
+        $indexed = $this->isIndexed(User::class);
+
+        return view('search.benchmarks', compact('term', 'typo', 'results', 'indexed'));
     }
 
     /**

@@ -24,4 +24,16 @@ class BenchmarksPageTest extends TestCase
     {
         $this->get('/search/benchmarks?q=jonh')->assertOk()->assertDontSee('5–20×')->assertSee('measured for this term');
     }
+
+    /** WG-M6: an index that was never built is named, not shown as "BM25 finds nothing". */
+    public function test_an_unbuilt_index_shows_the_rebuild_hint_in_the_bm25_panel(): void
+    {
+        $this->seed(\Database\Seeders\DatabaseSeeder::class);
+        \Illuminate\Support\Facades\DB::table('fuzzy_index_meta')->where('model_type', \App\Models\User::class)->delete();
+
+        $this->get('/search/benchmarks?q=john')->assertOk()->assertSee('Index not built');
+
+        $this->artisan('fuzzy-search:rebuild', ['model' => \App\Models\User::class]);
+        $this->get('/search/benchmarks?q=john')->assertOk()->assertDontSee('Index not built');
+    }
 }

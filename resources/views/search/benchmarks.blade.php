@@ -35,6 +35,11 @@
                 <div class="p-5">
                     @if(!empty($data['error']))
                         <x-callout tone="danger">{{ $data['error'] }}</x-callout>
+                    @elseif($rows->isEmpty() && $key !== 'like' && ! $indexed)
+                        <x-callout tone="warn" title="Index not built">
+                            The BM25 index holds no rows for users yet, so this panel has nothing to read. Build it once:
+                            <span class="code">php artisan fuzzy-search:rebuild "App\Models\User"</span>
+                        </x-callout>
                     @elseif($rows->isEmpty())
                         <p class="text-sm text-muted">No results</p>
                     @else
