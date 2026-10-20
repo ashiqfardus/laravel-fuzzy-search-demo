@@ -39,7 +39,7 @@
     </label>
     <div class="relative">
         <input id="as-you-type" type="text" x-model="q" @input.debounce.200ms="asYouType()"
-               class="field-control pr-10" placeholder="Type three letters, e.g. macb, ipho, sam…" autocomplete="off">
+               class="field-control pr-10" placeholder="Type three letters, e.g. macb, ipho, samsu…" autocomplete="off">
         <span x-show="loading" x-cloak class="absolute right-3 top-1/2 -translate-y-1/2 text-accent" aria-hidden="true">
             <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>

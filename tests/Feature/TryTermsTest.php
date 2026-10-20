@@ -38,4 +38,30 @@ class TryTermsTest extends TestCase
         }
         $this->assertSame([], $failed);
     }
+
+    public function test_the_try_terms_the_pages_name_find_what_they_say(): void
+    {
+        $this->get('/search/smart?q=macbok')->assertOk()->assertSee('MacBook', false);
+        $this->get('/search/scout-demo?q=john')->assertOk()->assertSee('John Doe');
+
+        $playground = $this->get('/search/playground?q=' . urlencode('^Jane Smith$'))->assertOk();
+        $this->assertSame(1, $playground->viewData('results')->total());
+
+        $first = $this->getJson('/api/as-you-type?q=samsu')->assertOk()->json('data.0.name');
+        $this->assertStringContainsString('Samsung', (string) $first);
+    }
+
+    public function test_the_dashboard_and_readme_count_seven_algorithms(): void
+    {
+        $this->get('/')->assertOk()->assertSee('Seven algorithms')->assertDontSee('Eight algorithms');
+        $this->assertDoesNotMatchRegularExpression('/\\beight\\b/i', file_get_contents(base_path('README.md')));
+    }
+
+    public function test_the_scout_title_escapes_the_query_once(): void
+    {
+        $this->get('/search/scout-demo?q=' . urlencode("O'Brien"))
+            ->assertOk()
+            ->assertSee('Results for “O&#039;Brien”', false)
+            ->assertDontSee('&amp;#039;', false);
+    }
 }

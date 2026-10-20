@@ -14,7 +14,7 @@
 </x-search-form>
 
 @if($term)
-    <x-results title="Results for “{{ $term }}”" :count="$results->count()">
+    <x-results :title="'Results for “' . $term . '”'" :count="$results->count()">
         @if($results->isEmpty())
             <x-empty icon="bolt">
                 No results.

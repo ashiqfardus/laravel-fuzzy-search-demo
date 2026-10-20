@@ -99,7 +99,7 @@
         <ul class="grid gap-1 sm:grid-cols-2">
             <li><span class="code">volet</span> → Violet VonRueden (typo correction)</li>
             <li><span class="code">iphne</span> → iPhone (did you mean)</li>
-            <li><span class="code">mac</span> → completions from product names</li>
+            <li><span class="code">macbok</span> → MacBook Pro 16" (typo correction)</li>
             <li>Results are merged by name similarity to the query (the match %)</li>
         </ul>
     </x-callout>

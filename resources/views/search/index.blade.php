@@ -11,7 +11,7 @@
         ['search.smart',             'sparkles', 'Smart search',       'Did-you-mean from the index dictionary, suggestions and autocomplete across four models.',                              'iphne → iPhone'],
         ['search.capability-matrix', 'table',    'Compare algorithms', 'The same term through every algorithm, side by side, with timings.',                                                   'jhn'],
         ['search.benchmarks',        'chart',    'LIKE vs BM25',       'Latency and ordering: pattern search against the inverted index, with a typo-tolerance toggle for the index read.',                                       'jonh · typo 2'],
-        ['search.scout-demo',        'bolt',     'Scout driver',       'SCOUT_DRIVER=fuzzy-search wires the package in as a Scout engine.',                                                     'laravel'],
+        ['search.scout-demo',        'bolt',     'Scout driver',       'SCOUT_DRIVER=fuzzy-search wires the package in as a Scout engine.',                                                     'john'],
         ['search.playground',        'code',     'Query playground',   'Extended syntax: ^prefix, word$, =exact, !not, | or, ~typo, field:scope, quoted phrases.',                                                  '^John Doe !banned'],
         ['search.analytics',         'chart',    'Search analytics',   'Popular and zero-result searches, latency by path and daily volume from fuzzy_search_logs.',                                       'run a few searches first'],
         ['search.i18n',              'squares',  'CJK search',         'Chinese, Japanese and Korean product names through the script-aware n-gram tokenizer.',                                            '東京'],
@@ -49,7 +49,7 @@
         <div>
             <p class="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-accent">ashiqfardus/laravel-fuzzy-search</p>
             <h1 class="font-mono text-3xl font-semibold tracking-tight sm:text-5xl sm:leading-[1.1]">Typo-tolerant search, straight from your database.</h1>
-            <p class="mt-4 max-w-xl text-lg leading-relaxed text-muted">Eight algorithms, a BM25 inverted index, extended query syntax and a Scout driver. Every page here runs the real package against seeded data.</p>
+            <p class="mt-4 max-w-xl text-lg leading-relaxed text-muted">Seven algorithms, a BM25 inverted index, extended query syntax and a Scout driver. Every page here runs the real package against seeded data.</p>
             <div class="mt-6 flex flex-wrap gap-3">
                 <button type="button" @click="tour.start()" class="btn-primary">
                     <x-icon name="play" class="h-4 w-4" />

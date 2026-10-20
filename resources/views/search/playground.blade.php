@@ -53,7 +53,7 @@
 
     <div class="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted">
         Examples:
-        @foreach(['^John Doe', 'john | jane', '^John Doe !banned', '^Smith Doe$', '~jonh', 'email:^jon', 'name:~jonh'] as $example)
+        @foreach(['^John Doe', 'john | jane', '^John Doe !banned', '^Jane Smith$', '~jonh', 'email:^jon', 'name:~jonh'] as $example)
             <a href="?q={{ urlencode($example) }}" class="code cursor-pointer transition-colors duration-200 hover:bg-line">{{ $example }}</a>
         @endforeach
     </div>
