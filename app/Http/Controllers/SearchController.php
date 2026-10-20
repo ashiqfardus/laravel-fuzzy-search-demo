@@ -54,7 +54,7 @@ class SearchController extends Controller
         $query = $this->term($request);
         $engine = $this->engine($request);
         $algorithm = $this->option($request, 'algorithm', self::USER_ALGORITHMS);
-        $typoTolerance = (int) $request->input('typo_tolerance', 2);
+        $typoTolerance = max(0, min(5, (int) $request->input('typo_tolerance', 2)));
         $fallback = $request->input('fallback', '');
         if (!in_array($fallback, self::USER_ALGORITHMS, true) || $fallback === $algorithm) {
             $fallback = '';
