@@ -26,21 +26,25 @@
     suggestions: [],
     source: null,
     latencyMs: null,
+    error: null,
     loading: false,
     controller: null,
     async suggest() {
+        this.error = null;
         if (this.q.length < 2) { this.suggestions = []; this.source = null; return; }
         this.loading = true;
         if (this.controller) this.controller.abort();
         this.controller = new AbortController();
         try {
             const resp = await fetch('/api/suggest?model=users&q=' + encodeURIComponent(this.q), { signal: this.controller.signal });
+            if (!resp.ok) { this.error = resp.status === 429 ? 'Too many requests. Wait a moment and try again.' : 'Search is temporarily unavailable. Try again in a moment.'; this.suggestions = []; this.source = null; return; }
             const data = await resp.json();
+            this.error = data.error ?? null;
             this.suggestions = data.suggestions ?? [];
             this.source = data.source ?? null;
             this.latencyMs = data.latency_ms ?? null;
         } catch (e) {
-            if (e.name !== 'AbortError') { this.suggestions = []; this.source = null; }
+            if (e.name !== 'AbortError') { this.error = 'Search is temporarily unavailable. Try again in a moment.'; this.suggestions = []; this.source = null; }
         } finally {
             this.loading = false;
         }
@@ -62,8 +66,11 @@
             <li class="px-4 py-2 text-sm text-ink" x-text="s"></li>
         </template>
     </ul>
-    <p x-show="!loading && q.length >= 2 && suggestions.length === 0" x-cloak class="mt-3 text-sm text-muted">No completions found.</p>
-    <p x-show="source" x-cloak class="mt-3 font-mono text-xs text-muted"><span x-text="source"></span> · <span x-text="latencyMs"></span> ms</p>
+    <div role="status" aria-live="polite">
+        <p x-show="error" x-cloak class="mt-3 text-sm text-amber-300" x-text="error"></p>
+        <p x-show="!error && !loading && q.length >= 2 && suggestions.length === 0" x-cloak class="mt-3 text-sm text-muted">No completions found.</p>
+        <p x-show="source" x-cloak class="mt-3 font-mono text-xs text-muted"><span x-text="source"></span> · <span x-text="latencyMs"></span> ms</p>
+    </div>
 </div>
 
 <x-search-form button="Smart search" cols="md:grid-cols-3">

@@ -17,21 +17,25 @@
     query: @js($query),
     results: [],
     meta: null,
+    error: null,
     loading: false,
     controller: null,
     get hasOperators() { return /[!^$=|~&quot;':]/.test(this.query); },
     async suggest() {
         if (this.controller) this.controller.abort();
+        this.error = null;
         if (this.query.length < 2 || this.hasOperators) { this.results = []; this.meta = null; this.loading = false; return; }
         this.loading = true;
         this.controller = new AbortController();
         try {
             const resp = await fetch('/api/search/users?q=' + encodeURIComponent(this.query), { signal: this.controller.signal });
+            if (!resp.ok) { this.error = resp.status === 429 ? 'Too many requests. Wait a moment and try again.' : 'Search is temporarily unavailable. Try again in a moment.'; this.results = []; this.meta = null; return; }
             const payload = await resp.json();
+            this.error = payload.error ?? null;
             this.results = payload.data ?? [];
             this.meta = payload.meta ?? null;
         } catch (e) {
-            if (e.name !== 'AbortError') { this.results = []; this.meta = null; }
+            if (e.name !== 'AbortError') { this.error = 'Search is temporarily unavailable. Try again in a moment.'; this.results = []; this.meta = null; }
         } finally {
             this.loading = false;
         }
@@ -59,10 +63,12 @@
         @endforeach
     </div>
 
+    <div role="status" aria-live="polite">
+    <p x-show="error" x-cloak class="mt-4 text-sm text-amber-300" x-text="error"></p>
     <p x-show="hasOperators" x-cloak class="mt-4 text-sm text-muted" data-preview-note>
         The live preview matches plain words only and ignores operators. Run the query to apply them.
     </p>
-    <p x-show="!loading && !hasOperators && results.length === 0 && query.length >= 2" x-cloak class="mt-4 text-sm text-muted">
+    <p x-show="!error && !loading && !hasOperators && results.length === 0 && query.length >= 2" x-cloak class="mt-4 text-sm text-muted">
         No live matches — run the query for the full extended search.
     </p>
     <ul x-show="results.length > 0" x-cloak class="mt-4 divide-y divide-line overflow-hidden rounded-xl border border-line" aria-label="Live preview">
@@ -80,6 +86,7 @@
         </template>
     </ul>
     <p x-show="meta" x-cloak class="mt-3 font-mono text-xs text-muted"><span x-text="meta?.algorithm"></span> · <span x-text="meta?.latency_ms"></span> ms</p>
+    </div>
 </form>
 
 @if($error)

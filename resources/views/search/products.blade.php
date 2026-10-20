@@ -15,20 +15,24 @@
     q: '',
     rows: [],
     meta: null,
+    error: null,
     loading: false,
     controller: null,
     async asYouType() {
+        this.error = null;
         if (this.q.length < 2) { this.rows = []; this.meta = null; return; }
         this.loading = true;
         if (this.controller) this.controller.abort();
         this.controller = new AbortController();
         try {
             const resp = await fetch('/api/as-you-type?q=' + encodeURIComponent(this.q), { signal: this.controller.signal });
+            if (!resp.ok) { this.error = resp.status === 429 ? 'Too many requests. Wait a moment and try again.' : 'Search is temporarily unavailable. Try again in a moment.'; this.rows = []; this.meta = null; return; }
             const payload = await resp.json();
+            this.error = payload.error ?? null;
             this.rows = payload.data ?? [];
             this.meta = payload.meta ?? null;
         } catch (e) {
-            if (e.name !== 'AbortError') { this.rows = []; this.meta = null; }
+            if (e.name !== 'AbortError') { this.error = 'Search is temporarily unavailable. Try again in a moment.'; this.rows = []; this.meta = null; }
         } finally {
             this.loading = false;
         }
@@ -61,12 +65,15 @@
             </li>
         </template>
     </ul>
-    <p x-show="!loading && q.length >= 2 && rows.length === 0" x-cloak class="mt-3 text-sm text-muted">
-        No index matches yet — keep typing, or run <span class="code">php artisan fuzzy-search:rebuild "App\Models\Product"</span>.
-    </p>
-    <p x-show="meta" x-cloak class="mt-3 font-mono text-xs text-muted">
-        <span x-text="meta?.algorithm"></span> · <span x-text="meta?.latency_ms"></span> ms
-    </p>
+    <div role="status" aria-live="polite">
+        <p x-show="error" x-cloak class="mt-3 text-sm text-amber-300" x-text="error"></p>
+        <p x-show="!error && !loading && q.length >= 2 && rows.length === 0" x-cloak class="mt-3 text-sm text-muted">
+            No index matches yet — keep typing, or run <span class="code">php artisan fuzzy-search:rebuild "App\Models\Product"</span>.
+        </p>
+        <p x-show="meta" x-cloak class="mt-3 font-mono text-xs text-muted">
+            <span x-text="meta?.algorithm"></span> · <span x-text="meta?.latency_ms"></span> ms
+        </p>
+    </div>
 </div>
 
 <x-search-form button="Search products" cols="md:grid-cols-5">
