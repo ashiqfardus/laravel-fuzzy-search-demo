@@ -118,12 +118,13 @@ Try these queries:
 | Query | Meaning |
 | ----- | ------- |
 | `'john` | Soft contains — "john" appears anywhere |
-| `=John Doe` | Exact phrase match |
+| `"John Doe"` | Phrase — the words together, in this order |
+| `=jane@example.com` | Exact — a column equals the whole term (here the email); `=John Doe` would mean name exactly "John" and "Doe" anywhere |
 | `^john` | Starts with "john" |
 | `doe$` | Ends with "doe" |
 | `!smith` | Exclude records matching "smith" |
 | `john \| jane` | OR — matches either |
-| `john !(doe \| smith)` | john, but not doe or smith |
+| `john !doe !smith` | john, but not doe or smith (`!` negates one term; it cannot precede a group) |
 | `~jonh` | Typo-tolerant term — edit-distance match inside an extended query |
 | `email:^jon` | Field scope — apply the operator to one column only |
 
