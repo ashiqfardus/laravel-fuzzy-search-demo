@@ -73,7 +73,16 @@ php artisan db:seed --class=Database\\Seeders\\LargeDatasetSeeder
 
 # 1 million users — takes several minutes; disabled in APP_ENV=production
 php artisan demo:seed --huge
+
+# Then rebuild the index: both seeders bulk-insert, which fires no model events, so the
+# index (which the pages read by default) does not hold their rows until you do
+php artisan fuzzy-search:rebuild "App\Models\User"
+php artisan fuzzy-search:rebuild "App\Models\Product"
+php artisan fuzzy-search:rebuild "App\Models\Article"
+php artisan fuzzy-search:rebuild "App\Models\Contact"
 ```
+
+`demo:seed --huge` adds users only, so after it alone the `User` rebuild is enough. Until the rebuild, the BM25 pages and the LIKE-vs-BM25 benchmark search only the rows indexed before the bulk seed.
 
 ## Test Scenarios
 
