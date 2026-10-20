@@ -22,4 +22,17 @@ class IndexedStateTest extends TestCase
         $this->artisan('fuzzy-search:rebuild', ['model' => User::class])->assertSuccessful();
         $this->get('/search/users?q=person')->assertOk()->assertDontSee('Index not built');
     }
+
+    /** A second look in the same minute does not count the table again. */
+    public function test_the_row_count_is_cached_between_requests(): void
+    {
+        User::factory()->create(['name' => 'Indexed Person']);
+        $this->get('/search/users?q=person')->assertOk();
+
+        \Illuminate\Support\Facades\DB::enableQueryLog();
+        $this->get('/search/users?q=person')->assertOk();
+        $counts = array_filter(\Illuminate\Support\Facades\DB::getQueryLog(), fn ($q) => preg_match('/select count\(\*\) as aggregate from "users"/i', $q['query']));
+
+        $this->assertSame([], array_values($counts));
+    }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use App\Models\User;
@@ -816,7 +817,14 @@ class SearchController extends Controller
     {
         $docs = DB::table('fuzzy_index_meta')->where('model_type', $modelClass)->value('total_docs');
 
-        return $docs !== null && (int) $docs >= $modelClass::query()->count();
+        if ($docs === null) {
+            return false;
+        }
+
+        // The row count is cached per model and meta total_docs: an index write changes
+        // total_docs and re-checks at once. Ceiling: rows added while indexing is off are
+        // noticed within 60 s, not instantly. (COUNT(*) per model per request is too slow at 1M rows.)
+        return Cache::remember("demo:indexed:{$modelClass}:{$docs}", 60, fn () => (int) $docs >= $modelClass::query()->count());
     }
 
     /**
