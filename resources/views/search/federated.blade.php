@@ -33,11 +33,8 @@
 
 @if($query)
     <x-results title="Across all models" :count="$results->total()">
-        @if($results->isEmpty() && $results->total() > 0)
-            <x-empty icon="squares">
-                No results on page {{ $results->currentPage() }}.
-                <x-slot:hint><a href="{{ $results->url(1) }}" class="text-link hover:underline">Back to page 1</a> of {{ $results->lastPage() }}.</x-slot:hint>
-            </x-empty>
+        @if($results->isEmpty() && $results->currentPage() > 1)
+            <x-past-end :paginator="$results" />
         @elseif($results->isEmpty())
             <x-empty icon="squares">
                 Nothing matches “{{ $query }}” in any model.
@@ -67,7 +64,7 @@
                             </p>
                         </div>
                         @isset($item->_score)
-                            <span class="badge bg-accent/15 text-accent" title="Normalised score">{{ number_format($item->_score, 2) }}</span>
+                            <span class="badge bg-accent/15 text-accent" title="Normalised score"><span class="sr-only">Normalised score </span>{{ number_format($item->_score, 2) }}</span>
                         @endisset
                     </li>
                 @endforeach
