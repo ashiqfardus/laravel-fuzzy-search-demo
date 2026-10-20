@@ -35,8 +35,10 @@
                 No articles match “{{ $query }}”.
                 @if($useIndex)
                     <x-slot:hint><x-index-miss /></x-slot:hint>
-                @else
+                @elseif($matchMode === 'all')
                     <x-slot:hint>Switch to “match any” to widen the search.</x-slot:hint>
+                @else
+                    <x-slot:hint>Check the spelling, or search the BM25 index, which forgives typos.</x-slot:hint>
                 @endif
             </x-empty>
         @else
@@ -49,7 +51,7 @@
                         <div class="flex items-center justify-between gap-3">
                             <span class="badge {{ $status }}">{{ ucfirst($article->status) }}</span>
                             @isset($article->_score)
-                                <span class="badge bg-accent/15 text-accent" title="Relevance score">{{ number_format($article->_score, 2) }}</span>
+                                <span class="badge bg-accent/15 text-accent" title="Relevance score"><span class="sr-only">Relevance score </span>{{ number_format($article->_score, 2) }}</span>
                             @endisset
                         </div>
                         <h3 class="text-lg font-medium text-ink">@fuzzyHighlight($article, 'title')</h3>
