@@ -232,7 +232,7 @@ class SearchController extends Controller
     /**
      * Federated search across all models. Once every model is indexed, each is searched
      * through its BM25 index (FederatedSearch::useInvertedIndex()) on its own configured
-     * columns. While any index is missing, each model runs its own LIKE search instead, and
+     * columns. While every index is missing, each model runs its own LIKE search instead, and
      * paginate() reads each table twice (count + page), so that scan searches the short name
      * columns only: email and the long product description made it 1.7-1.9 s at 100k rows
      * per model.
@@ -244,12 +244,18 @@ class SearchController extends Controller
 
         $results = collect();
         $missing = [];
+        $leftOut = [];
 
         if ($query) {
             $missing = array_values(array_filter($models, fn (string $model) => !$this->isIndexed($model)));
-            $search = FederatedSearch::across($models)->search($query)->limitPerModel(10);
+            // Index the built models and leave the rest out: one unbuilt model used to send all
+            // of them to the LIKE scan (8 statements, 8-24 s at 1M rows). Only when none is
+            // built does the LIKE scan answer.
+            $indexed = array_values(array_diff($models, $missing));
+            $search = FederatedSearch::across($indexed === [] ? $models : $indexed)->search($query)->limitPerModel(10);
+            $leftOut = $indexed !== [] ? $missing : [];
 
-            if ($missing === []) {
+            if ($indexed !== []) {
                 $search->useInvertedIndex();
             } else {
                 $search->searchIn(['name', 'title', 'first_name', 'last_name']);
@@ -264,7 +270,7 @@ class SearchController extends Controller
             )->load('author');
         }
 
-        return view('search.federated', compact('results', 'query', 'missing'));
+        return view('search.federated', compact('results', 'query', 'missing', 'leftOut'));
     }
 
     /**
