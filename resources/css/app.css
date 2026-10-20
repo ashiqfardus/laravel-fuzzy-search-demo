@@ -32,7 +32,7 @@
 
 @layer components {
     .field-control {
-        @apply w-full rounded-lg border border-line bg-raised px-3.5 py-2.5 text-ink placeholder:text-muted/70
+        @apply w-full rounded-lg border border-line bg-raised px-3.5 py-2.5 text-ink placeholder:text-muted
                transition-colors duration-200 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/40;
     }
     .btn-primary {
