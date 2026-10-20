@@ -92,7 +92,7 @@
                             <p class="truncate text-sm text-muted">{{ $user->email }}</p>
                         </div>
                         @isset($user->_score)
-                            <span class="badge bg-accent/15 text-accent" title="Relevance score">{{ number_format($user->_score, 2) }}</span>
+                            <span class="badge bg-accent/15 text-accent" title="Relevance score"><span class="sr-only">Relevance score </span>{{ number_format($user->_score, 2) }}</span>
                         @endisset
                     </li>
                 @endforeach

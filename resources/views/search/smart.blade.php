@@ -77,9 +77,9 @@
     <div class="mb-8 grid gap-4 md:grid-cols-3">
         @foreach($panels as [$title, $icon, $items, $emptyText])
             <section class="card p-5">
-                <h3 class="mb-4 flex items-center gap-2 font-mono text-xs uppercase tracking-[0.15em] text-muted">
+                <h2 class="mb-4 flex items-center gap-2 font-mono text-xs uppercase tracking-[0.15em] text-muted">
                     <x-icon :name="$icon" class="h-4 w-4 text-accent" /> {{ $title }}
-                </h3>
+                </h2>
                 @if($items->isEmpty())
                     <p class="text-sm text-muted">{{ $emptyText }}</p>
                 @else

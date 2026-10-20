@@ -64,7 +64,7 @@
                             @endif
                         </div>
                         @isset($contact->_score)
-                            <span class="badge bg-accent/15 text-accent" title="Relevance score">{{ number_format($contact->_score, 2) }}</span>
+                            <span class="badge bg-accent/15 text-accent" title="Relevance score"><span class="sr-only">Relevance score </span>{{ number_format($contact->_score, 2) }}</span>
                         @endisset
                     </article>
                 @endforeach

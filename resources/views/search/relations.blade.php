@@ -45,7 +45,7 @@
                         <div class="flex items-center justify-between gap-3">
                             <span class="badge bg-raised text-muted">Article</span>
                             @isset($article->_score)
-                                <span class="badge bg-accent/15 text-accent" title="Relevance score">{{ number_format($article->_score, 2) }}</span>
+                                <span class="badge bg-accent/15 text-accent" title="Relevance score"><span class="sr-only">Relevance score </span>{{ number_format($article->_score, 2) }}</span>
                             @endisset
                         </div>
                         <h3 class="text-lg font-medium text-ink">@fuzzyHighlight($article, 'title')</h3>

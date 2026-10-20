@@ -118,7 +118,7 @@
                         <div class="flex items-center justify-between gap-2">
                             <span class="badge bg-raised text-muted">{{ $product->category?->name }}</span>
                             @isset($product->_score)
-                                <span class="badge bg-accent/15 text-accent" title="Relevance score">{{ number_format($product->_score, 1) }}</span>
+                                <span class="badge bg-accent/15 text-accent" title="Relevance score"><span class="sr-only">Relevance score </span>{{ number_format($product->_score, 1) }}</span>
                             @endisset
                         </div>
                         <h3 class="font-medium text-ink">@fuzzyHighlight($product, 'name')</h3>
