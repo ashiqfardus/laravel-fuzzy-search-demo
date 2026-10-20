@@ -8,7 +8,8 @@ use Tests\TestCase;
 
 /**
  * A query parameter sent as an array (?q[]=x), or empty, must never fail a page: every action
- * reads q and its selects as strings (P6D-6).
+ * reads q and its selects as strings (P6D-6). Nor may a select's value it does not offer
+ * (N5-M5): contacts has no metaphone shadow columns, so ?algorithm=metaphone threw.
  */
 class ArrayParameterTest extends TestCase
 {
@@ -32,6 +33,11 @@ class ArrayParameterTest extends TestCase
             '/search/contacts?q[]=x',
             '/search/contacts?q=jon&algorithm[]=x',
             '/search/contacts?q=jon&algorithm=',
+            '/search/contacts?q=jon&algorithm=metaphone',
+            '/search/contacts?q=jon&algorithm=trigram',
+            '/search/contacts?q=jon&algorithm=bogus',
+            '/search/users?q=jon&algorithm=trigram&engine=like',
+            '/search/users?q=jon&algorithm=bogus&engine=like',
             '/search/federated?q[]=x',
             '/search/smart?q[]=x',
             '/search/smart?q=lara&engine[]=like',
@@ -55,5 +61,11 @@ class ArrayParameterTest extends TestCase
     public function test_an_array_or_empty_parameter_never_fails_the_page(string $uri): void
     {
         $this->get($uri)->assertOk();
+    }
+
+    public function test_an_algorithm_its_select_does_not_offer_falls_back_to_the_default(): void
+    {
+        $this->get('/search/contacts?q=jon&algorithm=metaphone')->assertOk()->assertViewHas('algorithm', 'soundex');
+        $this->get('/search/users?q=jon&algorithm=trigram&engine=like')->assertOk()->assertViewHas('algorithm', 'fuzzy');
     }
 }

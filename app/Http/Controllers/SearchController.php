@@ -24,6 +24,9 @@ class SearchController extends Controller
      */
     private const LIKE_SLICE = 10000;
 
+    /** The algorithms the users page's select offers, its default first. */
+    private const USER_ALGORITHMS = ['fuzzy', 'levenshtein', 'soundex', 'metaphone', 'simple'];
+
     /**
      * Main search dashboard
      */
@@ -50,10 +53,10 @@ class SearchController extends Controller
     {
         $query = $this->term($request);
         $engine = $this->engine($request);
-        $algorithm = $this->stringInput($request, 'algorithm', 'fuzzy');
+        $algorithm = $this->option($request, 'algorithm', self::USER_ALGORITHMS);
         $typoTolerance = (int) $request->input('typo_tolerance', 2);
         $fallback = $request->input('fallback', '');
-        if (!in_array($fallback, ['fuzzy', 'levenshtein', 'soundex', 'metaphone', 'simple'], true) || $fallback === $algorithm) {
+        if (!in_array($fallback, self::USER_ALGORITHMS, true) || $fallback === $algorithm) {
             $fallback = '';
         }
         $verifiedOnly = $request->boolean('verified_only');
@@ -64,33 +67,29 @@ class SearchController extends Controller
         $attempts = $this->recordSearchAttempts();
 
         if ($query) {
-            try {
-                $searchQuery = User::search($query)
-                    ->typoTolerance($typoTolerance)
-                    ->withRelevance()
-                    ->highlight('mark');
+            $searchQuery = User::search($query)
+                ->typoTolerance($typoTolerance)
+                ->withRelevance()
+                ->highlight('mark');
 
-                if ($useIndex) {
-                    $searchQuery->useInvertedIndex();
-                } else {
-                    $searchQuery->using($algorithm);
+            if ($useIndex) {
+                $searchQuery->useInvertedIndex();
+            } else {
+                $searchQuery->using($algorithm);
 
-                    if ($fallback !== '') {
-                        // Re-runs the search with this algorithm only if the primary finds nothing.
-                        $searchQuery->fallback($fallback);
-                    }
+                if ($fallback !== '') {
+                    // Re-runs the search with this algorithm only if the primary finds nothing.
+                    $searchQuery->fallback($fallback);
                 }
-
-                if ($verifiedOnly) {
-                    // Chained straight onto the search builder — see "Chaining Eloquent" in the package README.
-                    $searchQuery->whereNotNull('email_verified_at');
-                }
-
-                $results = $searchQuery->get();
-                $debugInfo = $searchQuery->getDebugInfo();
-            } catch (\Ashiqfardus\LaravelFuzzySearch\Exceptions\InvalidAlgorithmException) {
-                $algorithm = 'fuzzy';
             }
+
+            if ($verifiedOnly) {
+                // Chained straight onto the search builder — see "Chaining Eloquent" in the package README.
+                $searchQuery->whereNotNull('email_verified_at');
+            }
+
+            $results = $searchQuery->get();
+            $debugInfo = $searchQuery->getDebugInfo();
         }
 
         return view('search.users', [
@@ -125,8 +124,7 @@ class SearchController extends Controller
     public function products(Request $request)
     {
         $query    = $this->term($request);
-        $preset   = $request->input('preset');
-        $preset   = in_array($preset, ['ecommerce', 'exact'], true) ? $preset : 'ecommerce';
+        $preset   = $this->option($request, 'preset', ['ecommerce', 'exact']);
         $category = $this->stringInput($request, 'category', '');
         $engine   = $this->engine($request);
         $useIndex = $engine === 'bm25' && $this->isIndexed(Product::class);
@@ -209,20 +207,18 @@ class SearchController extends Controller
     public function contacts(Request $request)
     {
         $query = $this->term($request);
-        $algorithm = $this->stringInput($request, 'algorithm', 'soundex');
+        // Contact has no metaphone shadow columns: an algorithm the select does not offer is
+        // read as Soundex, never passed on (?algorithm=metaphone threw).
+        $algorithm = $this->option($request, 'algorithm', ['soundex', 'levenshtein', 'fuzzy', 'similar_text']);
 
         $results = collect();
 
         if ($query) {
-            try {
-                $results = Contact::search($query)
-                    ->using($algorithm)
-                    ->withRelevance()
-                    ->highlight('mark')
-                    ->get();
-            } catch (\Ashiqfardus\LaravelFuzzySearch\Exceptions\InvalidAlgorithmException) {
-                $algorithm = 'soundex';
-            }
+            $results = Contact::search($query)
+                ->using($algorithm)
+                ->withRelevance()
+                ->highlight('mark')
+                ->get();
         }
 
         return view('search.contacts', compact('results', 'query', 'algorithm'));
@@ -769,6 +765,14 @@ class SearchController extends Controller
         $value = $request->input($key, $default);
 
         return is_string($value) ? $value : $default;
+    }
+
+    /** A select's parameter: one of the values it offers, else the first (its default). */
+    private function option(Request $request, string $key, array $options): string
+    {
+        $value = $request->input($key);
+
+        return in_array($value, $options, true) ? $value : $options[0];
     }
 
     /** Whether the model's BM25 index is built: fuzzy-search:rebuild writes its meta row. */
