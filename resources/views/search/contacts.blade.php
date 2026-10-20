@@ -4,12 +4,16 @@
 
 @section('content')
 <x-page-header eyebrow="Phonetic matching" title="Contact search">
-    Soundex matches names that sound alike, so “steven” finds Stefan and “jon” finds Johnny. It keeps the first letter, so “philip” never finds Filip, nor “katherine” Catherine. These examples are MySQL/MariaDB's native SOUNDEX(), which this demo runs on; other databases use the package's phonetic pattern matching, which matches differently.
+    @if($nativeSoundex)
+        Soundex matches names that sound alike, so “steven” finds Stefan and “jon” finds Johnny. It keeps the first letter, so “philip” never finds Filip and “katherine” never finds Catherine. This database (MySQL/MariaDB) runs SOUNDEX() natively; PostgreSQL, SQLite and SQL Server use the package's phonetic pattern fallback, which matches differently.
+    @else
+        On this database Soundex runs the package's phonetic pattern fallback, as on every database but MySQL and MariaDB (on PostgreSQL by default): it matches the term, its first three letters, its consonant skeleton and a few spelling swaps (ph→f, ck→k, s→z). So “steven” finds Stefan and Stephen and “philip” finds Filip, but “jon” never finds John (try “john”), and “katherine” never finds Catherine. On MySQL or MariaDB, native SOUNDEX() matches by sound instead.
+    @endif
 </x-page-header>
 
 <x-search-form button="Search contacts" cols="md:grid-cols-3">
     <x-field label="Search query" for="q" class="md:col-span-2">
-        <input id="q" type="text" name="q" value="{{ $query }}" placeholder="Try: steven, jon, katherine…" class="field-control" autofocus>
+        <input id="q" type="text" name="q" value="{{ $query }}" placeholder="Try: steven, {{ $nativeSoundex ? 'jon' : 'john' }}, katherine…" class="field-control" autofocus>
     </x-field>
     <x-field label="Algorithm" for="algorithm">
         <select id="algorithm" name="algorithm" class="field-control">
@@ -24,7 +28,11 @@
     <x-callout tone="info" title="Try a sound-alike" class="mb-8">
         <ul class="grid gap-1 sm:grid-cols-2">
             <li><span class="code">steven</span> finds Stefan, Stephen</li>
-            <li><span class="code">jon</span> finds John, Johnny</li>
+            @if($nativeSoundex)
+                <li><span class="code">jon</span> finds John, Johnny</li>
+            @else
+                <li><span class="code">john</span> finds Johnny</li>
+            @endif
             <li><span class="code">katherine</span> finds Kathryn</li>
             <li><span class="code">eric</span> finds Erik, Erich</li>
         </ul>

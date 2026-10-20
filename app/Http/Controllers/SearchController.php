@@ -221,7 +221,11 @@ class SearchController extends Controller
                 ->get();
         }
 
-        return view('search.contacts', compact('results', 'query', 'algorithm'));
+        // MySQL/MariaDB run SOUNDEX() natively; the others take the package's phonetic pattern
+        // fallback, which matches spellings, so the page's examples differ.
+        $nativeSoundex = in_array((new Contact())->getConnection()->getDriverName(), ['mysql', 'mariadb'], true);
+
+        return view('search.contacts', compact('results', 'query', 'algorithm', 'nativeSoundex'));
     }
 
     /**

@@ -130,12 +130,14 @@ Try these queries:
 
 ### 5. Phonetic search (`/search/contacts`)
 
+On MySQL/MariaDB (native `SOUNDEX()`):
+
 - Search `steven` → finds "Stefan", "Stephen"
 - Search `katherine` → finds "Kathryn"
 - Search `jon` → finds "John", "Johnny"
 - Search `eric` → finds "Erik", "Erich"
 
-On MySQL/MariaDB, Soundex keeps the first letter and codes the rest, so `philip` never finds "Filip", `katherine` never finds "Catherine", and `jon` never finds "Jonathan" (J500 against J535). The 40 random contacts are drawn from a name list, so `FixedContactsSeeder` (run by `db:seed`) adds a contact for each name the hints use (Stefan, Stephen, Steven, John, Johnny, Jon, Kathryn, Katherine, Catherine, Erik, Erich, Eric, Filip) that no contact has yet; running it again adds nothing. On a database seeded before it existed, run `php artisan db:seed --class=FixedContactsSeeder`. These examples are MySQL/MariaDB's native `SOUNDEX()`, which the demo runs on. Other databases (PostgreSQL, SQLite, SQL Server) use the package's phonetic pattern fallback, which matches differently: there `jon` also finds "Jonathan" and `philip` finds "Filip".
+On MySQL/MariaDB, Soundex keeps the first letter and codes the rest, so `philip` never finds "Filip", `katherine` never finds "Catherine", and `jon` never finds "Jonathan" (J500 against J535). The 40 random contacts are drawn from a name list, so `FixedContactsSeeder` (run by `db:seed`) adds a contact for each name the hints use (Stefan, Stephen, Steven, John, Johnny, Jon, Kathryn, Katherine, Catherine, Erik, Erich, Eric, Filip) that no contact has yet; running it again adds nothing. On a database seeded before it existed, run `php artisan db:seed --class=FixedContactsSeeder`. Every other database (PostgreSQL by default, SQLite — the database `.env.example` sets up — and SQL Server) runs the package's phonetic pattern fallback instead, which matches spellings: the term, its first three letters, its consonant skeleton and a few swaps (ph→f, ck→k, s→z). There `steven`, `katherine` and `eric` find the same names, but `jon` finds only names spelled with "jon" (Jon, Jonathan), not "John" — search `john` to find "Johnny" — and `philip` finds "Filip". The contacts page shows the examples for the database it runs on.
 
 ### 6. Config presets (`/search/products`)
 
