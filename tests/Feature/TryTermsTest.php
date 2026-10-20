@@ -64,4 +64,13 @@ class TryTermsTest extends TestCase
             ->assertSee('Results for “O&#039;Brien”', false)
             ->assertDontSee('&amp;#039;', false);
     }
+
+    public function test_the_readme_links_only_to_files_that_exist(): void
+    {
+        preg_match_all('/\]\((?!https?:|#|mailto:)([^)#\s]+)/', file_get_contents(base_path('README.md')), $m);
+
+        $missing = array_values(array_filter($m[1], fn (string $path) => ! file_exists(base_path($path))));
+
+        $this->assertSame([], $missing);
+    }
 }

@@ -61,7 +61,7 @@ The default seeder (`php artisan db:seed`) creates:
 | Users | 25 | `name`, `email` |
 | Products | 50 | `name`, `description`, `sku`, `brand`, `category.name` |
 | Articles | 30 | `title`, `body`, `excerpt`, `author.name` |
-| Contacts | 40 random, plus the 13 names the contact hints use | `first_name`, `last_name`, `email`, `company` |
+| Contacts | 40 random, plus each of the 13 names the contact hints use that none of them already has (44 here) | `first_name`, `last_name`, `email`, `company` |
 
 ### Large dataset (benchmarks)
 
@@ -90,7 +90,7 @@ php artisan fuzzy-search:rebuild "App\Models\Contact"
 
 - Search `jonh` → finds "John" (single-character transposition), on the BM25 index or the LIKE table scan
 - Search `smyth` → finds "Smith" (phonetic near-match)
-- Slide the typo tolerance control to see how threshold affects recall
+- Change the typo tolerance (a select, 0 to 5) to see how the threshold affects recall
 
 ### 2. Algorithm comparison (`/search/users`)
 
@@ -198,6 +198,7 @@ database/
     ├── LargeDatasetSeeder.php     # 100k rows per model (400k total)
     └── HugeDatasetSeeder.php      # 1M users
 resources/views/
+├── components/                    # callout, field, results, pager, empty, icon...
 ├── layouts/app.blade.php
 ├── partials/tour-overlay.blade.php
 └── search/
@@ -209,6 +210,8 @@ resources/views/
     ├── contacts.blade.php
     ├── federated.blade.php
     ├── smart.blade.php
+    ├── analytics.blade.php
+    ├── i18n.blade.php
     ├── benchmarks.blade.php
     ├── capability-matrix.blade.php
     ├── scout-demo.blade.php
@@ -219,4 +222,4 @@ routes/
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT — see [LICENSE](https://github.com/ashiqfardus/laravel-fuzzy-search/blob/main/LICENSE) of the package.
