@@ -17,9 +17,14 @@ class User extends Authenticatable
         'password',
     ];
 
+    // The metaphone shadow columns are index plumbing, not part of a user's public record.
+    // /api/search/users serialises this model to anonymous callers (it is a demo); a real
+    // app authorises that route and hides email too.
     protected $hidden = [
         'password',
         'remember_token',
+        'name_metaphone',
+        'email_metaphone',
     ];
 
     protected array $searchable = [

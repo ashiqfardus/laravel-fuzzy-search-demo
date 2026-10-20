@@ -22,6 +22,8 @@
         ['search.benchmarks',        'BM25'],
         ['search.scout-demo',        'Scout'],
         ['search.playground',        'Playground'],
+        ['search.analytics',         'Analytics'],
+        ['search.i18n',              'CJK'],
     ];
 @endphp
 <body class="min-h-full bg-base font-sans text-ink antialiased" x-data="{ tour: fuzzyTour(), menu: false }" x-init="tour.restore()">
