@@ -54,4 +54,25 @@ class BackendEdgesTest extends TestCase
         $seeder->run();
         $this->assertSame(40, DB::table('users')->count());
     }
+
+    /** The plain list pages say "no results on this page" too, instead of "Page 2 of 1 · 0 results". */
+    public function test_every_paged_list_links_back_from_a_page_past_the_end(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        foreach (['users?q=john', 'products?q=macbook', 'articles?q=search', 'relations?q=smith', 'contacts?q=john&algorithm=fuzzy', 'federated?q=john'] as $url) {
+            $this->get("/search/{$url}&page=999")->assertOk()
+                ->assertSee('No results on page 999')
+                ->assertSee('Back to page 1')
+                ->assertDontSee('0 results · ');
+        }
+    }
+
+    /** The federated score badge has text for screen readers, not a title alone (FIXES-3 #36). */
+    public function test_the_federated_score_badge_has_screen_reader_text(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        $this->get('/search/federated?q=john')->assertOk()->assertSee('<span class="sr-only">Normalised score </span>', false);
+    }
 }

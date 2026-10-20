@@ -29,7 +29,9 @@
 
 @if($query)
     <x-results :count="$results->total()">
-        @if($results->isEmpty())
+        @if($results->isEmpty() && $results->currentPage() > 1)
+            <x-past-end :paginator="$results" />
+        @elseif($results->isEmpty())
             <x-empty icon="document">
                 No articles match “{{ $query }}”, by title or by author.
                 @if($useIndex)
