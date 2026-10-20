@@ -33,7 +33,7 @@ class BenchmarksPageTest extends TestCase
 
         $this->get('/search/benchmarks?q=john')->assertOk()->assertSee('Index not built');
 
-        $this->artisan('fuzzy-search:rebuild', ['model' => \App\Models\User::class]);
+        $this->artisan('fuzzy-search:rebuild', ['model' => \App\Models\User::class, '--fresh' => true]);
         $this->get('/search/benchmarks?q=john')->assertOk()->assertDontSee('Index not built');
     }
 }

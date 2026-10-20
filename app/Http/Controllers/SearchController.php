@@ -806,10 +806,17 @@ class SearchController extends Controller
         return in_array($value, $options, true) ? $value : $options[0];
     }
 
-    /** Whether the model's BM25 index is built: fuzzy-search:rebuild writes its meta row. */
+    /**
+     * Whether the model's BM25 index is built: fuzzy-search:rebuild writes its meta row, and the
+     * index holds a document for every row. A partial index (reindexRelated() before the first
+     * rebuild, or rows added while indexing was off) would answer with missing rows, so it
+     * counts as not built and the page offers the LIKE scan and the rebuild command.
+     */
     private function isIndexed(string $modelClass): bool
     {
-        return DB::table('fuzzy_index_meta')->where('model_type', $modelClass)->exists();
+        $docs = DB::table('fuzzy_index_meta')->where('model_type', $modelClass)->value('total_docs');
+
+        return $docs !== null && (int) $docs >= $modelClass::query()->count();
     }
 
     /**
