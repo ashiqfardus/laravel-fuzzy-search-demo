@@ -50,7 +50,7 @@ php artisan serve
 
 Open <http://127.0.0.1:8000> in your browser.
 
-The demo runs no queue worker, so `AppServiceProvider` forces `fuzzy-search.indexing.async` to `false` — index updates (including `reindexRelated()` on a category/author rename) happen synchronously on the request instead of sitting unprocessed in the `jobs` table.
+`AppServiceProvider` turns observer indexing on (`fuzzy-search.indexing.enabled`, which the package ships `false`), so every save reaches the BM25 index, and since the demo runs no queue worker it forces `fuzzy-search.indexing.async` to `false`: index updates (including `reindexRelated()` on a category/author rename) happen synchronously on the request instead of sitting unprocessed in the `jobs` table. `db:seed` therefore indexes the rows it creates; the rebuild above covers rows written before, and bulk inserts that fire no model events (the large-dataset seeders below).
 
 ## Test Data
 

@@ -11,8 +11,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // The demo runs no queue worker; index synchronously so saves and reindexRelated() take effect immediately.
-        config(['fuzzy-search.indexing.async' => false]);
+        // Saves reach the BM25 index (the package ships observer indexing off), synchronously:
+        // the demo runs no queue worker, so saves and reindexRelated() take effect immediately.
+        config(['fuzzy-search.indexing.enabled' => true, 'fuzzy-search.indexing.async' => false]);
 
         // Persist search analytics (fuzzy_search_logs) so /search/analytics has data to show.
         config(['fuzzy-search.analytics.enabled' => true, 'fuzzy-search.analytics.queue' => null]);
