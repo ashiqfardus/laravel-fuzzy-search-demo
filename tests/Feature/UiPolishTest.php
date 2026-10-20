@@ -86,4 +86,10 @@ class UiPolishTest extends TestCase
     {
         $this->get('/')->assertOk()->assertSee('in v2.1')->assertDontSee('from the next release');
     }
+
+    /** Item 11: Escape ends the docked tour card from anywhere on the page, not only from inside it. */
+    public function test_escape_ends_the_tour_wherever_focus_is(): void
+    {
+        $this->get('/')->assertOk()->assertSee('@keydown.escape.window="tour.active && tour.finish()"', false);
+    }
 }

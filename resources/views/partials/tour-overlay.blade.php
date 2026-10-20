@@ -5,7 +5,7 @@
     x-cloak
     class="fixed inset-0 z-60 flex p-4"
     :class="tour.docked ? 'pointer-events-none items-end justify-end' : 'items-end justify-center bg-base/70 backdrop-blur-sm sm:items-center'"
-    @keydown.escape.window="tour.active && !tour.docked && tour.finish()"
+    @keydown.escape.window="tour.active && tour.finish()"
     x-effect="tour.active && $nextTick(() => $refs.tourPrimary.focus())"
 >
     <div class="card pointer-events-auto w-full max-w-sm p-6 shadow-2xl"
