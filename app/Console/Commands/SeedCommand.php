@@ -6,7 +6,7 @@ use Illuminate\Console\Command;
 
 class SeedCommand extends Command
 {
-    protected $signature   = 'demo:seed {--huge : Seed 1 million users (takes ~10 minutes on commodity hardware)}';
+    protected $signature   = 'demo:seed {--huge : Seed 1 million users}';
     protected $description = 'Seed the demo database';
 
     public function handle(): int
@@ -17,7 +17,7 @@ class SeedCommand extends Command
         }
 
         if ($this->option('huge')) {
-            $this->warn('Seeding 1M users. This will take several minutes...');
+            $this->warn('Seeding 1M users. This takes a while...');
             $this->call('db:seed', ['--class' => \Database\Seeders\HugeDatasetSeeder::class, '--force' => true]);
         } else {
             $this->info('Seeding standard demo dataset (~25 users, 50 products, 30 articles, 40 contacts)...');

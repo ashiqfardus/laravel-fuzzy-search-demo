@@ -38,7 +38,7 @@
                     @elseif($data['rows']->isEmpty())
                         <p class="text-sm text-muted">No results</p>
                         @if($algo === 'soundex')
-                            <p class="mt-2 text-xs leading-relaxed text-muted">Soundex needs a true phonetic match (same sound code). Try <span class="code">john</span>, <span class="code">stephen</span> or <span class="code">steven</span>.</p>
+                            <p class="mt-2 text-xs leading-relaxed text-muted">Soundex needs a true phonetic match (same sound code). Try <span class="code">john</span> or <span class="code">jon</span>: both sound like John Doe, Jon Snow and Johnny Bravo.</p>
                         @elseif($algo === 'metaphone')
                             <p class="mt-2 text-xs leading-relaxed text-muted">Metaphone matches the sound of the whole name, so one word of it finds nothing: try <a href="?q={{ urlencode('jane smith') }}" class="code cursor-pointer transition-colors duration-200 hover:bg-line">jane smith</a>.</p>
                         @endif
@@ -63,7 +63,7 @@
     </div>
 
     <x-callout tone="info" title="How to read this">
-        Differences reveal how each algorithm handles typos, phonetics and substring matching. Zero Soundex results means no phonetically similar first name exists for that query — correct, not broken. The SQL each algorithm generates is documented in the
+        Differences reveal how each algorithm handles typos, phonetics and substring matching. Zero Soundex results means no user's first or last word sounds like that query — correct, not broken. The SQL each algorithm generates is documented in the
         <a href="https://github.com/ashiqfardus/laravel-fuzzy-search#readme" class="text-link underline" target="_blank" rel="noopener">package docs</a>.
     </x-callout>
 @endif

@@ -1,11 +1,15 @@
 @extends('layouts.app')
 
-@section('title', 'Scout driver — Fuzzy Search Demo')
+@section('title', 'Scout index search — Fuzzy Search Demo')
 
 @section('content')
-<x-page-header eyebrow="Laravel Scout" title="Scout driver">
-    Set <span class="code">SCOUT_DRIVER=fuzzy-search</span> and the package becomes a Scout engine once <span class="code">laravel/scout</span> is installed; no separate driver package. It wraps the same BM25 inverted index as <span class="code">->useInvertedIndex()</span> and returns a <span class="code">_score</span> on every model.
+<x-page-header eyebrow="Laravel Scout · index search" title="The index search behind the Scout driver">
+    Set <span class="code">SCOUT_DRIVER=fuzzy-search</span> and the package becomes a Scout engine once <span class="code">laravel/scout</span> is installed; no separate driver package. The engine wraps the same BM25 inverted index as <span class="code">->useInvertedIndex()</span>, and this page runs that index search directly.
 </x-page-header>
+
+<x-callout tone="info" class="mb-8">
+    This demo does not install Scout, so Scout itself does not run here: no <span class="code">laravel/scout</span>, no <span class="code">SCOUT_DRIVER</span>, no Scout <span class="code">paginate()</span>. Try those in your own app.
+</x-callout>
 
 <x-search-form button="Search" cols="md:grid-cols-1">
     <x-field label="Search users" for="q">

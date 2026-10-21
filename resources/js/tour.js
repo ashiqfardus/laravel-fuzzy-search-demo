@@ -31,8 +31,8 @@ export function fuzzyTour() {
             href:   '/search/benchmarks',
         },
         {
-            title:  '7 / 8 — Scout Driver',
-            body:   'SCOUT_DRIVER=fuzzy-search wires in the package as a Laravel Scout engine once laravel/scout is installed. No separate driver package.',
+            title:  '7 / 8 — Scout index search',
+            body:   'SCOUT_DRIVER=fuzzy-search wires in the package as a Laravel Scout engine once laravel/scout is installed. No separate driver package. This demo does not install Scout; the page runs the index search the driver wraps.',
             href:   '/search/scout-demo',
         },
         {

@@ -7,13 +7,13 @@
     Choose how many typos to forgive. The BM25 index answers by default; switch the engine to the LIKE table scan to pick an algorithm and optionally chain a fallback that only runs when the primary finds nothing. The demo does not chain <span class="code">fallback()</span> on the index: a fallback would run a LIKE scan on a miss.
 </x-page-header>
 
-<x-search-form button="Search users" cols="md:grid-cols-6">
+<x-search-form button="Search users" cols="md:grid-cols-6" :engine="$engine">
     <x-field label="Search query" for="q" class="md:col-span-2">
         <input id="q" type="text" name="q" value="{{ $query }}" placeholder="Try: jonh, jon, johnny…" class="field-control" autofocus>
     </x-field>
     <x-engine-field :engine="$engine" index="BM25 index" model="App\Models\User" scan="Each LIKE algorithm scans the table: about 2–4 s at 1M users, and a fallback can run two scans." />
     <x-field label="Algorithm" for="algorithm" hint="Table scan only.">
-        <select id="algorithm" name="algorithm" class="field-control">
+        <select id="algorithm" name="algorithm" class="field-control" :disabled="engine === 'bm25'">
             @foreach(['fuzzy' => 'Fuzzy', 'levenshtein' => 'Levenshtein', 'soundex' => 'Soundex', 'metaphone' => 'Metaphone', 'simple' => 'Simple (LIKE)'] as $value => $label)
                 <option value="{{ $value }}" @selected($algorithm === $value)>{{ $label }}</option>
             @endforeach
@@ -27,7 +27,7 @@
         </select>
     </x-field>
     <x-field label="Fallback" for="fallback" hint="Table scan only: runs if the primary finds nothing. Try Simple + “jonh” with Fuzzy.">
-        <select id="fallback" name="fallback" class="field-control">
+        <select id="fallback" name="fallback" class="field-control" :disabled="engine === 'bm25'">
             <option value="" @selected($fallback === '')>None</option>
             @foreach(['fuzzy' => 'Fuzzy', 'levenshtein' => 'Levenshtein', 'soundex' => 'Soundex', 'metaphone' => 'Metaphone', 'simple' => 'Simple (LIKE)'] as $value => $label)
                 <option value="{{ $value }}" @selected($fallback === $value)>{{ $label }}</option>

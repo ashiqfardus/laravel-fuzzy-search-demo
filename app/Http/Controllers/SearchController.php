@@ -25,6 +25,9 @@ class SearchController extends Controller
      */
     private const LIKE_SLICE = 10000;
 
+    /** A term is listed on the public analytics page only after this many searches used it. */
+    private const MIN_PUBLIC_SEARCHES = 2;
+
     /** The algorithms the users page's select offers, its default first. */
     private const USER_ALGORITHMS = ['fuzzy', 'levenshtein', 'soundex', 'metaphone', 'simple'];
 
@@ -180,6 +183,7 @@ class SearchController extends Controller
 
         if ($query) {
             $searchQuery = Article::search($query)
+                ->with('author')
                 ->preset('blog')
                 ->tokenize()
                 ->withRelevance()
@@ -332,7 +336,7 @@ class SearchController extends Controller
             $search->useInvertedIndex();
         }
 
-        return FuzzySearchCollection::fromBuilder($search)->response();
+        return $this->unlogged(fn () => FuzzySearchCollection::fromBuilder($search)->response());
     }
 
     /**
@@ -363,9 +367,9 @@ class SearchController extends Controller
         };
 
         $start = microtime(true);
-        $suggestions = $modelClass::search($query)
+        $suggestions = $this->unlogged(fn () => $modelClass::search($query)
             ->searchIn($searchColumns)
-            ->suggest(8);
+            ->suggest(8));
         $latencyMs = round((microtime(true) - $start) * 1000, 2);
 
         $source = DB::table('fuzzy_index_meta')->where('model_type', $modelClass)->exists() ? 'index' : 'table';
@@ -392,9 +396,9 @@ class SearchController extends Controller
         }
 
         try {
-            return FuzzySearchCollection::fromBuilder(
+            return $this->unlogged(fn () => FuzzySearchCollection::fromBuilder(
                 Product::search($query)->useInvertedIndex()->asYouType()->typoTolerance(1)->highlight('mark')->limit(8)
-            )->response();
+            )->response());
         } catch (\Throwable $e) {
             logger()->error('as-you-type search failed', ['error' => $e->getMessage()]);
 
@@ -552,6 +556,11 @@ class SearchController extends Controller
                 ->take(20)
                 ->values();
 
+            // One query for the authors of the matched articles, not one per row.
+            (new \Illuminate\Database\Eloquent\Collection(
+                $results->pluck('item')->filter(fn ($item) => $item instanceof Article)->all()
+            ))->loadMissing('author');
+
             // Get autocomplete/suggestions from actual matches
             $autocomplete = $results->take(8)->map(function($r) {
                 $item = $r['item'];
@@ -609,9 +618,14 @@ class SearchController extends Controller
      */
     public function analytics(): \Illuminate\View\View
     {
+        // The log holds what visitors typed and this page is public: list a term only once at
+        // least two searches used it, so one person's pasted text does not appear. The query
+        // reads a wider window first because the filter runs after the limit.
+        $repeated = fn (array $rows) => array_slice(array_values(array_filter($rows, fn ($row) => $row['searches'] >= self::MIN_PUBLIC_SEARCHES)), 0, 10);
+
         return view('search.analytics', [
-            'popular' => SearchAnalytics::popular(30, 10),
-            'zero'    => SearchAnalytics::zeroResults(30, 10),
+            'popular' => $repeated(SearchAnalytics::popular(30, 100)),
+            'zero'    => $repeated(SearchAnalytics::zeroResults(30, 100)),
             'latency' => SearchAnalytics::averageLatency(30),
             'volume'  => SearchAnalytics::volume(30),
         ]);
@@ -806,6 +820,23 @@ class SearchController extends Controller
         $value = $request->input($key, $default);
 
         return is_string($value) ? $value : $default;
+    }
+
+    /**
+     * Run a search without writing a log row: the as-you-type and JSON endpoints fire a search
+     * per keystroke, and their fragments ("ma", "mac", "macb") would fill the public analytics
+     * page. Analytics is switched off for the call only and put back after it.
+     */
+    private function unlogged(\Closure $search): mixed
+    {
+        $enabled = config('fuzzy-search.analytics.enabled');
+        config(['fuzzy-search.analytics.enabled' => false]);
+
+        try {
+            return $search();
+        } finally {
+            config(['fuzzy-search.analytics.enabled' => $enabled]);
+        }
     }
 
     /** A select's parameter: one of the values it offers, else the first (its default). */

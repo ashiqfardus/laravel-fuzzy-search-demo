@@ -82,7 +82,7 @@ class UiPolishTest extends TestCase
     }
 
     /** WG-L9 */
-    public function test_the_index_page_says_in_v2_1(): void
+    public function test_the_index_page_says_in_v3_0(): void
     {
         $this->get('/')->assertOk()->assertSee('in v3.0')->assertDontSee('from the next release');
     }

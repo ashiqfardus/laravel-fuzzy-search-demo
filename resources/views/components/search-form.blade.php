@@ -1,5 +1,5 @@
-@props(['button' => 'Search', 'cols' => 'md:grid-cols-4'])
-<form method="GET" {{ $attributes->merge(['class' => 'card mb-8 p-5 sm:p-6']) }} x-data="{ loading: false }" @submit="loading = true">
+@props(['button' => 'Search', 'cols' => 'md:grid-cols-4', 'engine' => null])
+<form method="GET" {{ $attributes->merge(['class' => 'card mb-8 p-5 sm:p-6']) }} x-data="{ loading: false, engine: @js($engine) }" @submit="loading = true" @pageshow.window="if ($event.persisted) loading = false">
     <div class="grid gap-4 {{ $cols }}">
         {{ $slot }}
     </div>

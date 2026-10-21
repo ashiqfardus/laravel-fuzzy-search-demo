@@ -20,7 +20,7 @@ A demonstration application showcasing the [ashiqfardus/laravel-fuzzy-search](ht
 | `/search/smart` | One list across four models, merged by a match percentage (PHP `similar_text` of the name against the query, since each model's relevance scores are on their own scale), `didYouMean()`, autocomplete suggestions, plus a live autocomplete widget calling `/api/suggest?model=users&q=` — dictionary-backed (`suggest()`) when the model is indexed, table scan otherwise. **Engine:** the BM25 index by default — one typo-tolerant `useInvertedIndex()` search per model, and "Did you mean" from the index dictionary — because the LIKE path runs levenshtein and fuzzy over every row of all four tables (5.2–11.4 s at 100k rows per model, 29 s at 1M: past PHP's 30 s limit); `?engine=like` keeps it as a labelled opt-in that reads only the first 10,000 rows of each model, by key, so every scan answers quickly on a large table. A model whose index is not built is searched with fuzzy LIKE (the demo does not use `fallback()` here: a term usually matches one or two of the four models, and a fallback on every miss would scan the rest) |
 | `/search/benchmarks` | Side-by-side timing: LIKE vs the BM25 inverted index, with a typo-tolerance toggle that adds a third panel running the same index read with each term expanded by edit distance. **Engine:** both, side by side — the LIKE panel scans the whole users table on purpose, since its latency against the index is what the page measures |
 | `/search/capability-matrix` | The same term through seven algorithms side by side, with timings. **Engine:** LIKE — comparing the LIKE algorithms is the page's point — run over the first 10,000 users by key, so every algorithm answers quickly (over 1M users the whole-table matrix took 6.7–7.8 s) |
-| `/search/scout-demo` | Laravel Scout integration (`SCOUT_DRIVER=fuzzy-search`). **Engine:** the BM25 index (`useInvertedIndex()`), the index the Scout engine wraps; until the users index is built the page finds nothing and says to rebuild |
+| `/search/scout-demo` | The index search behind the Scout driver (`SCOUT_DRIVER=fuzzy-search`); Scout itself is not installed in the demo. **Engine:** the BM25 index (`useInvertedIndex()`), the index the Scout engine wraps; until the users index is built the page finds nothing and says to rebuild |
 | `/search/playground` | Extended query syntax: include `'`, exact `=`, prefix `^`, suffix `$`, exclude `!`, OR, grouping `()`, typo `~word`, field scope `field:term`; `extended()->paginate(10)` with the same pager component, plus a live preview calling `/api/search/users` (the BM25 index once users are indexed) that returns the package's `FuzzySearchCollection` — scores, escaped highlights and search meta (algorithm, latency). **Engine:** LIKE — `extended()` compiles to LIKE and has no index path — run over the first 10,000 users by key, as on the capability matrix, so a query stays quick on a large table |
 | `/search/analytics` | Popular and zero-result searches, latency by path and daily volume, read from `fuzzy_search_logs` via the `SearchAnalytics` facade. **Engine:** none — it reads the logs |
 | `/search/i18n` | Chinese, Japanese and Korean product names through the `ScriptAwareTokenizer` — character bigrams for CJK runs, whitespace for everything else, same BM25 index. **Engine:** the BM25 index — the tokenizer only applies there |
@@ -50,6 +50,8 @@ php artisan serve
 
 Open <http://127.0.0.1:8000> in your browser.
 
+**Behind a proxy or load balancer** (nginx, Cloudflare, a cloud load balancer), set `TRUSTED_PROXIES` in `.env` to the proxy's address, or a comma-separated list of addresses. Without it every visitor arrives from the proxy's IP and shares one rate-limit bucket, so the whole site returns 429 after 30 page loads a minute in total. Do not set `*` on a server that clients reach directly: any client could then send its own `X-Forwarded-For` and rotate its address past both limiters. Use `*` only when the proxy overwrites that header.
+
 `AppServiceProvider` turns observer indexing on (`fuzzy-search.indexing.enabled`, which the package ships `false`), so every save reaches the BM25 index, and since the demo runs no queue worker it forces `fuzzy-search.indexing.async` to `false`: index updates (including `reindexRelated()` on a category/author rename) happen synchronously on the request instead of sitting unprocessed in the `jobs` table. `db:seed` therefore indexes the rows it creates; the rebuild above covers rows written before, and bulk inserts that fire no model events (the large-dataset seeders below).
 
 ## Test Data
@@ -71,7 +73,7 @@ To reproduce benchmark numbers with a realistic dataset:
 # 400k rows (100k per model)
 php artisan db:seed --class=Database\\Seeders\\LargeDatasetSeeder
 
-# 1 million users — takes several minutes; disabled in APP_ENV=production
+# 1 million users — disabled in APP_ENV=production
 php artisan demo:seed --huge
 
 # Then rebuild the index: both seeders bulk-insert, which fires no model events, so the
@@ -82,7 +84,7 @@ php artisan fuzzy-search:rebuild "App\Models\Article"
 php artisan fuzzy-search:rebuild "App\Models\Contact"
 ```
 
-`demo:seed --huge` adds users only, so after it alone the `User` rebuild is enough. Until the rebuild, the BM25 pages and the LIKE-vs-BM25 benchmark search only the rows indexed before the bulk seed.
+Both seeders also refuse to run in `APP_ENV=production` when called directly with `db:seed --class=`. `demo:seed --huge` adds users only, so after it alone the `User` rebuild is enough. Until the rebuild the index covers only the rows indexed before the bulk seed, and a model whose index holds fewer documents than its table has rows counts as not built: the users, products, articles, relations and smart pages then answer with the LIKE table scan (the seconds quoted above) and say so, and federated search leaves that model out. The LIKE-vs-BM25 benchmark, CJK, Scout and as-you-type pages read the partial index as it is.
 
 ## Test Scenarios
 
@@ -144,9 +146,9 @@ The presets pick the algorithm on the LIKE table scan (`?engine=like`): compare 
 
 The page shows weighted BM25 by default. Every fixed catalog product has a real description that names other products, so `macbook` on the default BM25 engine ranks **MacBook Pro 16"** (title, weight 10) above **Dell XPS 15** and **iPad Pro 12.9"**, which only mention it in the description (weight 5). The as-you-type box above the form hits `/api/as-you-type` after two characters and completes from the dictionary — type `macb`, `ipho` or `nespr`.
 
-### 7. Scout driver (`/search/scout-demo`)
+### 7. Scout index search (`/search/scout-demo`)
 
-Demonstrates `SCOUT_DRIVER=fuzzy-search` — the Scout engine built into the package. It needs `laravel/scout` installed, but no separate driver package. This demo does not install Scout, so the page runs the same BM25 index search directly (`useInvertedIndex()`).
+Demonstrates `SCOUT_DRIVER=fuzzy-search` — the Scout engine built into the package. It needs `laravel/scout` installed, but no separate driver package. This demo does not install Scout, so Scout itself does not run: the page is labelled as the index search the driver wraps and runs it directly (`useInvertedIndex()`).
 
 ### 8. Federated search (`/search/federated`)
 
@@ -159,6 +161,8 @@ Search `smith` — the author "John Smith" is in the fixed seeded pool, so the m
 ### 10. Persisted search analytics (`/search/analytics`)
 
 Run a handful of searches on the other pages first (`analytics.enabled` is on in `AppServiceProvider`, the queue is disabled, so rows land in `fuzzy_search_logs` synchronously). The page then reads the `SearchAnalytics` facade for popular terms, zero-result terms, latency by path and daily volume.
+
+**Privacy:** the log stores the terms visitors type (`hash_terms` is off so the page can show them), and the page is public. So the demo logs the page searches only, not the as-you-type and JSON endpoints, lists a term only after at least two searches used it, and schedules `fuzzy-search:analytics:prune` daily (30 days, `analytics.retention_days`), which needs the scheduler (`php artisan schedule:run` every minute). Before hosting the demo publicly, decide whether you want the page at all; set `analytics.hash_terms` to `true` or `analytics.enabled` to `false` in `AppServiceProvider` if not.
 
 ### 11. CJK search (`/search/i18n`)
 
@@ -217,7 +221,7 @@ resources/views/
     ├── scout-demo.blade.php
     └── playground.blade.php
 routes/
-└── web.php                        # HTML routes: throttle:30,1 | API routes: throttle:60,1
+└── web.php                        # HTML routes: 30/min per IP (10/min of them LIKE scans) | API routes: 60/min
 ```
 
 ## License

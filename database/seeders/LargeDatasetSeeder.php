@@ -24,6 +24,10 @@ class LargeDatasetSeeder extends Seeder
 
     public function run(): void
     {
+        if (app()->environment('production')) {
+            throw new \RuntimeException('This seeder is disabled in production (APP_ENV=production).');
+        }
+
         $this->say("Filling each table up to {$this->rowsPerModel} rows with bulk inserts...");
 
         $this->seedUsers();

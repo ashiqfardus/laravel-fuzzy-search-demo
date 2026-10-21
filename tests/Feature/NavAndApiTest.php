@@ -25,6 +25,10 @@ class NavAndApiTest extends TestCase
 
         $this->assertArrayNotHasKey('name_metaphone', User::first()->toArray());
         $this->assertArrayNotHasKey('email_metaphone', User::first()->toArray());
-        $this->getJson('/api/search/users?q=jon')->assertOk()->assertJsonMissingPath('data.0.name_metaphone');
+        $this->getJson('/api/search/users?q=jon')->assertOk()
+            ->assertJsonPath('data.0.email', 'jon.snow@example.com')
+            ->assertJsonMissingPath('data.0.name_metaphone')
+            ->assertJsonMissingPath('data.0.email_metaphone')
+            ->assertJsonMissingPath('data.0.password');
     }
 }

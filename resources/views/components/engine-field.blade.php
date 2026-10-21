@@ -3,7 +3,7 @@
     $hint = $scan . ($model ? ' Build the index once: php artisan fuzzy-search:rebuild "' . $model . '"' : '');
 @endphp
 <x-field label="Engine" for="engine" :hint="$hint">
-    <select id="engine" name="engine" class="field-control">
+    <select id="engine" name="engine" class="field-control" @change="engine = $event.target.value">
         <option value="bm25" @selected($engine === 'bm25')>{{ $index }}</option>
         <option value="like" @selected($engine === 'like')>LIKE table scan (slow on large tables)</option>
     </select>

@@ -2,7 +2,10 @@
 
 namespace Tests\Feature;
 
+use Database\Seeders\DatabaseSeeder;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /** The analytics page calls four SearchAnalytics methods; this keeps a package signature change from reaching users unseen. */
@@ -27,12 +30,51 @@ class AnalyticsPageTest extends TestCase
     {
         config(['fuzzy-search.analytics.enabled' => true]);
 
-        $this->get('/search/users?q=john')->assertOk();
-        $this->get('/search/users?q=zzqxkv')->assertOk();
+        foreach (range(1, 2) as $_) {
+            $this->get('/search/users?q=john')->assertOk();
+            $this->get('/search/users?q=zzqxkv')->assertOk();
+        }
 
         $this->get('/search/analytics')->assertOk()
             ->assertSee('john')
             ->assertSee('zzqxkv')
             ->assertDontSee('No searches recorded yet.');
+    }
+
+    public function test_a_term_searched_once_is_not_listed_on_the_public_page(): void
+    {
+        config(['fuzzy-search.analytics.enabled' => true]);
+
+        $this->get('/search/users?q=pasted.private@example.com')->assertOk();
+        $this->get('/search/users?q=john')->assertOk();
+        $this->get('/search/users?q=john')->assertOk();
+
+        $this->get('/search/analytics')->assertOk()
+            ->assertSee('john')
+            ->assertDontSee('pasted.private@example.com');
+    }
+
+    public function test_the_as_you_type_and_json_endpoints_are_not_logged(): void
+    {
+        config(['fuzzy-search.analytics.enabled' => true]);
+        $this->seed(DatabaseSeeder::class);
+
+        foreach (['/api/as-you-type?q=macb', '/api/search/users?q=jo', '/api/suggest?model=users&q=jo'] as $uri) {
+            $this->getJson($uri)->assertOk();
+            $this->getJson($uri)->assertOk();
+        }
+        $this->assertSame(0, DB::table('fuzzy_search_logs')->count());
+        $this->assertTrue(config('fuzzy-search.analytics.enabled'), 'logging is back on for the next page');
+
+        $this->get('/search/users?q=john')->assertOk();
+        $this->assertGreaterThan(0, DB::table('fuzzy_search_logs')->count());
+    }
+
+    public function test_the_prune_command_is_scheduled_daily(): void
+    {
+        $events = collect(app(Schedule::class)->events())->filter(fn ($event) => str_contains($event->command, 'fuzzy-search:analytics:prune'));
+
+        $this->assertCount(1, $events);
+        $this->assertSame('0 0 * * *', $events->first()->expression);
     }
 }
