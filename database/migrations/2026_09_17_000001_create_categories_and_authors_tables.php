@@ -55,10 +55,11 @@ return new class extends Migration
             return;
         }
 
-        $now = now();
+        // CURRENT_TIMESTAMP, not bound values: PostgreSQL types a bound parameter in a DISTINCT select
+        // list as text and refuses to insert it into a timestamp column.
         DB::table($lookup)->insertUsing(
             ['name', 'created_at', 'updated_at'],
-            DB::table($table)->selectRaw('DISTINCT '.$old.', ?, ?', [$now, $now])
+            DB::table($table)->selectRaw('DISTINCT '.$old.', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP')
                 ->whereNotNull($old)
                 ->whereNotIn($old, DB::table($lookup)->select('name'))
         );
