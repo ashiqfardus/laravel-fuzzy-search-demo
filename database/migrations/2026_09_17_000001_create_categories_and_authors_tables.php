@@ -7,34 +7,65 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Re-runnable: every step checks what already exists, so a second run, or a run after one that
+     * stopped partway (MySQL commits each DDL statement on its own), skips what is done. The
+     * backfill is two set-based statements per table, not one query per distinct value.
+     */
     public function up(): void
     {
-        Schema::create('categories', function (Blueprint $table) {
-            $table->id();
-            $table->string('name')->unique();
-            $table->timestamps();
-        });
-        Schema::create('authors', function (Blueprint $table) {
-            $table->id();
-            $table->string('name')->unique();
-            $table->timestamps();
-        });
+        if (! Schema::hasTable('categories')) {
+            Schema::create('categories', function (Blueprint $table) {
+                $table->id();
+                $table->string('name')->unique();
+                $table->timestamps();
+            });
+        }
+        if (! Schema::hasTable('authors')) {
+            Schema::create('authors', function (Blueprint $table) {
+                $table->id();
+                $table->string('name')->unique();
+                $table->timestamps();
+            });
+        }
 
-        Schema::table('products', fn (Blueprint $table) => $table->foreignId('category_id')->nullable()->after('brand')->constrained()->nullOnDelete());
-        Schema::table('articles', fn (Blueprint $table) => $table->foreignId('author_id')->nullable()->after('excerpt')->constrained()->nullOnDelete());
+        if (! Schema::hasColumn('products', 'category_id')) {
+            Schema::table('products', fn (Blueprint $table) => $table->foreignId('category_id')->nullable()->after('brand')->constrained()->nullOnDelete());
+        }
+        if (! Schema::hasColumn('articles', 'author_id')) {
+            Schema::table('articles', fn (Blueprint $table) => $table->foreignId('author_id')->nullable()->after('excerpt')->constrained()->nullOnDelete());
+        }
 
         // Backfill from the old string columns, then drop them.
-        foreach (DB::table('products')->whereNotNull('category')->distinct()->pluck('category') as $name) {
-            $id = DB::table('categories')->insertGetId(['name' => $name, 'created_at' => now(), 'updated_at' => now()]);
-            DB::table('products')->where('category', $name)->update(['category_id' => $id]);
+        $this->backfill('products', 'category', 'category_id', 'categories');
+        $this->backfill('articles', 'author', 'author_id', 'authors');
+
+        if (Schema::hasColumn('products', 'category')) {
+            Schema::table('products', fn (Blueprint $table) => $table->dropColumn('category'));
         }
-        foreach (DB::table('articles')->whereNotNull('author')->distinct()->pluck('author') as $name) {
-            $id = DB::table('authors')->insertGetId(['name' => $name, 'created_at' => now(), 'updated_at' => now()]);
-            DB::table('articles')->where('author', $name)->update(['author_id' => $id]);
+        if (Schema::hasColumn('articles', 'author')) {
+            Schema::table('articles', fn (Blueprint $table) => $table->dropColumn('author'));
+        }
+    }
+
+    /** Insert the distinct names not yet in $lookup, then point each row at its name's id. */
+    private function backfill(string $table, string $old, string $foreignKey, string $lookup): void
+    {
+        if (! Schema::hasColumn($table, $old)) {
+            return;
         }
 
-        Schema::table('products', fn (Blueprint $table) => $table->dropColumn('category'));
-        Schema::table('articles', fn (Blueprint $table) => $table->dropColumn('author'));
+        $now = now();
+        DB::table($lookup)->insertUsing(
+            ['name', 'created_at', 'updated_at'],
+            DB::table($table)->selectRaw('DISTINCT '.$old.', ?, ?', [$now, $now])
+                ->whereNotNull($old)
+                ->whereNotIn($old, DB::table($lookup)->select('name'))
+        );
+
+        DB::table($table)->whereNotNull($old)->whereNull($foreignKey)->update([
+            $foreignKey => DB::raw("(select id from {$lookup} where {$lookup}.name = {$table}.{$old})"),
+        ]);
     }
 
     public function down(): void
