@@ -84,7 +84,7 @@ class UiPolishTest extends TestCase
     /** WG-L9 */
     public function test_the_index_page_says_in_v2_1(): void
     {
-        $this->get('/')->assertOk()->assertSee('in v2.1')->assertDontSee('from the next release');
+        $this->get('/')->assertOk()->assertSee('in v3.0')->assertDontSee('from the next release');
     }
 
     /** Item 11: Escape ends the docked tour card from anywhere on the page, not only from inside it. */

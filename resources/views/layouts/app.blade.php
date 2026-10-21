@@ -34,7 +34,7 @@
                     <x-icon name="search" class="h-4 w-4" />
                 </span>
                 fuzzy-search
-                <span class="badge bg-raised text-muted">v2.1</span>
+                <span class="badge bg-raised text-muted">v3.0</span>
             </a>
 
             <nav class="hidden min-w-0 flex-1 flex-wrap items-center gap-1 md:flex" aria-label="Primary">
