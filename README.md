@@ -68,7 +68,7 @@ The default seeder (`php artisan db:seed`) creates:
 To reproduce benchmark numbers with a realistic dataset:
 
 ```bash
-# 400k rows (100k per model) — takes ~2 minutes
+# 400k rows (100k per model)
 php artisan db:seed --class=Database\\Seeders\\LargeDatasetSeeder
 
 # 1 million users — takes several minutes; disabled in APP_ENV=production
