@@ -4,7 +4,7 @@
 
 @section('content')
 <x-page-header eyebrow="fuzzy_search_logs · last 30 days" title="Search analytics">
-    An executed <span class="code">get()</span>, <span class="code">paginate()</span> or <span class="code">simplePaginate()</span> fires a <span class="code">FuzzySearchExecuted</span> event; <span class="code">count()</span>, cache hits and Scout do not. A <span class="code">fallback()</span> chain logs a row per algorithm it ran and a federated search a row per model. With analytics enabled, the listener persists term, path, result count and latency. This page reads it back through the <span class="code">SearchAnalytics</span> facade. It is public: a term is listed only after at least two searches used it, the as-you-type and JSON endpoints are not logged, and rows older than 30 days are pruned daily.
+    An executed <span class="code">get()</span>, <span class="code">paginate()</span> or <span class="code">simplePaginate()</span> fires a <span class="code">FuzzySearchExecuted</span> event; <span class="code">count()</span>, cache hits and Scout do not. A <span class="code">fallback()</span> chain logs a row per algorithm it ran and a federated search a row per model. With analytics enabled, the listener persists term, path, result count and latency. This page reads it back through the <span class="code">SearchAnalytics</span> facade. It is public: a term is listed only after at least two searches used it and found something (zero-result searches are shown as a count), the as-you-type and JSON endpoints are not logged, and rows older than 30 days are pruned daily.
 </x-page-header>
 
 <div class="mb-6 grid gap-6 lg:grid-cols-2">
@@ -37,28 +37,11 @@
         @endif
     </x-results>
 
-    <x-results title="Zero-result searches" :count="count($zero)">
-        @if(empty($zero))
+    <x-results title="Zero-result searches" :count="$zeroSearches">
+        @if($zeroSearches === 0)
             <x-empty icon="search">No zero-result searches in this window.</x-empty>
         @else
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm">
-                    <thead class="border-b border-line font-mono text-xs uppercase tracking-wider text-muted">
-                        <tr>
-                            <th class="px-5 py-2.5 font-medium">Term</th>
-                            <th class="px-5 py-2.5 font-medium">Searches</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-line">
-                        @foreach($zero as $row)
-                            <tr>
-                                <td class="px-5 py-2.5 font-mono text-ink">{{ $row['term'] }}</td>
-                                <td class="px-5 py-2.5 tabular-nums text-muted">{{ $row['searches'] }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
+            <p class="px-5 py-4 text-sm text-muted"><span class="font-mono tabular-nums text-ink">{{ number_format($zeroSearches) }}</span> {{ \Illuminate\Support\Str::plural('search', $zeroSearches) }} in the last 30 days found nothing. Their terms are not shown: they are mostly text people pasted or mistyped.</p>
         @endif
     </x-results>
 </div>

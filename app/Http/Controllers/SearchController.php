@@ -25,7 +25,7 @@ class SearchController extends Controller
      */
     private const LIKE_SLICE = 10000;
 
-    /** A term is listed on the public analytics page only after this many searches used it. */
+    /** A term is listed on the public analytics page only after this many searches used it, and only if it found something. */
     private const MIN_PUBLIC_SEARCHES = 2;
 
     /** The algorithms the users page's select offers, its default first. */
@@ -613,21 +613,26 @@ class SearchController extends Controller
     }
 
     /**
-     * Persisted search analytics — popular terms, zero-result terms, latency by path and
+     * Persisted search analytics — popular terms, a zero-result count, latency by path and
      * daily volume, all read from fuzzy_search_logs via the SearchAnalytics facade.
      */
     public function analytics(): \Illuminate\View\View
     {
         // The log holds what visitors typed and this page is public: list a term only once at
-        // least two searches used it, so one person's pasted text does not appear. The query
-        // reads a wider window first because the filter runs after the limit.
-        $repeated = fn (array $rows) => array_slice(array_values(array_filter($rows, fn ($row) => $row['searches'] >= self::MIN_PUBLIC_SEARCHES)), 0, 10);
+        // least two searches used it and it found something. Pasted personal text nearly always
+        // finds nothing, so zero-result searches are a count, never a term. The query reads a
+        // wider window first because the filter runs after the limit.
+        $listed = array_slice(array_values(array_filter(
+            SearchAnalytics::popular(30, 100),
+            fn ($row) => $row['searches'] >= self::MIN_PUBLIC_SEARCHES && $row['avg_results'] > 0
+        )), 0, 10);
 
         return view('search.analytics', [
-            'popular' => $repeated(SearchAnalytics::popular(30, 100)),
-            'zero'    => $repeated(SearchAnalytics::zeroResults(30, 100)),
-            'latency' => SearchAnalytics::averageLatency(30),
-            'volume'  => SearchAnalytics::volume(30),
+            'popular'     => $listed,
+            'zeroSearches' => DB::table(config('fuzzy-search.analytics.table', 'fuzzy_search_logs'))
+                ->where('created_at', '>=', now()->subDays(30))->where('result_count', 0)->count(),
+            'latency'     => SearchAnalytics::averageLatency(30),
+            'volume'      => SearchAnalytics::volume(30),
         ]);
     }
 

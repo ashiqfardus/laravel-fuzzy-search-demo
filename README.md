@@ -22,7 +22,7 @@ A demonstration application showcasing the [ashiqfardus/laravel-fuzzy-search](ht
 | `/search/capability-matrix` | The same term through seven algorithms side by side, with timings. **Engine:** LIKE — comparing the LIKE algorithms is the page's point — run over the first 10,000 users by key, so every algorithm answers quickly (over 1M users the whole-table matrix took 6.7–7.8 s) |
 | `/search/scout-demo` | The index search behind the Scout driver (`SCOUT_DRIVER=fuzzy-search`); Scout itself is not installed in the demo. **Engine:** the BM25 index (`useInvertedIndex()`), the index the Scout engine wraps; until the users index is built the page finds nothing and says to rebuild |
 | `/search/playground` | Extended query syntax: include `'`, exact `=`, prefix `^`, suffix `$`, exclude `!`, OR, grouping `()`, typo `~word`, field scope `field:term`; `extended()->paginate(10)` with the same pager component, plus a live preview calling `/api/search/users` (the BM25 index once users are indexed) that returns the package's `FuzzySearchCollection` — scores, escaped highlights and search meta (algorithm, latency). **Engine:** LIKE — `extended()` compiles to LIKE and has no index path — run over the first 10,000 users by key, as on the capability matrix, so a query stays quick on a large table |
-| `/search/analytics` | Popular and zero-result searches, latency by path and daily volume, read from `fuzzy_search_logs` via the `SearchAnalytics` facade. **Engine:** none — it reads the logs |
+| `/search/analytics` | Popular searches, a zero-result count, latency by path and daily volume, read from `fuzzy_search_logs` via the `SearchAnalytics` facade. **Engine:** none — it reads the logs |
 | `/search/i18n` | Chinese, Japanese and Korean product names through the `ScriptAwareTokenizer` — character bigrams for CJK runs, whitespace for everything else, same BM25 index. **Engine:** the BM25 index — the tokenizer only applies there |
 
 ## Installation
@@ -160,9 +160,9 @@ Search `smith` — the author "John Smith" is in the fixed seeded pool, so the m
 
 ### 10. Persisted search analytics (`/search/analytics`)
 
-Run a handful of searches on the other pages first (`analytics.enabled` is on in `AppServiceProvider`, the queue is disabled, so rows land in `fuzzy_search_logs` synchronously). The page then reads the `SearchAnalytics` facade for popular terms, zero-result terms, latency by path and daily volume.
+Run a handful of searches on the other pages first (`analytics.enabled` is on in `AppServiceProvider`, the queue is disabled, so rows land in `fuzzy_search_logs` synchronously). The page then reads the `SearchAnalytics` facade for popular terms, a count of zero-result searches, latency by path and daily volume.
 
-**Privacy:** the log stores the terms visitors type (`hash_terms` is off so the page can show them), and the page is public. So the demo logs the page searches only, not the as-you-type and JSON endpoints, lists a term only after at least two searches used it, and schedules `fuzzy-search:analytics:prune` daily (30 days, `analytics.retention_days`), which needs the scheduler (`php artisan schedule:run` every minute). Before hosting the demo publicly, decide whether you want the page at all; set `analytics.hash_terms` to `true` or `analytics.enabled` to `false` in `AppServiceProvider` if not.
+**Privacy:** the log stores the terms visitors type (`hash_terms` is off so the page can show them), and the page is public. So the demo logs the page searches only, not the as-you-type and JSON endpoints, lists a term only after at least two searches used it and it found something, shows zero-result searches as a count with no terms, and schedules `fuzzy-search:analytics:prune` daily (30 days, `analytics.retention_days`), which needs the scheduler (`php artisan schedule:run` every minute). Before hosting the demo publicly, decide whether you want the page at all; set `analytics.hash_terms` to `true` or `analytics.enabled` to `false` in `AppServiceProvider` if not.
 
 ### 11. CJK search (`/search/i18n`)
 

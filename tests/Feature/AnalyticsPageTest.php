@@ -29,6 +29,7 @@ class AnalyticsPageTest extends TestCase
     public function test_it_lists_the_logged_searches(): void
     {
         config(['fuzzy-search.analytics.enabled' => true]);
+        $this->seed(DatabaseSeeder::class);
 
         foreach (range(1, 2) as $_) {
             $this->get('/search/users?q=john')->assertOk();
@@ -37,13 +38,43 @@ class AnalyticsPageTest extends TestCase
 
         $this->get('/search/analytics')->assertOk()
             ->assertSee('john')
-            ->assertSee('zzqxkv')
             ->assertDontSee('No searches recorded yet.');
+    }
+
+    public function test_zero_result_searches_are_a_count_and_never_a_term(): void
+    {
+        config(['fuzzy-search.analytics.enabled' => true]);
+
+        foreach (range(1, 3) as $_) {
+            $this->get('/search/users?q=zzqxkv')->assertOk();
+        }
+
+        $response = $this->get('/search/analytics')->assertOk()
+            ->assertSee('searches in the last 30 days found nothing')
+            ->assertDontSee('zzqxkv')
+            ->assertDontSee('No zero-result searches in this window.');
+        $this->assertSame(3, $response->viewData('zeroSearches'));
+    }
+
+    public function test_a_term_searched_twice_that_found_nothing_is_not_in_popular_searches(): void
+    {
+        config(['fuzzy-search.analytics.enabled' => true]);
+        $this->seed(DatabaseSeeder::class);
+
+        foreach (range(1, 2) as $_) {
+            $this->get('/search/users?q=john')->assertOk();
+            $this->get('/search/users?q=zzqxkv')->assertOk();
+        }
+
+        $response = $this->get('/search/analytics')->assertOk();
+        $this->assertSame(['john'], array_column($response->viewData('popular'), 'term'));
+        $this->assertSame(2, $response->viewData('zeroSearches'));
     }
 
     public function test_a_term_searched_once_is_not_listed_on_the_public_page(): void
     {
         config(['fuzzy-search.analytics.enabled' => true]);
+        $this->seed(DatabaseSeeder::class);
 
         $this->get('/search/users?q=pasted.private@example.com')->assertOk();
         $this->get('/search/users?q=john')->assertOk();
