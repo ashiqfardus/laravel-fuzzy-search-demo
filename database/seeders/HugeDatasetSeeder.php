@@ -7,20 +7,22 @@ use Illuminate\Support\Facades\DB;
 
 class HugeDatasetSeeder extends Seeder
 {
-    private const TARGET_USERS = 1_000_000;
     private const CHUNK_SIZE   = 2_000;
+
+    /** The user count to fill up to. A property so a test can fill a few instead of 1M. */
+    public int $targetUsers = 1_000_000;
 
     public function run(): void
     {
         $current = DB::table('users')->count();
-        $needed  = max(0, self::TARGET_USERS - $current);
+        $needed  = max(0, $this->targetUsers - $current);
 
         if ($needed === 0) {
-            $this->command->info("Already at {$current} users. Nothing to seed.");
+            $this->command?->info("Already at {$current} users. Nothing to seed.");
             return;
         }
 
-        $this->command->info("Current users: {$current}. Adding {$needed} more to reach 1M...");
+        $this->command?->info("Current users: {$current}. Adding {$needed} more to reach {$this->targetUsers}...");
 
         static $firstNames = [
             'John','Jane','Jon','Johnny','Jonathan','Johanna','James','Jack','Jake',
@@ -43,10 +45,12 @@ class HugeDatasetSeeder extends Seeder
         ];
 
         $now   = date('Y-m-d H:i:s');
-        $bar   = $this->command->getOutput()->createProgressBar($needed);
+        $bar   = $this->command?->getOutput()->createProgressBar($needed);
         $chunk = [];
         $count = 0;
-        $i     = $current;
+        // From the highest id, not the count: after a gap (or LargeDatasetSeeder's max(id)+1 numbering)
+        // the count would reuse e-mail numbers that already exist.
+        $i     = (int) DB::table('users')->max('id') + 1;
 
         while ($count < $needed) {
             $first = $firstNames[array_rand($firstNames)];
@@ -64,17 +68,17 @@ class HugeDatasetSeeder extends Seeder
             if (count($chunk) === self::CHUNK_SIZE) {
                 DB::table('users')->insert($chunk);
                 $chunk = [];
-                $bar->advance(self::CHUNK_SIZE);
+                $bar?->advance(self::CHUNK_SIZE);
             }
         }
 
         if (!empty($chunk)) {
             DB::table('users')->insert($chunk);
-            $bar->advance(count($chunk));
+            $bar?->advance(count($chunk));
         }
 
-        $bar->finish();
-        $this->command->newLine();
-        $this->command->info('Total users: ' . DB::table('users')->count());
+        $bar?->finish();
+        $this->command?->newLine();
+        $this->command?->info('Total users: ' . DB::table('users')->count());
     }
 }

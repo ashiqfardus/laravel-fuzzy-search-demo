@@ -31,7 +31,7 @@ class IndexedStateTest extends TestCase
 
         \Illuminate\Support\Facades\DB::enableQueryLog();
         $this->get('/search/users?q=person')->assertOk();
-        $counts = array_filter(\Illuminate\Support\Facades\DB::getQueryLog(), fn ($q) => preg_match('/select count\(\*\) as aggregate from "users"/i', $q['query']));
+        $counts = array_filter(\Illuminate\Support\Facades\DB::getQueryLog(), fn ($q) => preg_match('/select count\(\*\) as aggregate from [`"]users[`"]/i', $q['query']));
 
         $this->assertSame([], array_values($counts));
     }
@@ -45,7 +45,7 @@ class IndexedStateTest extends TestCase
         User::factory()->create(['name' => 'Indexed Person']);
         $this->get('/search/users?q=person')->assertOk();
 
-        $counts = fn () => count(array_filter(\Illuminate\Support\Facades\DB::getQueryLog(), fn ($q) => preg_match('/select count\(\*\) as aggregate from "users"/i', $q['query'])));
+        $counts = fn () => count(array_filter(\Illuminate\Support\Facades\DB::getQueryLog(), fn ($q) => preg_match('/select count\(\*\) as aggregate from [`"]users[`"]/i', $q['query'])));
 
         \Illuminate\Support\Facades\DB::enableQueryLog();
         $this->travel(599)->seconds();

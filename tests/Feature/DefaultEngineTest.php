@@ -158,7 +158,7 @@ class DefaultEngineTest extends TestCase
 
         $likeReads = [];
         DB::listen(function ($query) use (&$likeReads) {
-            if (preg_match('/from "(users|products|articles|contacts)"/', $query->sql, $m) && stripos($query->sql, ' like ') !== false) {
+            if (preg_match('/from [`"](users|products|articles|contacts)[`"]/', $query->sql, $m) && stripos($query->sql, ' like ') !== false) {
                 $likeReads[$m[1]][] = $query->sql;
             }
         });
@@ -173,7 +173,7 @@ class DefaultEngineTest extends TestCase
         foreach ($likeReads as $table => $sqls) {
             $this->assertCount(2, $sqls, $table); // levenshtein and fuzzy
             foreach ($sqls as $sql) {
-                $this->assertStringContainsString('"' . $table . '"."id" <= ?', $sql);
+                $this->assertMatchesRegularExpression('/[`"]' . $table . '[`"]\.[`"]id[`"] <= \?/', $sql);
             }
         }
     }
@@ -220,7 +220,7 @@ class DefaultEngineTest extends TestCase
     {
         $scans = [];
         DB::listen(function ($query) use ($table, &$scans) {
-            if (preg_match('/from "' . $table . '"/i', $query->sql) && stripos($query->sql, ' like ') !== false) {
+            if (preg_match('/from [`"]' . $table . '[`"]/i', $query->sql) && stripos($query->sql, ' like ') !== false) {
                 $scans[] = $query->sql;
             }
         });

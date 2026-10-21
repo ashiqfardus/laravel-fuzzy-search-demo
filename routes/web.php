@@ -3,9 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SearchController;
 
-Route::get('/', [SearchController::class, 'index'])->name('search.index');
-
 Route::middleware('throttle:demo-pages')->group(function () {
+    Route::get('/', [SearchController::class, 'index'])->name('search.index');
     Route::get('/search/users', [SearchController::class, 'users'])->name('search.users');
     Route::get('/search/products', [SearchController::class, 'products'])->name('search.products');
     Route::get('/search/relations', [SearchController::class, 'relations'])->name('search.relations');

@@ -11,8 +11,9 @@ use Illuminate\Database\Seeder;
  * because they start with another letter (Filip, Catherine). The random 40 are drawn from a name
  * list, so without these rows a hint could name a contact the database does not hold.
  *
- * Re-runnable: a name that any contact already has is skipped, so running it again (on its own,
- * `php artisan db:seed --class=FixedContactsSeeder`, or through DatabaseSeeder) adds nothing twice.
+ * Re-runnable: each row is keyed on a fixed, unique e-mail address, so running it again (on its own,
+ * `php artisan db:seed --class=FixedContactsSeeder`, or through DatabaseSeeder) adds nothing twice,
+ * and a random contact that happens to share a first name does not stand in for it.
  */
 class FixedContactsSeeder extends Seeder
 {
@@ -27,9 +28,10 @@ class FixedContactsSeeder extends Seeder
     public function run(): void
     {
         foreach (self::FIRST_NAMES as $firstName) {
+            $email = strtolower($firstName).'@fixed-contacts.example';
             Contact::firstOrCreate(
-                ['first_name' => $firstName],
-                Contact::factory()->raw(['first_name' => $firstName])
+                ['email' => $email],
+                Contact::factory()->raw(['first_name' => $firstName, 'email' => $email])
             );
         }
     }

@@ -61,7 +61,7 @@ class ProductFactory extends Factory
         return [
             'name' => $product['name'],
             'description' => $product['description'],
-            'sku' => fake()->unique()->bothify('SKU-#####'),
+            'sku' => fake()->numerify('SKU-##########'),
             'brand' => $product['brand'],
             'category_id' => self::category($product),
             'price' => fake()->randomFloat(2, 29.99, 2999.99),

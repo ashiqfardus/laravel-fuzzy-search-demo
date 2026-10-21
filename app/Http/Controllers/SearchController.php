@@ -33,14 +33,16 @@ class SearchController extends Controller
      */
     public function index()
     {
-        return view('search.index', [
-            'stats' => [
-                'users' => User::count(),
-                'products' => Product::count(),
-                'articles' => Article::count(),
-                'contacts' => Contact::count(),
-            ]
+        // A cold COUNT(*) took about 3.3 s per model at 1M rows. The home page shows only rough
+        // totals, so 60 s of staleness is invisible and bounds the scans to one set per minute.
+        $stats = Cache::remember('demo.counts', 60, fn () => [
+            'users' => User::count(),
+            'products' => Product::count(),
+            'articles' => Article::count(),
+            'contacts' => Contact::count(),
         ]);
+
+        return view('search.index', ['stats' => $stats]);
     }
 
     /**

@@ -9,6 +9,16 @@ class LargeDatasetSeeder extends Seeder
 {
     private const CHUNK_SIZE = 1_000;
 
+    /** Product type => the category name ProductFactory's catalog uses for it. */
+    private const CATEGORY_OF = [
+        'Laptop' => 'Laptops', 'Phone' => 'Smartphones', 'Tablet' => 'Tablets', 'Monitor' => 'TVs',
+        'Keyboard' => 'Accessories', 'Mouse' => 'Accessories', 'Headphones' => 'Headphones',
+        'Camera' => 'Accessories', 'Printer' => 'Home Appliances', 'Speaker' => 'Headphones',
+        'Watch' => 'Accessories', 'Charger' => 'Accessories', 'Cable' => 'Accessories',
+        'Case' => 'Accessories', 'Stand' => 'Accessories', 'Webcam' => 'Accessories',
+        'Router' => 'Home Appliances',
+    ];
+
     /** Rows each table is filled up to. A property so a test can fill a few instead of 100k. */
     public int $rowsPerModel = 100_000;
 
@@ -72,15 +82,17 @@ class LargeDatasetSeeder extends Seeder
             $adj       = $adjectives[array_rand($adjectives)];
             $price     = round(rand(999, 199999) / 100, 2);
             $sku       = strtoupper(substr($brand, 0, 3)) . '-' . $type[0] . '-' . str_pad($i, 6, '0', STR_PAD_LEFT);
-            $categoryIds[$type] ??= DB::table('categories')->where('name', $type)->value('id')
-                ?? DB::table('categories')->insertGetId(['name' => $type, 'created_at' => now(), 'updated_at' => now()]);
+            // The category names the factory's catalog uses, so the products page's filter lists one vocabulary.
+            $category = self::CATEGORY_OF[$type];
+            $categoryIds[$category] ??= DB::table('categories')->where('name', $category)->value('id')
+                ?? DB::table('categories')->insertGetId(['name' => $category, 'created_at' => now(), 'updated_at' => now()]);
             return [
                 'name'        => "{$brand} {$type} {$adj}",
                 'description' => "The {$brand} {$type} {$adj} is a high-quality product with excellent performance.",
                 'sku'         => $sku,
                 'brand'       => $brand,
                 'price'       => $price,
-                'category_id' => $categoryIds[$type],
+                'category_id' => $categoryIds[$category],
                 'created_at'  => now(),
                 'updated_at'  => now(),
             ];

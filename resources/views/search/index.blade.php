@@ -1,5 +1,6 @@
 @extends('layouts.app')
 
+{{-- $new is printed unescaped ({!! !!}) below: keep its items static literals, never model or request text. --}}
 @php
     $pages = [
         ['search.users',             'users',    'User search',        'The BM25 index by default, or five LIKE algorithms with typo tolerance and a fallback chain that only runs when the primary finds nothing.', 'jonh · simple → fuzzy'],

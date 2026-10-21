@@ -77,7 +77,7 @@ class DatabaseSeeder extends Seeder
         foreach (ProductFactory::catalog() as $entry) {
             $product = Product::firstOrCreate(['name' => $entry['name']], [
                 'description' => $entry['description'] ?? fake()->paragraph(3),
-                'sku' => fake()->unique()->bothify('SKU-#####'),
+                'sku' => fake()->numerify('SKU-##########'),
                 'brand' => $entry['brand'],
                 'category_id' => ProductFactory::category($entry),
                 'price' => fake()->randomFloat(2, 29.99, 2999.99),

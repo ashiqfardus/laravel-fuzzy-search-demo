@@ -34,7 +34,11 @@ class AppServiceProvider extends ServiceProvider
     {
         // Separate keys: a page load and the as-you-type requests it makes must not spend
         // the same per-IP budget (the default throttle key is the IP alone, for both).
-        RateLimiter::for('demo-pages', fn (Request $request) => Limit::perMinute(30)->by('pages|'.$request->ip()));
+        // A LIKE table scan (?engine=like) also spends a smaller budget of its own.
+        RateLimiter::for('demo-pages', fn (Request $request) => array_filter([
+            Limit::perMinute(30)->by('pages|'.$request->ip()),
+            $request->input('engine') === 'like' ? Limit::perMinute(10)->by('like|'.$request->ip()) : null,
+        ]));
         RateLimiter::for('demo-api', fn (Request $request) => Limit::perMinute(60)->by('api|'.$request->ip()));
     }
 }

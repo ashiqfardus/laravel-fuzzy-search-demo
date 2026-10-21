@@ -35,7 +35,7 @@ class FederatedPartialIndexTest extends TestCase
     {
         $scans = [];
         DB::listen(function ($q) use (&$scans) {
-            if (preg_match('/from "(users|products|articles|contacts)"/i', $q->sql) && stripos($q->sql, ' like ') !== false) {
+            if (preg_match('/from [`"](users|products|articles|contacts)[`"]/i', $q->sql) && stripos($q->sql, ' like ') !== false) {
                 $scans[] = $q->sql;
             }
         });

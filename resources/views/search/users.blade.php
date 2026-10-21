@@ -4,7 +4,7 @@
 
 @section('content')
 <x-page-header eyebrow="BM25 index · algorithms · typo tolerance · fallback" title="User search">
-    Choose how many typos to forgive. The BM25 index answers by default; switch the engine to the LIKE table scan to pick an algorithm and optionally chain a fallback that only runs when the primary finds nothing.
+    Choose how many typos to forgive. The BM25 index answers by default; switch the engine to the LIKE table scan to pick an algorithm and optionally chain a fallback that only runs when the primary finds nothing. The demo does not chain <span class="code">fallback()</span> on the index: a fallback would run a LIKE scan on a miss.
 </x-page-header>
 
 <x-search-form button="Search users" cols="md:grid-cols-6">

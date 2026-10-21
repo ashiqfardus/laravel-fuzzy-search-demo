@@ -4,7 +4,7 @@
 
 @section('content')
 <x-page-header eyebrow="fuzzy_search_logs · last 30 days" title="Search analytics">
-    Every search fires a <span class="code">FuzzySearchExecuted</span> event; with analytics enabled, the listener persists term, path, result count and latency. This page reads it back through the <span class="code">SearchAnalytics</span> facade.
+    An executed <span class="code">get()</span>, <span class="code">paginate()</span> or <span class="code">simplePaginate()</span> fires a <span class="code">FuzzySearchExecuted</span> event; <span class="code">count()</span>, cache hits and Scout do not. A <span class="code">fallback()</span> chain logs a row per algorithm it ran and a federated search a row per model. With analytics enabled, the listener persists term, path, result count and latency. This page reads it back through the <span class="code">SearchAnalytics</span> facade.
 </x-page-header>
 
 <div class="mb-6 grid gap-6 lg:grid-cols-2">
