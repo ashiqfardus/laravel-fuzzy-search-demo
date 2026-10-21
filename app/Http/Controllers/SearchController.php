@@ -222,9 +222,10 @@ class SearchController extends Controller
                 ->paginate(10)->withQueryString();
         }
 
-        // MySQL/MariaDB run SOUNDEX() natively; the others take the package's phonetic pattern
+        // MySQL, MariaDB and SQL Server run SOUNDEX() natively and SQLite the package's soundex function;
+        // PostgreSQL (without fuzzystrmatch) takes the package's phonetic pattern
         // fallback, which matches spellings, so the page's examples differ.
-        $nativeSoundex = in_array((new Contact())->getConnection()->getDriverName(), ['mysql', 'mariadb'], true);
+        $nativeSoundex = in_array((new Contact())->getConnection()->getDriverName(), ['mysql', 'mariadb', 'sqlsrv', 'sqlite'], true);
 
         return view('search.contacts', compact('results', 'query', 'algorithm', 'nativeSoundex'));
     }

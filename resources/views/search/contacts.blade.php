@@ -6,9 +6,9 @@
 @php($algorithmLabels = ['soundex' => 'Soundex', 'levenshtein' => 'Levenshtein', 'fuzzy' => 'Fuzzy', 'similar_text' => 'Similar text'])
 <x-page-header eyebrow="Phonetic matching" title="Contact search">
     @if($nativeSoundex)
-        Soundex matches names that sound alike, so “steven” finds Stefan and “jon” finds Johnny. It keeps the first letter, so “philip” never finds Filip and “katherine” never finds Catherine. This database (MySQL/MariaDB) runs SOUNDEX() natively; PostgreSQL, SQLite and SQL Server use the package's phonetic pattern fallback, which matches differently.
+        Soundex matches names that sound alike, so “steven” finds Stefan and “jon” finds Johnny. It keeps the first letter, so “philip” never finds Filip and “katherine” never finds Catherine. MySQL, MariaDB and SQL Server each runs SOUNDEX() natively, and SQLite a soundex function the package registers; PostgreSQL uses the package's phonetic pattern fallback unless fuzzystrmatch is installed, which matches differently.
     @else
-        On this database Soundex runs the package's phonetic pattern fallback, as on every database but MySQL and MariaDB (on PostgreSQL by default): it matches the term, its first three letters, its consonant skeleton and a few spelling swaps (ph→f, ck→k, s→z). So “steven” finds Stefan and Stephen and “philip” finds Filip, but “jon” never finds John (try “john”), and “katherine” never finds Catherine. On MySQL or MariaDB, native SOUNDEX() matches by sound instead.
+        On this database (PostgreSQL without fuzzystrmatch) Soundex runs the package's phonetic pattern fallback: it matches the term, its first three letters, its consonant skeleton and a few spelling swaps (ph→f, ck→k, s→z). So “steven” finds Stefan and Stephen and “philip” finds Filip, but “jon” never finds John (try “john”), and “katherine” never finds Catherine. On MySQL, MariaDB, SQL Server and SQLite it matches by sound instead.
     @endif
 </x-page-header>
 

@@ -41,7 +41,7 @@ class ContactHintsTest extends TestCase
 
     private function native(): bool
     {
-        return in_array(DB::getDriverName(), ['mysql', 'mariadb'], true);
+        return in_array(DB::getDriverName(), ['mysql', 'mariadb', 'sqlsrv', 'sqlite'], true); // every database but PostgreSQL matches by sound in 2.1
     }
 
     protected function setUp(): void
