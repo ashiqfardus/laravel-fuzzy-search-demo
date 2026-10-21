@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Middleware\TrustProxies;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
@@ -32,6 +33,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Read from config here, not with env() in bootstrap/app.php: its middleware callback runs
+        // before .env is loaded, and env() returns null once the config is cached.
+        if ($proxies = config('app.trusted_proxies')) {
+            TrustProxies::at($proxies === '*' ? '*' : array_map('trim', explode(',', $proxies)));
+        }
+
         // Separate keys: a page load and the as-you-type requests it makes must not spend
         // the same per-IP budget (the default throttle key is the IP alone, for both).
         // A LIKE table scan (?engine=like) also spends a smaller budget of its own.

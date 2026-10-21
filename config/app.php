@@ -123,4 +123,17 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Trusted Proxies
+    |--------------------------------------------------------------------------
+    |
+    | Behind a reverse proxy, $request->ip() is the proxy, so every visitor
+    | would share one rate-limit bucket. List the proxy addresses here
+    | (comma separated, or *); AppServiceProvider applies them.
+    |
+    */
+
+    'trusted_proxies' => env('TRUSTED_PROXIES'),
+
 ];
