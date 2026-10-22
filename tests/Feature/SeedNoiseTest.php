@@ -23,6 +23,10 @@ class SeedNoiseTest extends TestCase
     {
         parent::setUp();
 
+        // The seeder draws authors, titles and prices at random; a fixed seed makes every run
+        // seed the same rows, so a draw with no Smith (or a Smith on most articles) cannot fail a run.
+        mt_srand(20261022);
+        fake()->seed(20261022);
         $this->seed(DatabaseSeeder::class);
     }
 
