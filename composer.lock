@@ -4,28 +4,47 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "efc9cdf34e9be2f06148c33f86448733",
+    "content-hash": "a156be1885e7498c7f2076ed8a09e293",
     "packages": [
         {
             "name": "ashiqfardus/laravel-fuzzy-search",
-            "version": "2.x-dev",
+            "version": "v3.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/ashiqfardus/laravel-fuzzy-search.git",
+                "reference": "536ae87cd284be0bcb036608b4e605cc2880cc9a"
+            },
             "dist": {
-                "type": "path",
-                "url": "../laravel-fuzzy-search",
-                "reference": "8011007ef6de184458207f8294ed1c7ddf7e6dd0"
+                "type": "zip",
+                "url": "https://api.github.com/repos/ashiqfardus/laravel-fuzzy-search/zipball/536ae87cd284be0bcb036608b4e605cc2880cc9a",
+                "reference": "536ae87cd284be0bcb036608b4e605cc2880cc9a",
+                "shasum": ""
             },
             "require": {
-                "illuminate/database": "^9.0|^10.0|^11.0|^12.0|^13.0",
-                "illuminate/support": "^9.0|^10.0|^11.0|^12.0|^13.0",
-                "php": "^8.0|^8.1|^8.2|^8.3|^8.4"
+                "illuminate/bus": "^10.0|^11.0|^12.0|^13.0",
+                "illuminate/console": "^10.0|^11.0|^12.0|^13.0",
+                "illuminate/database": "^10.0|^11.0|^12.0|^13.0",
+                "illuminate/http": "^10.0|^11.0|^12.0|^13.0",
+                "illuminate/queue": "^10.0|^11.0|^12.0|^13.0",
+                "illuminate/support": "^10.0|^11.0|^12.0|^13.0",
+                "php": "^8.1|^8.2|^8.3|^8.4|^8.5",
+                "symfony/finder": "^6.0|^7.0|^8.0"
+            },
+            "conflict": {
+                "laravel/scout": "<10.1"
             },
             "require-dev": {
-                "orchestra/testbench": "^7.0|^8.0|^9.0|^10.0",
-                "phpunit/phpunit": "^9.0|^10.0|^11.0|^12.0||^13.0"
+                "filament/filament": "^3.3",
+                "laravel/scout": "^10.1|^11.0",
+                "orchestra/testbench": "^8.0|^9.0|^10.0|^11.0",
+                "phpunit/phpunit": "^10.1|^11.0|^12.0|^13.0",
+                "wamania/php-stemmer": "^1.3|^4.0"
             },
             "suggest": {
-                "laravel/scout": "Required for Scout driver integration (^9.0|^10.0)",
-                "wamania/php-stemmer": "Required for language stemming support in Phase 1 (^1.2)"
+                "ext-intl": "Unicode decomposition for indexing.accent_insensitive and accentInsensitive() (the built-in map is the fallback)",
+                "filament/filament": "Required for the HasFuzzyGlobalSearch trait and tableSearch() (v3.3+)",
+                "laravel/scout": "Required for Scout driver integration (^10.1|^11.0)",
+                "wamania/php-stemmer": "Required for language stemming support (1.3, or 2.0 and later)"
             },
             "type": "library",
             "extra": {
@@ -40,22 +59,7 @@
                     "Ashiqfardus\\LaravelFuzzySearch\\": "src/"
                 }
             },
-            "autoload-dev": {
-                "psr-4": {
-                    "Ashiqfardus\\LaravelFuzzySearch\\Tests\\": "tests/"
-                }
-            },
-            "scripts": {
-                "test": [
-                    "vendor/bin/phpunit"
-                ],
-                "test-coverage": [
-                    "vendor/bin/phpunit --coverage-html coverage"
-                ],
-                "benchmark": [
-                    "php artisan fuzzy-search:benchmark"
-                ]
-            },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -67,8 +71,10 @@
             ],
             "description": "A powerful, zero-config fuzzy search package for Laravel with fluent API",
             "keywords": [
+                "bm25",
                 "eloquent",
                 "fuzzy",
+                "inverted-index",
                 "laravel",
                 "levenshtein",
                 "query-builder",
@@ -77,10 +83,11 @@
                 "trigram",
                 "typo-tolerance"
             ],
-            "transport-options": {
-                "symlink": true,
-                "relative": true
-            }
+            "support": {
+                "issues": "https://github.com/ashiqfardus/laravel-fuzzy-search/issues",
+                "source": "https://github.com/ashiqfardus/laravel-fuzzy-search/tree/v3.0.0"
+            },
+            "time": "2026-10-22T01:50:05+00:00"
         },
         {
             "name": "brick/math",
@@ -6410,69 +6417,6 @@
             "time": "2026-01-05T16:49:17+00:00"
         },
         {
-            "name": "laravel/sail",
-            "version": "v1.52.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/laravel/sail.git",
-                "reference": "64ac7d8abb2dbcf2b76e61289451bae79066b0b3"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/laravel/sail/zipball/64ac7d8abb2dbcf2b76e61289451bae79066b0b3",
-                "reference": "64ac7d8abb2dbcf2b76e61289451bae79066b0b3",
-                "shasum": ""
-            },
-            "require": {
-                "illuminate/console": "^9.52.16|^10.0|^11.0|^12.0",
-                "illuminate/contracts": "^9.52.16|^10.0|^11.0|^12.0",
-                "illuminate/support": "^9.52.16|^10.0|^11.0|^12.0",
-                "php": "^8.0",
-                "symfony/console": "^6.0|^7.0",
-                "symfony/yaml": "^6.0|^7.0"
-            },
-            "require-dev": {
-                "orchestra/testbench": "^7.0|^8.0|^9.0|^10.0",
-                "phpstan/phpstan": "^2.0"
-            },
-            "bin": [
-                "bin/sail"
-            ],
-            "type": "library",
-            "extra": {
-                "laravel": {
-                    "providers": [
-                        "Laravel\\Sail\\SailServiceProvider"
-                    ]
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Laravel\\Sail\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Taylor Otwell",
-                    "email": "taylor@laravel.com"
-                }
-            ],
-            "description": "Docker files for running a basic Laravel application.",
-            "keywords": [
-                "docker",
-                "laravel"
-            ],
-            "support": {
-                "issues": "https://github.com/laravel/sail/issues",
-                "source": "https://github.com/laravel/sail"
-            },
-            "time": "2026-01-01T02:46:03+00:00"
-        },
-        {
             "name": "mockery/mockery",
             "version": "1.6.12",
             "source": {
@@ -8315,82 +8259,6 @@
             "time": "2024-10-20T05:08:20+00:00"
         },
         {
-            "name": "symfony/yaml",
-            "version": "v7.4.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/symfony/yaml.git",
-                "reference": "24dd4de28d2e3988b311751ac49e684d783e2345"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/symfony/yaml/zipball/24dd4de28d2e3988b311751ac49e684d783e2345",
-                "reference": "24dd4de28d2e3988b311751ac49e684d783e2345",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=8.2",
-                "symfony/deprecation-contracts": "^2.5|^3",
-                "symfony/polyfill-ctype": "^1.8"
-            },
-            "conflict": {
-                "symfony/console": "<6.4"
-            },
-            "require-dev": {
-                "symfony/console": "^6.4|^7.0|^8.0"
-            },
-            "bin": [
-                "Resources/bin/yaml-lint"
-            ],
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "Symfony\\Component\\Yaml\\": ""
-                },
-                "exclude-from-classmap": [
-                    "/Tests/"
-                ]
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Fabien Potencier",
-                    "email": "fabien@symfony.com"
-                },
-                {
-                    "name": "Symfony Community",
-                    "homepage": "https://symfony.com/contributors"
-                }
-            ],
-            "description": "Loads and dumps YAML files",
-            "homepage": "https://symfony.com",
-            "support": {
-                "source": "https://github.com/symfony/yaml/tree/v7.4.1"
-            },
-            "funding": [
-                {
-                    "url": "https://symfony.com/sponsor",
-                    "type": "custom"
-                },
-                {
-                    "url": "https://github.com/fabpot",
-                    "type": "github"
-                },
-                {
-                    "url": "https://github.com/nicolas-grekas",
-                    "type": "github"
-                },
-                {
-                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
-                    "type": "tidelift"
-                }
-            ],
-            "time": "2025-12-04T18:11:45+00:00"
-        },
-        {
             "name": "theseer/tokenizer",
             "version": "1.3.1",
             "source": {
@@ -8443,10 +8311,7 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {
-        "ashiqfardus/laravel-fuzzy-search": 20,
-        "laravel/framework": 20
-    },
+    "stability-flags": {},
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
