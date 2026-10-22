@@ -8,16 +8,16 @@
     "packages": [
         {
             "name": "ashiqfardus/laravel-fuzzy-search",
-            "version": "v3.0.0",
+            "version": "v3.0.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/ashiqfardus/laravel-fuzzy-search.git",
-                "reference": "536ae87cd284be0bcb036608b4e605cc2880cc9a"
+                "reference": "d92eb74bc2b4c17ea9254873edfda558b4ee4fb9"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ashiqfardus/laravel-fuzzy-search/zipball/536ae87cd284be0bcb036608b4e605cc2880cc9a",
-                "reference": "536ae87cd284be0bcb036608b4e605cc2880cc9a",
+                "url": "https://api.github.com/repos/ashiqfardus/laravel-fuzzy-search/zipball/d92eb74bc2b4c17ea9254873edfda558b4ee4fb9",
+                "reference": "d92eb74bc2b4c17ea9254873edfda558b4ee4fb9",
                 "shasum": ""
             },
             "require": {
@@ -85,9 +85,9 @@
             ],
             "support": {
                 "issues": "https://github.com/ashiqfardus/laravel-fuzzy-search/issues",
-                "source": "https://github.com/ashiqfardus/laravel-fuzzy-search/tree/v3.0.0"
+                "source": "https://github.com/ashiqfardus/laravel-fuzzy-search/tree/v3.0.1"
             },
-            "time": "2026-10-22T01:50:05+00:00"
+            "time": "2026-10-22T08:27:46+00:00"
         },
         {
             "name": "brick/math",
