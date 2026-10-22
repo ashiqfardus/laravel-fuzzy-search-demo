@@ -268,7 +268,9 @@ class SearchController extends Controller
                 $search->searchIn(['name', 'title', 'first_name', 'last_name']);
             }
 
-            $results = $search->paginate(10)->withQueryString();
+            // One visit searches every model, and each model's search would log a row: unlogged, so a
+            // single visit cannot count as the repeated searches the public analytics page asks for.
+            $results = $this->unlogged(fn () => $search->paginate(10)->withQueryString());
 
             // FederatedSearch fetches each model separately, so the Article rows it returns
             // don't have author eager loaded — load it in one query rather than per row.
@@ -541,10 +543,13 @@ class SearchController extends Controller
                 });
             };
 
-            $productResults = $searchModel(Product::class, 'Product', 'name');
-            $userResults = $searchModel(User::class, 'User', 'name');
-            $articleResults = $searchModel(Article::class, 'Article', 'title');
-            $contactResults = $searchModel(Contact::class, 'Contact', 'first_name');
+            // Four searches for one visit: unlogged, as on the federated page.
+            [$productResults, $userResults, $articleResults, $contactResults] = $this->unlogged(fn () => [
+                $searchModel(Product::class, 'Product', 'name'),
+                $searchModel(User::class, 'User', 'name'),
+                $searchModel(Article::class, 'Article', 'title'),
+                $searchModel(Contact::class, 'Contact', 'first_name'),
+            ]);
 
             // Merge by name similarity (higher = better match): each model's relevance scores
             // are on its own scale, so they cannot order rows across models.
@@ -630,7 +635,7 @@ class SearchController extends Controller
         return view('search.analytics', [
             'popular'     => $listed,
             'zeroSearches' => DB::table(config('fuzzy-search.analytics.table', 'fuzzy_search_logs'))
-                ->where('created_at', '>=', now()->subDays(30))->where('result_count', 0)->count(),
+                ->where('created_at', '>=', now()->subDays(30)->startOfDay())->where('result_count', 0)->count(), // the package's window
             'latency'     => SearchAnalytics::averageLatency(30),
             'volume'      => SearchAnalytics::volume(30),
         ]);

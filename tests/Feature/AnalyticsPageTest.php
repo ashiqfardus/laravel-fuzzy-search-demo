@@ -108,4 +108,18 @@ class AnalyticsPageTest extends TestCase
         $this->assertCount(1, $events);
         $this->assertSame('0 0 * * *', $events->first()->expression);
     }
+
+    public function test_one_federated_or_smart_visit_logs_no_row(): void
+    {
+        config(['fuzzy-search.analytics.enabled' => true]);
+        $this->seed(DatabaseSeeder::class);
+        $logs = fn () => DB::table(config('fuzzy-search.analytics.table', 'fuzzy_search_logs'))->count();
+
+        $this->get('/search/federated?q=john')->assertOk();
+        $this->get('/search/smart?q=john')->assertOk();
+        $this->assertSame(0, $logs());
+
+        $this->get('/search/users?q=john')->assertOk();
+        $this->assertSame(1, $logs()); // logging itself is on: one plain search is one row
+    }
 }
